@@ -1,0 +1,73 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  clerkId       String?  @unique // Clerk auth ID
+  username      String   @unique @default("Uchenik")
+  xp            Int      @default(0)
+  crystals      Int      @default(0)
+  streak        Int      @default(0)
+  streakFreezes Int      @default(0) // Monetization hook
+  lastActive    DateTime @default(now())
+  activeStep    Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  monster   Monster?
+  progress  LessonProgress[]
+  inventory Inventory[]
+}
+
+model Monster {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @unique
+  name       String
+  emoji      String
+  color      String
+  promptUsed String
+  imageUrl   String   @default("")
+  mood       Int      @default(100) // Drops if user misses a day (Loss Aversion)
+  createdAt  DateTime @default(now())
+}
+
+model Inventory {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  itemType   String // "skin", "background", "gacha_ticket"
+  itemId     String // "cyber_visor"
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  order       Int      @unique
+  xpReward    Int      @default(100)
+  crystalRwd  Int      @default(10)
+  createdAt   DateTime @default(now())
+
+  progress LessonProgress[]
+}
+
+model LessonProgress {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  completed   Boolean   @default(false)
+  score       Int       @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+}

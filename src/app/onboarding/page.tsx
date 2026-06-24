@@ -1,0 +1,216 @@
+"use client";
+
+import { useState, Suspense } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, Sparkles } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+
+type Phase = "hatching" | "naming" | "ready";
+
+const HATCH_MESSAGES = [
+  "Яйцо трескается...",
+  "Что-то шевелится внутри...",
+  "Свет пробивается сквозь скорлупу...",
+  "Твой питомец просыпается!",
+];
+
+function OnboardingContent() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const prefersReducedMotion = useReducedMotion();
+
+  const monsterEmoji = params.get("emoji") || "🐉";
+  const monsterColor = params.get("color") || "#a78bfa";
+  const defaultName = params.get("name") || "Огняш";
+
+  const [phase, setPhase] = useState<Phase>("hatching");
+  const [hatchStep, setHatchStep] = useState(0);
+  const [petName, setPetName] = useState(defaultName);
+
+  const advanceHatch = () => {
+    if (hatchStep < HATCH_MESSAGES.length - 1) {
+      setHatchStep((s) => s + 1);
+    } else {
+      setPhase("naming");
+    }
+  };
+
+  const confirmName = async () => {
+    if (petName.trim().length === 0) return;
+    try {
+      await fetch("/api/monster", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: petName,
+          emoji: monsterEmoji,
+          color: monsterColor,
+          promptUsed: "Выбран при онбординге",
+          skipImage: true
+        })
+      });
+    } catch (err) {
+      console.error("Failed to save monster name on onboarding:", err);
+    }
+    setPhase("ready");
+  };
+
+  const goToFirstLesson = () => {
+    router.push("/lesson/1");
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md space-y-8 text-center">
+        {phase === "hatching" && (
+          <motion.div
+            key="hatching"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
+            className="space-y-8"
+          >
+            <motion.div
+              animate={{
+                scale: [1, 1.06, 1],
+                rotate: [0, hatchStep * 3, 0],
+              }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.6,
+                ease: "easeInOut",
+              }}
+              className="mx-auto flex h-40 w-40 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-7xl shadow-[0_0_80px_rgba(139,92,246,0.3)]"
+              style={{
+                boxShadow: `0 0 ${40 + hatchStep * 20}px ${monsterColor}44`,
+              }}
+            >
+              {hatchStep < HATCH_MESSAGES.length - 1 ? "🥚" : monsterEmoji}
+            </motion.div>
+
+            <p className="text-lg font-medium text-white/90">
+              {HATCH_MESSAGES[hatchStep]}
+            </p>
+
+            <button
+              onClick={advanceHatch}
+              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+            >
+              <Sparkles className="h-4 w-4" />
+              {hatchStep < HATCH_MESSAGES.length - 1
+                ? "Продолжить"
+                : "Познакомиться!"}
+            </button>
+          </motion.div>
+        )}
+
+        {phase === "naming" && (
+          <motion.div
+            key="naming"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
+            className="space-y-6"
+          >
+            <div
+              className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-6xl"
+              style={{ boxShadow: `0 0 60px ${monsterColor}44` }}
+            >
+              {monsterEmoji}
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xl font-semibold text-white">
+                Как зовут твоего питомца?
+              </p>
+              <p className="text-sm text-white/60">
+                Можешь оставить имя или придумать своё
+              </p>
+            </div>
+
+            <input
+              value={petName}
+              onChange={(e) => setPetName(e.target.value)}
+              maxLength={24}
+              className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
+              autoFocus
+            />
+
+            <button
+              onClick={confirmName}
+              disabled={petName.trim().length === 0}
+              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+            >
+              Это {petName}!
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+
+        {phase === "ready" && (
+          <motion.div
+            key="ready"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.5 }}
+            className="space-y-6"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{
+                duration: prefersReducedMotion ? 0 : 0.8,
+                ease: "easeOut",
+              }}
+              className="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-7xl"
+              style={{ boxShadow: `0 0 80px ${monsterColor}55` }}
+            >
+              {monsterEmoji}
+            </motion.div>
+
+            <div className="space-y-2">
+              <p className="text-2xl font-semibold text-white">
+                {petName} готов учиться!
+              </p>
+              <p className="text-sm text-white/60">
+                Первый урок: научи {petName} говорить. Напиши ему 3 слова, и он
+                ответит.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-surface/80 p-4 text-left">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+                Урок 1 из 5
+              </p>
+              <p className="mt-1 text-sm font-semibold text-white">
+                Пробуждение
+              </p>
+              <p className="mt-1 text-sm text-white/60">
+                Дай питомцу 3 характеристики, чтобы он ожил
+              </p>
+            </div>
+
+            <button
+              onClick={goToFirstLesson}
+              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+            >
+              Начать урок
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </motion.div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center text-white font-sans">
+        <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin" />
+        <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора...</p>
+      </div>
+    }>
+      <OnboardingContent />
+    </Suspense>
+  );
+}
