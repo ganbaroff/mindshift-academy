@@ -68,7 +68,7 @@ export async function POST(req: Request) {
         name,
         emoji,
         color,
-        promptUsed,
+        promptUsed: `[redacted-${promptUsed.length}ch]`, // COPPA: don't store raw child input
         imageUrl,
       },
       create: {
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
         name,
         emoji,
         color,
-        promptUsed,
+        promptUsed: `[redacted-${promptUsed.length}ch]`, // COPPA: don't store raw child input
         imageUrl,
       },
     });

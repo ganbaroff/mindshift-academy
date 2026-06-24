@@ -7,6 +7,7 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 const isDemoBypass = (req: Request) =>
+  process.env.NODE_ENV === "development" &&
   new URL(req.url).searchParams.get("demo") === "1";
 
 export default clerkMiddleware(async (auth, req) => {

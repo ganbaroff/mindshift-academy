@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
+  if (process.env.NODE_ENV !== "development") {
+    return NextResponse.json({ error: "Reset disabled in production" }, { status: 403 });
+  }
+
   try {
     // Reset default user stats in SQLite database
     const resetUser = await prisma.user.upsert({

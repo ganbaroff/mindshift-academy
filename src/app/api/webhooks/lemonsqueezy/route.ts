@@ -55,7 +55,7 @@ export async function POST(req: Request) {
               name: words.join("-"),
               emoji: "🥚",
               color: "#a78bfa",
-              promptUsed: words.join(", "),
+              promptUsed: `[${words.length} words]`, // COPPA: don't store raw child input
             },
           });
         }

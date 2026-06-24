@@ -258,10 +258,15 @@ export async function POST(req: Request) {
     }
 
     const ai = (await import("@/lib/ai-provider")).getAIClient();
-    const challengeCompleted = checkChallengeSuccess(userPrompt, activeStepId);
 
-    if (challengeCompleted) {
-      await updateUserRewards(dbUser.id, activeStepId);
+    // SECURITY: Use server-side activeStep, NOT client-supplied activeStepId
+    // Prevents XP farming by sending arbitrary stepId from client
+    const serverStepId = dbUser.activeStep;
+    const challengeCompleted = checkChallengeSuccess(userPrompt, serverStepId);
+
+    if (challengeCompleted && serverStepId === activeStepId) {
+      // Only reward if client step matches server state (prevents replay)
+      await updateUserRewards(dbUser.id, serverStepId);
     }
 
     // Simulated Mode (no API key)
@@ -341,8 +346,13 @@ export async function POST(req: Request) {
       temperature: 0.7,
     });
 
-    const aiMessageText = response.choices[0]?.message?.content || "Извини, произошел сбой. Попробуй еще раз!";
-    
+    let aiMessageText = response.choices[0]?.message?.content || "Монстр задумался... Попробуй ещё раз!";
+
+    // SECURITY: Output moderation — filter AI response before showing to child
+    if (!isSafePrompt(aiMessageText)) {
+      aiMessageText = "Ой, монстр запутался в словах! Давай попробуем ещё раз 🐲";
+    }
+
     const costEstimate = (
       ((response.usage?.prompt_tokens || 0) * 0.150) / 1000000 + 
       ((response.usage?.completion_tokens || 0) * 0.600) / 1000000
