@@ -6,29 +6,24 @@ export async function POST(req: Request) {
   try {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
-    let user;
-    
-    if (clerkId) {
-      user = await prisma.user.findUnique({
-        where: { clerkId },
-      });
+
+    // P0-4: require authentication (closes the anonymous claim exploit).
+    if (!clerkId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!user) {
-      user = await prisma.user.findUnique({
-        where: { username: "Uchenik" },
-      });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            username: "Uchenik",
-            xp: 450,
-            crystals: 120,
-            streak: 3,
-            activeStep: 1,
-          },
-        });
-      }
+    // P0-4: server-side daily guard — one claim per calendar day. Stops the no-guard spam
+    // exploit (client-side hasClaimedToday was the ONLY check). A user who already claimed
+    // today (streak > 0 AND lastActive is today) is rejected here, not trusted to self-limit.
+    const now = new Date();
+    const last = user.lastActive ? new Date(user.lastActive) : null;
+    const alreadyClaimedToday = user.streak > 0 && last && last.toDateString() === now.toDateString();
+    if (alreadyClaimedToday) {
+      return NextResponse.json({ error: "Награда уже получена сегодня" }, { status: 409 });
     }
 
     // Determine current day in the 7-day reward cycle

@@ -5,30 +5,17 @@ export async function POST(req: Request) {
   try {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
-    let user;
 
-    if (clerkId) {
-      user = await prisma.user.findUnique({
-        where: { clerkId },
-      });
+    // P0-4: require authentication. Closes the demonstrated unauthenticated currency-mint
+    // (anonymous curl granted +100 to a shared "Uchenik" row). RESIDUAL (not yet closed):
+    // there is no parent role, so an authenticated child could still call this directly —
+    // a full fix needs a parent-authorization gate. This change closes the anonymous vector.
+    if (!clerkId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+    const user = await prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
-      // Fallback for preview mode
-      user = await prisma.user.findUnique({
-        where: { username: "Uchenik" },
-      });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            username: "Uchenik",
-            xp: 450,
-            crystals: 120,
-            streak: 3,
-            activeStep: 1,
-          },
-        });
-      }
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Increment user crystals by 100 for positive reinforcement
