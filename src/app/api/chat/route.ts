@@ -96,6 +96,58 @@ function checkChallengeSuccess(prompt: string, stepId: number): boolean {
   return false;
 }
 
+// PEDAGOGY: what REAL comprehension looks like per lesson (not "contains a keyword").
+const LESSON_RUBRICS: Record<number, string> = {
+  1: "Урок «Пробуждение». Засчитывается, только если ребёнок описал монстра, дав минимум ТРИ разных осмысленных качества/характеристики (например: храбрый, быстрый, огненный). Случайный набор слов, цифры или бессмысленные слова, не являющиеся качествами, — НЕ засчитывать.",
+  2: "Урок «Характер». Засчитывается, только если ребёнок дал монстру ИНСТРУКЦИЮ, как себя вести/говорить/реагировать (например: «рычи перед каждым словом», «говори как грозный дракон и дыши огнём»). Фраза не про поведение монстра — НЕ засчитывать.",
+  3: "Урок «Секретный язык». Засчитывается, только если ребёнок задал ПРАВИЛО шифра — конкретное преобразование текста (например: «заменяй все гласные на звёздочки»). Если правила преобразования нет (одиночный символ, случайная фраза) — НЕ засчитывать.",
+  4: "Урок «Машинное зрение». ИИ ошибочно решил, что на картинке кошка. Засчитывается, только если ребёнок именно ИСПРАВИЛ ошибку — указал, что это НЕ кошка, и/или дал команду исправить, назвав верный объект (собаку). Одно голое слово-объект (например просто «собака») без акта исправления — НЕ засчитывать.",
+  5: "Урок «Битва промптов». Засчитывается, только если ребёнок написал промпт с ОСМЫСЛЕННЫМ логическим условием, реально управляющим поведением (структура «если … то … [иначе …]» с понятным смыслом, например: «если видишь врага, то атакуй, иначе защищайся»). Бессмысленная присказка со словами «если/тогда» без реальной логики — НЕ засчитывать.",
+};
+
+// LLM-as-judge: decide if the child's message genuinely performs the lesson skill.
+async function judgeComprehension(
+  ai: any,
+  prompt: string,
+  stepId: number
+): Promise<{ pass: boolean; reason: string }> {
+  const rubric = LESSON_RUBRICS[stepId];
+  if (!rubric) return { pass: false, reason: "Неизвестный урок." };
+
+  try {
+    const judge = await ai.client.chat.completions.create({
+      model: ai.model,
+      max_tokens: 120,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content:
+            "Ты — строгий, но добрый проверяющий в детской академии промпт-инжиниринга. " +
+            "Тебе дают критерий урока и сообщение ребёнка. Верни СТРОГО JSON вида " +
+            '{"pass": true|false, "reason": "одно короткое доброе предложение по-русски"}. ' +
+            "Засчитывай (pass:true) ТОЛЬКО если ребёнок реально выполнил суть задания, а не просто вставил подходящее слово. " +
+            "Бессмысленное, не по теме или лишь формально содержащее ключевое слово сообщение — pass:false. Сомневаешься — pass:false.",
+        },
+        {
+          role: "user",
+          content: `Критерий урока: ${rubric}\n\nСообщение ребёнка: "${prompt}"`,
+        },
+      ],
+    });
+
+    const data = JSON.parse(judge.choices[0]?.message?.content || "{}");
+    return {
+      pass: data.pass === true,
+      reason: typeof data.reason === "string" ? data.reason : "",
+    };
+  } catch (err) {
+    console.error("Judge error, falling back to keyword check:", err);
+    return { pass: checkChallengeSuccess(prompt, stepId), reason: "резервная проверка" };
+  }
+}
+
 // Helper to find or seed a lesson dynamically
 async function getOrCreateLesson(stepId: number) {
   let lesson = await prisma.lesson.findUnique({
@@ -278,7 +330,13 @@ export async function POST(req: Request) {
     // SECURITY: Use server-side activeStep, NOT client-supplied activeStepId
     // Prevents XP farming by sending arbitrary stepId from client
     const serverStepId = dbUser.activeStep;
-    const challengeCompleted = checkChallengeSuccess(userPrompt, serverStepId);
+    // PEDAGOGY: an LLM judges whether the child actually demonstrated the lesson's
+    // skill — not just whether a keyword is present. The keyword check stays ONLY as
+    // an offline (no provider) fallback so lessons aren't bricked without an API key.
+    const verdict = ai
+      ? await judgeComprehension(ai, userPrompt, serverStepId)
+      : { pass: checkChallengeSuccess(userPrompt, serverStepId), reason: "офлайн-режим (без ИИ-судьи)" };
+    const challengeCompleted = verdict.pass;
 
     if (challengeCompleted && serverStepId === activeStepId) {
       // Only reward if client step matches server state (prevents replay)
@@ -330,7 +388,8 @@ export async function POST(req: Request) {
         toxicityScore: 0.00,
         latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
         cost: "$0.00002 (симуляция)",
-        challengeCompleted
+        challengeCompleted,
+        judgeReason: verdict.reason
       });
     }
 
@@ -379,4 +438,22 @@ export async function POST(req: Request) {
       safetyPassed: true,
       toxicityScore: 0.00,
       latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
-      cost: `$${costEstim
+      cost: `$${costEstimate}`,
+      challengeCompleted,
+      judgeReason: verdict.reason
+    });
+
+  } catch (error: any) {
+    // SECURITY: Do not leak raw error messages to the client
+    console.error("OpenAI API Error:", error.message || error);
+    return NextResponse.json({
+      response: "Упс! Произошла техническая ошибка на сервере. Пожалуйста, попробуй позже.",
+      safetyPassed: true,
+      toxicityScore: 0.00,
+      latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
+      cost: "$0.00000",
+      challengeCompleted: false
+    }, { status: 500 });
+  }
+}
+
