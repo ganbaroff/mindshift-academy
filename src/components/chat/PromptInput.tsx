@@ -4,6 +4,8 @@ import React from "react";
 import { Send, Volume2, VolumeX, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { Message } from "@/types";
+import confetti from "canvas-confetti";
+import { soundEngine } from "@/lib/sound-engine";
 
 export const PromptInput = () => {
   const {
@@ -18,6 +20,13 @@ export const PromptInput = () => {
   } = useGameStore();
 
   const handleChallengeSuccess = () => {
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.55 },
+      colors: ["#a78bfa", "#22d3ee", "#e9c400", "#c084fc"]
+    });
+    soundEngine.play("success");
     if (activeStepId === 1) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));
       updateXP(100);
@@ -55,6 +64,8 @@ export const PromptInput = () => {
   const handleSend = async () => {
     const prompt = promptInput.trim();
     if (!prompt) return;
+
+    soundEngine.play("click");
 
     const userMsg: Message = {
       id: Math.random().toString(),
@@ -121,7 +132,8 @@ export const PromptInput = () => {
           console.warn("API TTS failed, falling back to browser SpeechSynthesis:", ttsErr);
           if ("speechSynthesis" in window) {
             const utterance = new SpeechSynthesisUtterance(cleanText);
-            utterance.lang = "ru-RU";
+            const isAzerbaijani = /[əıöğüşçƏIÖĞÜŞÇ]/.test(cleanText);
+            utterance.lang = isAzerbaijani ? "az-AZ" : "ru-RU";
             window.speechSynthesis.speak(utterance);
           }
         }
@@ -189,7 +201,7 @@ export const PromptInput = () => {
     }
   };
 
-  if (steps[2]?.status === "completed" && !generatedMonster) {
+  if (steps[4]?.status === "completed" && !generatedMonster) {
     return (
       <div className="flex flex-col gap-4 p-5 rounded-2xl bg-amber-500/10 border-2 border-dashed border-amber-500/40 text-center">
         <h3 className="font-extrabold text-lg text-amber-500 flex items-center justify-center gap-2">

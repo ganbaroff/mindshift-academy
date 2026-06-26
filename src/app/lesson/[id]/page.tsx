@@ -10,6 +10,9 @@ import { GachaCalendar } from "@/components/gamification/GachaCalendar";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
 import { BookOpen, Trophy, ShieldCheck, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { motion, AnimatePresence } from "framer-motion";
+import { soundEngine } from "@/lib/sound-engine";
 
 export default function LessonPage() {
   const params = useParams();
@@ -20,8 +23,22 @@ export default function LessonPage() {
   const lessonKey = `lesson${lessonId}` as keyof typeof LESSON_PROMPTS;
   const lessonData = LESSON_PROMPTS[lessonKey];
 
-  const [streak, setStreak] = useState(3);
+  const [streak, setStreak] = useState(0);
   const [lastActive, setLastActive] = useState<string | null>(null);
+
+  const [showSplash, setShowSplash] = useState(false);
+  const [splashTitle, setSplashTitle] = useState("");
+  const [splashChapter, setSplashChapter] = useState(1);
+
+  useEffect(() => {
+    if (lessonData) {
+      setSplashChapter(lessonId);
+      setSplashTitle(lessonData.title);
+      setShowSplash(true);
+      const timer = setTimeout(() => setShowSplash(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [lessonId, lessonData]);
 
   const {
     activeStepId,
@@ -35,26 +52,33 @@ export default function LessonPage() {
     setIsModalOpen,
     modalDesc,
     latency,
-    currentCost,
-    promptCount,
     setMessages,
     setCrystals,
     setTotalXp
   } = useGameStore();
 
   useEffect(() => {
+    soundEngine.preload();
+    soundEngine.play("ambient");
+
     fetch("/api/user")
       .then((res) => res.json())
       .then((data) => {
         if (data && !data.error) {
-          setCrystals(data.crystals);
-          setTotalXp(data.xp);
-          if (data.streak) setStreak(data.streak);
+          setCrystals(data.crystals ?? 0);
+          setTotalXp(data.xp ?? 0);
+          setStreak(data.streak ?? 0);
           if (data.lastActive) setLastActive(data.lastActive);
         }
       })
       .catch((err) => console.error("Error loading user profile:", err));
   }, []);
+
+  useEffect(() => {
+    if (isModalOpen) {
+      soundEngine.play("crystal");
+    }
+  }, [isModalOpen]);
 
   useEffect(() => {
     if (!lessonData) {
@@ -110,7 +134,29 @@ export default function LessonPage() {
   if (!lessonData) return null;
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-sans relative">
+      <AnimatePresence>
+        {showSplash && (
+          <div className="fixed inset-0 z-[110] bg-[#070b14]/95 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 0.35, ease: "easeOut" }}
+              className="text-center space-y-4"
+            >
+              <p className="text-xs font-black text-violet-400 uppercase tracking-[0.35em]">
+                Глава {splashChapter}
+              </p>
+              <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight px-6 max-w-4xl leading-tight">
+                {splashTitle}
+              </h1>
+              <div className="h-1.5 w-24 bg-gradient-to-r from-violet-500 to-cyan-400 mx-auto rounded-full mt-6 shadow-[0_0_15px_rgba(139,92,246,0.5)] animate-pulse" />
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <Header />
 
       <main role="main" className="flex-grow p-6 grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 max-w-7xl w-full mx-auto relative z-10">
@@ -219,40 +265,27 @@ export default function LessonPage() {
           {/* Active Monster glowing card */}
           <div className="rounded-[28px] border border-white/5 bg-surface/90 p-5 shadow-2xl flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div 
-                className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center text-4xl shadow-lg relative overflow-hidden"
-                style={{
-                  boxShadow: `0 0 30px ${monsterColor}22`,
-                  border: `1px solid ${monsterColor}20`
-                }}
-              >
-                <div 
-                  className="absolute inset-0 opacity-20 pointer-events-none"
-                  style={{
-                    background: `radial-gradient(circle, ${monsterColor} 0%, transparent 70%)`
-                  }}
-                />
-                <span className="relative z-10">{activeSkin}</span>
-              </div>
+              <MonsterAvatar
+                mood={
+                  isModalOpen
+                    ? "celebrating"
+                    : latency === "Загрузка..."
+                    ? "thinking"
+                    : latency === "Ошибка"
+                    ? "sad"
+                    : "happy"
+                }
+                color={monsterColor}
+                size={64}
+              />
               <div>
                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Мой ИИ-напарник</p>
                 <h4 className="font-extrabold text-lg text-white mt-0.5">{activeMonsterName}</h4>
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Запросов</p>
-                <p className="font-black text-sm text-white mt-0.5">{promptCount}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Задержка</p>
-                <p className="font-black text-sm text-cyan-400 mt-0.5">{latency}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Стоимость</p>
-                <p className="font-black text-sm text-amber-500 mt-0.5">${currentCost.toFixed(5)}</p>
-              </div>
+            <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-white/60">
+              Урок {lessonId}/5
             </div>
           </div>
 
@@ -289,9 +322,26 @@ export default function LessonPage() {
             onClick={() => setIsModalOpen(false)}
           />
           <div className="bg-[#111625] border border-white/10 rounded-[32px] p-8 max-w-sm w-full relative z-10 text-center shadow-2xl space-y-6">
-            <div className="w-20 h-20 rounded-full bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-4xl mx-auto shadow-[0_0_40px_rgba(139,92,246,0.2)]">
-              🎉
-            </div>
+            <motion.div 
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 15 }}
+              className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-4xl mx-auto shadow-[0_0_40px_rgba(245,158,11,0.2)]"
+            >
+              <motion.span
+                animate={{
+                  y: [0, -8, 0],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                className="inline-block select-none"
+              >
+                💎
+              </motion.span>
+            </motion.div>
             <div className="space-y-2">
               <h3 className="text-2xl font-black text-white">Задание выполнено!</h3>
               <p className="text-sm text-gray-300 leading-relaxed">
@@ -319,3 +369,4 @@ export default function LessonPage() {
     </div>
   );
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

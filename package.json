@@ -1,5 +1,5 @@
 {
-  "name": "mindshift-mvp",
+  "name": "mindshift-academy",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",
-    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
     "@libsql/client": "^0.17.4",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/adapter-libsql": "^7.8.0",
@@ -19,7 +18,9 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
     "better-sqlite3": "^12.11.1",
+    "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.41.0",
+    "lottie-react": "^2.4.1",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
     "openai": "^6.44.0",
@@ -32,6 +33,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 
 type Phase = "hatching" | "naming" | "ready";
 
@@ -27,13 +28,25 @@ function OnboardingContent() {
   const [hatchStep, setHatchStep] = useState(0);
   const [petName, setPetName] = useState(defaultName);
 
-  const advanceHatch = () => {
-    if (hatchStep < HATCH_MESSAGES.length - 1) {
-      setHatchStep((s) => s + 1);
-    } else {
-      setPhase("naming");
+  const lastHatchStep = HATCH_MESSAGES.length - 1;
+  const isHatched = hatchStep >= lastHatchStep;
+
+  // The hatch plays itself like a short cutscene — messages auto-advance so the
+  // child just watches. A tap anywhere skips straight to the reveal.
+  useEffect(() => {
+    if (phase !== "hatching") return;
+    if (prefersReducedMotion) {
+      setHatchStep(lastHatchStep);
+      return;
     }
-  };
+    if (hatchStep >= lastHatchStep) return;
+    const timer = setTimeout(() => {
+      setHatchStep((s) => Math.min(s + 1, lastHatchStep));
+    }, 1300);
+    return () => clearTimeout(timer);
+  }, [phase, hatchStep, prefersReducedMotion, lastHatchStep]);
+
+  const skipHatch = () => setHatchStep(lastHatchStep);
 
   const confirmName = async () => {
     if (petName.trim().length === 0) return;
@@ -68,7 +81,8 @@ function OnboardingContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
-            className="space-y-8"
+            onClick={!isHatched ? skipHatch : undefined}
+            className={`space-y-8 ${!isHatched ? "cursor-pointer" : ""}`}
           >
             <motion.div
               animate={{
@@ -84,22 +98,49 @@ function OnboardingContent() {
                 boxShadow: `0 0 ${40 + hatchStep * 20}px ${monsterColor}44`,
               }}
             >
-              {hatchStep < HATCH_MESSAGES.length - 1 ? "🥚" : monsterEmoji}
+              {!isHatched ? (
+                "🥚"
+              ) : (
+                <MonsterAvatar mood="happy" color={monsterColor} size={144} />
+              )}
             </motion.div>
 
             <p className="text-lg font-medium text-white/90">
               {HATCH_MESSAGES[hatchStep]}
             </p>
 
-            <button
-              onClick={advanceHatch}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-            >
-              <Sparkles className="h-4 w-4" />
-              {hatchStep < HATCH_MESSAGES.length - 1
-                ? "Продолжить"
-                : "Познакомиться!"}
-            </button>
+            {/* Progress dots so the child senses the cutscene moving on its own */}
+            <div className="flex items-center justify-center gap-2" aria-hidden>
+              {HATCH_MESSAGES.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i <= hatchStep ? "w-5 bg-primary" : "w-1.5 bg-white/15"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {isHatched ? (
+              <button
+                onClick={() => setPhase("naming")}
+                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+              >
+                <Sparkles className="h-4 w-4" />
+                Познакомиться!
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  skipHatch();
+                }}
+                className="text-sm font-medium text-white/45 underline-offset-4 transition-colors hover:text-white/70 hover:underline"
+              >
+                Нажми, чтобы пропустить
+              </button>
+            )}
           </motion.div>
         )}
 
@@ -115,7 +156,7 @@ function OnboardingContent() {
               className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-6xl"
               style={{ boxShadow: `0 0 60px ${monsterColor}44` }}
             >
-              {monsterEmoji}
+              <MonsterAvatar mood="thinking" color={monsterColor} size={112} />
             </div>
 
             <div className="space-y-2">
@@ -163,7 +204,7 @@ function OnboardingContent() {
               className="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-7xl"
               style={{ boxShadow: `0 0 80px ${monsterColor}55` }}
             >
-              {monsterEmoji}
+              <MonsterAvatar mood="celebrating" color={monsterColor} size={128} />
             </motion.div>
 
             <div className="space-y-2">
@@ -172,45 +213,4 @@ function OnboardingContent() {
               </p>
               <p className="text-sm text-white/60">
                 Первый урок: научи {petName} говорить. Напиши ему 3 слова, и он
-                ответит.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-surface/80 p-4 text-left">
-              <p className="text-xs font-medium uppercase tracking-widest text-white/40">
-                Урок 1 из 5
-              </p>
-              <p className="mt-1 text-sm font-semibold text-white">
-                Пробуждение
-              </p>
-              <p className="mt-1 text-sm text-white/60">
-                Дай питомцу 3 характеристики, чтобы он ожил
-              </p>
-            </div>
-
-            <button
-              onClick={goToFirstLesson}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-            >
-              Начать урок
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </motion.div>
-        )}
-      </div>
-    </main>
-  );
-}
-
-export default function OnboardingPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center text-white font-sans">
-        <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin" />
-        <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора...</p>
-      </div>
-    }>
-      <OnboardingContent />
-    </Suspense>
-  );
-}
+                �

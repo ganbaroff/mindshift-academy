@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       imageUrl = imageBase64 ? `data:image/png;base64,${imageBase64}` : "";
     }
 
-    // 2. Fetch or create User
+    // 2. Fetch or create User (per-clerkId row for signed-in users)
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
     let user;
@@ -42,9 +42,23 @@ export async function POST(req: Request) {
       user = await prisma.user.findUnique({
         where: { clerkId },
       });
+      if (!user) {
+        // First interaction for this Clerk account — create their own row
+        user = await prisma.user.create({
+          data: {
+            clerkId,
+            username: name || "Uchenik",
+            xp: 0,
+            crystals: 0,
+            streak: 0,
+            activeStep: 1,
+          },
+        });
+      }
     }
 
     if (!user) {
+      // Anonymous / no Clerk session — shared demo user
       user = await prisma.user.findUnique({
         where: { username: "Uchenik" },
       });
@@ -52,10 +66,10 @@ export async function POST(req: Request) {
         user = await prisma.user.create({
           data: {
             username: "Uchenik",
-            xp: 450,
-            crystals: 120,
-            streak: 3,
-            activeStep: 2,
+            xp: 0,
+            crystals: 0,
+            streak: 0,
+            activeStep: 1,
           },
         });
       }
@@ -72,21 +86,4 @@ export async function POST(req: Request) {
         imageUrl,
       },
       create: {
-        userId: user.id,
-        name,
-        emoji,
-        color,
-        promptUsed: `[redacted-${promptUsed.length}ch]`, // COPPA: don't store raw child input
-        imageUrl,
-      },
-    });
-
-    return NextResponse.json(savedMonster);
-  } catch (error: unknown) {
-    console.error("Failed to generate monster:", error);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again later." },
-      { status: 500 }
-    );
-  }
-}
+        userId: user.id

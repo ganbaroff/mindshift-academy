@@ -21,7 +21,9 @@ const ratelimit = new Ratelimit({
 const chatRequestSchema = z.object({
   messages: z.array(
     z.object({
-      sender: z.enum(["user", "assistant"]),
+      // The app models AI turns as "monster" (see Message type + store/UI).
+      // Accept that here; the OpenAI mapping below converts non-"user" → "assistant".
+      sender: z.enum(["user", "monster"]),
       text: z.string().min(1).max(2000),
     })
   ).min(1),
@@ -230,7 +232,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fetch or create User
+    // Fetch or create User (per-clerkId row for signed-in users)
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
     let dbUser;
@@ -238,9 +240,23 @@ export async function POST(req: Request) {
       dbUser = await prisma.user.findUnique({
         where: { clerkId },
       });
+      if (!dbUser) {
+        // First chat for this Clerk account — create their own row
+        dbUser = await prisma.user.create({
+          data: {
+            clerkId,
+            username: "Uchenik",
+            xp: 0,
+            crystals: 0,
+            streak: 0,
+            activeStep: 1,
+          },
+        });
+      }
     }
 
     if (!dbUser) {
+      // Anonymous / no Clerk session — shared demo user
       dbUser = await prisma.user.findUnique({
         where: { username: "Uchenik" },
       });
@@ -248,10 +264,10 @@ export async function POST(req: Request) {
         dbUser = await prisma.user.create({
           data: {
             username: "Uchenik",
-            xp: 450,
-            crystals: 120,
-            streak: 3,
-            activeStep: 2,
+            xp: 0,
+            crystals: 0,
+            streak: 0,
+            activeStep: 1,
           },
         });
       }
@@ -363,21 +379,4 @@ export async function POST(req: Request) {
       safetyPassed: true,
       toxicityScore: 0.00,
       latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
-      cost: `$${costEstimate}`,
-      challengeCompleted
-    });
-
-  } catch (error: any) {
-    // SECURITY: Do not leak raw error messages to the client
-    console.error("OpenAI API Error:", error.message || error);
-    return NextResponse.json({
-      response: "Упс! Произошла техническая ошибка на сервере. Пожалуйста, попробуй позже.",
-      safetyPassed: true,
-      toxicityScore: 0.00,
-      latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
-      cost: "$0.00000",
-      challengeCompleted: false
-    }, { status: 500 });
-  }
-}
-
+      cost: `$${costEstim

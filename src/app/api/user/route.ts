@@ -15,7 +15,7 @@ export async function GET() {
       });
 
       if (!user) {
-        // 2. If not found, check email alignment (LemonSqueezy creates user by email as username)
+        // 2. Check email alignment (legacy: LemonSqueezy created user by email as username)
         const clerkUser = await currentUser();
         const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
 
@@ -26,7 +26,7 @@ export async function GET() {
           });
 
           if (user) {
-            // Link this Clerk user to the paid account
+            // Link this Clerk user to the existing account
             user = await prisma.user.update({
               where: { id: user.id },
               data: { clerkId },
@@ -34,10 +34,25 @@ export async function GET() {
             });
           }
         }
+
+        if (!user) {
+          // 3. First visit for this Clerk account — create their own row
+          user = await prisma.user.create({
+            data: {
+              clerkId,
+              username: "Uchenik",
+              xp: 0,
+              crystals: 0,
+              streak: 0,
+              activeStep: 1,
+            },
+            include: { monster: true },
+          });
+        }
       }
     }
 
-    // 3. Fallback to "Uchenik" if not logged in or account not found
+    // 4. Fallback to shared demo user for anonymous sessions
     if (!user) {
       user = await prisma.user.findUnique({
         where: { username: "Uchenik" },
@@ -47,20 +62,4 @@ export async function GET() {
       if (!user) {
         user = await prisma.user.create({
           data: {
-            username: "Uchenik",
-            xp: 450,
-            crystals: 120,
-            streak: 3,
-            activeStep: 2,
-          },
-          include: { monster: true },
-        });
-      }
-    }
-
-    return NextResponse.json(user);
-  } catch (error: any) {
-    console.error("Database user error:", error);
-    return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });
-  }
-}
+            username: "Uche

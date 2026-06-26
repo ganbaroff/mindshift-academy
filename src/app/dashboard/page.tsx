@@ -3,9 +3,10 @@ import { Link as LinkIcon, ShieldCheck, Sparkles, UserRound } from "lucide-react
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CopyReportButton } from "@/components/dashboard/CopyReportButton";
-import { CrystalUpsellButton } from "@/components/dashboard/CrystalUpsellButton";
 import { InventoryGrid } from "@/components/dashboard/InventoryGrid";
 import { prisma } from "@/lib/prisma";
+import { getViewerAccess } from "@/lib/access";
+import { DashboardMonster } from "@/components/dashboard/DashboardMonster";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -50,6 +51,14 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
     redirect("/sign-in");
   }
 
+  // Invite-only access: approved accounts only (no payment). Demo preview stays open.
+  if (userId && !isDemo) {
+    const { allowed } = await getViewerAccess();
+    if (!allowed) {
+      redirect("/no-access");
+    }
+  }
+
   const clerkUser = userId ? await currentUser() : null;
   const dbUser = userId
     ? await prisma.user.findUnique({
@@ -83,7 +92,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
     clerkUser?.firstName ||
     clerkUser?.fullName ||
     dbUser?.username ||
-    (isDemo ? "Demo parent" : "Siz");
+    (isDemo ? "Demo parent" : "Родитель");
 
   const monsterName = dbUser?.monster?.name ?? demoMonsterSeed ?? "Огненный Дракончик";
   const monsterMood = dbUser?.monster?.mood ?? 78;
@@ -142,8 +151,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               Панель родителей, где видно реальное обучение.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-white/68 sm:text-lg">
-              Siz видите, чему ребёнок научился на этой неделе, как менялся монстр, и
-              как далеко он ушёл по streak и crystal economy.
+              Вы видите, чему ребёнок научился на этой неделе, как менялся монстр
+              и как растут его серия дней и кристаллы.
             </p>
           </div>
 
@@ -221,9 +230,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
 
             <div className="mt-6 rounded-[24px] border border-white/10 bg-surface-strong/90 p-5">
               <div className="flex items-center gap-3">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white/[0.05] text-xl">
-                  {dbUser?.monster?.emoji ?? "🐲"}
-                </span>
+                <DashboardMonster color={dbUser?.monster?.color ?? "#8b5cf6"} moodValue={monsterMood} />
                 <div>
                   <p className="text-sm text-white/58">Активный питомец</p>
                   <p className="text-lg font-semibold text-white">{monsterName}</p>
@@ -265,7 +272,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                 </p>
               </div>
 
-              <CrystalUpsellButton />
               {inventoryCount > 0 && (
                 <div className="mt-6 border-t border-white/5 pt-5">
                   <InventoryGrid items={dbUser?.inventory ?? (isDemo ? demoInventory : [])} />
@@ -278,17 +284,18 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
-                  Следующий шаг
+                  Для родителей
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Сохранить недельный отчёт</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-white">Недельный отчёт под рукой</h2>
               </div>
 
               <Sparkles className="h-5 w-5 text-primary-soft" />
             </div>
 
             <p className="mt-4 text-sm leading-6 text-white/64">
-              Сейчас dashboard уже показывает learning proof. Следующий шаг Phase 1 —
-              подключить weekly email и billing portal.
+              Каждую неделю можно скопировать короткий отчёт о том, чему научился
+              ребёнок, и сохранить его себе или отправить близким — спокойно, без
+              оценок и давления.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -299,9 +306,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                 На главную
                 <LinkIcon className="h-4 w-4" />
               </Link>
-              <span className="inline-flex items-center rounded-2xl border border-dashed border-white/10 bg-transparent px-5 py-3 text-sm text-white/52">
-                Скоро: еженедельный отчёт на почту и платежный портал.
-              </span>
             </div>
           </section>
         </div>
@@ -309,3 +313,4 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
     </main>
   );
 }
+                                                                                                                                                         

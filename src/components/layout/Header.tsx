@@ -22,7 +22,7 @@ export const Header = () => {
       <div className="flex items-center gap-5">
         <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-full px-4 py-2 text-sm font-semibold">
           <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span>3 дня</span>
+          <span>Серия</span>
         </div>
         
         <div className="flex flex-col gap-1 w-[150px]">
@@ -45,4 +45,4 @@ export const Header = () => {
       </div>
     </header>
   );
-};
+}

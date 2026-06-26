@@ -13,13 +13,13 @@ export async function POST() {
       update: {
         xp: 450,
         crystals: 120,
-        activeStep: 2
+        activeStep: 1
       },
       create: {
         username: "Uchenik",
         xp: 450,
         crystals: 120,
-        activeStep: 2,
+        activeStep: 1,
         streak: 3
       }
     });
