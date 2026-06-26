@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
+import { moderate } from "@/lib/moderation";
 
 const requestSchema = z.object({
   words: z.array(z.string().trim().min(1).max(32)).length(3),
@@ -52,6 +53,15 @@ export async function POST(req: Request) {
       const description = `Этот питомец появился из слов: ${words.join(", ")}. Он ждет пробуждения.`;
 
       return NextResponse.json({ name, emoji, color, description });
+    }
+
+    // P0-2 SAFETY: moderate the child's 3 words before sending them to the model.
+    const mod = await moderate(ai.client, ai.model, words.join(" "));
+    if (!mod.safe) {
+      return NextResponse.json(
+        { error: "Давай придумаем добрые слова для монстра 😊" },
+        { status: 400 }
+      );
     }
 
     // Call AI provider (NVIDIA or OpenAI)

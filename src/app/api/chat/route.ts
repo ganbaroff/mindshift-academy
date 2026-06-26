@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { moderate } from "@/lib/moderation";
 
 // Initialize Upstash Redis
 const redis = new Redis({
@@ -38,9 +39,11 @@ const BLOCKLIST = [
   "урод", "смерть", "убить", "секс", "порно", "наркотики", "сигареты", "алкоголь"
 ];
 
+// Tiny keyword PRE-FILTER only (cheap fast-path). Word-boundaried so "хер" no longer
+// matches "Херсон". The real multilingual gate is moderate() in @/lib/moderation.
 function isSafePrompt(prompt: string): boolean {
   const lowercase = prompt.toLowerCase();
-  return !BLOCKLIST.some(word => lowercase.includes(word));
+  return !BLOCKLIST.some((word) => new RegExp(`(^|[^а-яё])${word}([^а-яё]|$)`, "i").test(lowercase));
 }
 
 // Check if step challenge is met
@@ -327,6 +330,23 @@ export async function POST(req: Request) {
 
     const ai = (await import("@/lib/ai-provider")).getAIClient();
 
+    // P0-2 SAFETY: real classifier moderation on the child's INPUT — multilingual
+    // (RU/AZ/EN/translit), deterministic, NOT a word list. The tutor is not the guard.
+    if (ai) {
+      const inMod = await moderate(ai.client, ai.model, userPrompt);
+      if (!inMod.safe) {
+        console.warn(`[MODERATION] input blocked (${inMod.source}: ${inMod.category})`);
+        return NextResponse.json({
+          response: "Ой! Давай общаться по-доброму и по теме урока 😊. А если тебя кто-то обидел или тебе тревожно — лучше расскажи об этом взрослому, которому доверяешь.",
+          safetyPassed: false,
+          toxicityScore: 0.99,
+          latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
+          cost: "$0.00000",
+          challengeCompleted: false,
+        });
+      }
+    }
+
     // SECURITY: Use server-side activeStep, NOT client-supplied activeStepId
     // Prevents XP farming by sending arbitrary stepId from client
     const serverStepId = dbUser.activeStep;
@@ -423,9 +443,12 @@ export async function POST(req: Request) {
 
     let aiMessageText = response.choices[0]?.message?.content || "Монстр задумался... Попробуй ещё раз!";
 
-    // SECURITY: Output moderation — filter AI response before showing to child
-    if (!isSafePrompt(aiMessageText)) {
-      aiMessageText = "Ой, монстр запутался в словах! Давай попробуем ещё раз 🐲";
+    // P0-2 SAFETY: real classifier moderation on the AI OUTPUT before it reaches the child —
+    // catches the model emitting/translating insults or unsafe content, in any language.
+    const outMod = await moderate(ai.client, ai.model, aiMessageText);
+    if (!outMod.safe) {
+      console.warn(`[MODERATION] output blocked (${outMod.source}: ${outMod.category})`);
+      aiMessageText = "Ой, давай поговорим о чём-нибудь добром и по теме урока! 🐲";
     }
 
     const costEstimate = (
