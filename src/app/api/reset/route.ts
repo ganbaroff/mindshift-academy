@@ -8,25 +8,31 @@ export async function POST() {
 
   try {
     // Reset default user stats in SQLite database
+    // "Start over" = a genuinely fresh child state (0/0/0), matching every other
+    // create path (user/monster/chat routes). The old 450/120/3 here silently
+    // re-introduced the demo inflation the QA fix removed.
     const resetUser = await prisma.user.upsert({
       where: { username: "Uchenik" },
       update: {
-        xp: 450,
-        crystals: 120,
+        xp: 0,
+        crystals: 0,
+        streak: 0,
         activeStep: 1
       },
       create: {
         username: "Uchenik",
-        xp: 450,
-        crystals: 120,
-        activeStep: 1,
-        streak: 3
+        xp: 0,
+        crystals: 0,
+        streak: 0,
+        activeStep: 1
       }
     });
 
-    // Delete saved monsters for this user to allow restarting the lesson clean
+    // Delete THIS user's saved monster so the restart is actually clean.
+    // (Was a hardcoded fake id "child_user_782" — display-only string from
+    // SafeProxyVisualizer — which matched no row, so the monster never cleared.)
     await prisma.monster.deleteMany({
-      where: { userId: "child_user_782" }
+      where: { userId: resetUser.id }
     });
 
     return NextResponse.json(resetUser);

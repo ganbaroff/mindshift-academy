@@ -62,4 +62,20 @@ export async function GET() {
       if (!user) {
         user = await prisma.user.create({
           data: {
-            username: "Uche
+            username: "Uchenik",
+            xp: 0,
+            crystals: 0,
+            streak: 0,
+            activeStep: 1,
+          },
+          include: { monster: true },
+        });
+      }
+    }
+
+    return NextResponse.json(user);
+  } catch (error: any) {
+    console.error("Database user error:", error);
+    return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });
+  }
+}
