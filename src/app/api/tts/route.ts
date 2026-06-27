@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-
-// Best-effort in-memory per-user rate limit (single-instance; prod should use Upstash/Redis).
-const ttsHits = new Map<string, number[]>();
-const TTS_LIMIT = 15;
-const TTS_WINDOW_MS = 60_000;
-function ttsRateLimited(key: string): boolean {
-  const now = Date.now();
-  const recent = (ttsHits.get(key) || []).filter((t) => now - t < TTS_WINDOW_MS);
-  recent.push(now);
-  ttsHits.set(key, recent);
-  return recent.length > TTS_LIMIT;
-}
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +10,12 @@ export async function POST(req: Request) {
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    if (ttsRateLimited(clerkId)) {
+    // P0-4: in prod with no distributed limiter, refuse rather than run a paid TTS unthrottled.
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+    }
+    const rl = await rateLimit("tts", clerkId, 15, 60);
+    if (!rl.success) {
       return NextResponse.json({ error: "Rate limit exceeded. Please wait." }, { status: 429 });
     }
 

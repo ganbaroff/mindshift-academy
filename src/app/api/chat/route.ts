@@ -2,21 +2,8 @@ import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import { moderate } from "@/lib/moderation";
-
-// Initialize Upstash Redis
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "https://dummy-url.upstash.io",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "dummy-token",
-});
-
-// Create a new ratelimiter, that allows 10 requests per 10 seconds
-const ratelimit = new Ratelimit({
-  redis: redis,
-  limiter: Ratelimit.slidingWindow(10, "10 s"),
-});
+import { rateLimit } from "@/lib/ratelimit";
 
 // Zod Schema for validation
 const chatRequestSchema = z.object({
@@ -253,13 +240,11 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   
   try {
-    // 1. Rate Limiting
+    // 1. Rate Limiting — real Upstash in prod, loud in-memory fallback in dev (@/lib/ratelimit)
     const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
-    if (process.env.UPSTASH_REDIS_REST_URL) {
-      const { success } = await ratelimit.limit(ip);
-      if (!success) {
-        return NextResponse.json({ error: "Rate limit exceeded. Please wait." }, { status: 429 });
-      }
+    const rl = await rateLimit("chat", ip, 20, 10);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
     }
 
     // 2. Zod Validation

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
 import { moderate } from "@/lib/moderation";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 
 const requestSchema = z.object({
   words: z.array(z.string().trim().min(1).max(32)).length(3),
@@ -31,6 +32,17 @@ const fallbackNames = ["Огняш", "Бублик", "Зефир", "Шустри
 
 export async function POST(req: Request) {
   try {
+    // P0-4: IP-based rate limit on this PUBLIC LLM/image endpoint — keep it public, cap abuse.
+    // Runs BEFORE moderation/LLM so a 429 is cheap.
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+    }
+    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
+    const rl = await rateLimit("silhouette", ip, 6, 60);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Слишком много запросов, попробуй чуть позже." }, { status: 429 });
+    }
+
     const body = await req.json().catch(() => null);
     const parsed = requestSchema.safeParse(body);
 
