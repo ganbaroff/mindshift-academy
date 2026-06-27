@@ -249,7 +249,11 @@ export async function POST(req: Request) {
     if (rateLimitMisconfiguredInProd()) {
       return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
     }
-    const rl = await rateLimit("chat", clerkId ?? publicClientKey(req), 20, 10);
+    const rlKey = clerkId ?? publicClientKey(req);
+    if (!rlKey) {
+      return NextResponse.json({ error: "Не удалось проверить источник запроса." }, { status: 429 });
+    }
+    const rl = await rateLimit("chat", rlKey, 20, 10);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
     }

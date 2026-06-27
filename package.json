@@ -18,6 +18,7 @@
     "@react-email/components": "^1.0.12",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
+    "@vercel/functions": "^3.7.4",
     "better-sqlite3": "^12.11.1",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^12.41.0",

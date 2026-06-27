@@ -37,9 +37,13 @@ export async function POST(req: Request) {
     if (rateLimitMisconfiguredInProd()) {
       return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
     }
-    // Key by a trusted source (x-real-ip), NOT raw x-forwarded-for — the latter is client-set
-    // and rotatable per request, which would spawn a fresh bucket and bypass the limit entirely.
-    const rl = await rateLimit("silhouette", publicClientKey(req), 6, 60);
+    // Trusted per-caller key (Vercel ipAddress). No trusted IP in prod → refuse, rather than
+    // bucket every anonymous caller into one shared key (which would self-DoS the public funnel).
+    const clientKey = publicClientKey(req);
+    if (!clientKey) {
+      return NextResponse.json({ error: "Не удалось проверить источник запроса." }, { status: 429 });
+    }
+    const rl = await rateLimit("silhouette", clientKey, 6, 60);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много запросов, попробуй чуть позже." }, { status: 429 });
     }

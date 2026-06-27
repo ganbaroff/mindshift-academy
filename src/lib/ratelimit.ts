@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { ipAddress } from "@vercel/functions";
 
 // P0-4 (prod-safe rate limiting). The old code silently fell back to a dummy Upstash URL /
 // per-instance in-memory map — which is NO throttle at all on serverless (Vercel = many
@@ -36,16 +37,20 @@ export function rateLimitMisconfiguredInProd(): boolean {
 }
 
 /**
- * Trusted per-caller key for PUBLIC (unauthenticated) endpoints.
- * Uses `x-real-ip` — set by the platform edge (Vercel) and NOT client-forgeable — and
- * DELIBERATELY ignores raw `x-forwarded-for`, which the client controls and can rotate per
- * request to spawn a fresh bucket (i.e. fully bypass the limit). For authenticated endpoints
- * key by the userId instead (also unspoofable). In dev there is no trusted IP → one global
- * bucket (still functional; just not per-client). For stricter guarantees on Vercel, use
- * `ipAddress()` from `@vercel/functions`.
+ * Trusted per-caller key for PUBLIC (unauthenticated) endpoints. Uses Vercel's official
+ * `ipAddress()` (the platform-derived client IP) — NOT a raw header trusted by reputation.
+ * Returns `null` when no trusted IP is available IN PRODUCTION: the caller MUST refuse (429),
+ * and must NEVER collapse all anonymous callers into one shared constant bucket — that would be
+ * a global self-DoS (a single stripped header takes the whole public funnel down for everyone).
+ * Dev gets one local bucket, gated on NODE_ENV so it can never be reached in production.
+ * Spoof-resistance is a platform property (Vercel overwrites the IP headers) — it can only be
+ * verified on a real Vercel deploy, not in dev where `ipAddress` reads raw headers.
  */
-export function publicClientKey(req: Request): string {
-  return req.headers.get("x-real-ip") || "global-dev";
+export function publicClientKey(req: Request): string | null {
+  const ip = ipAddress(req);
+  if (ip) return ip;
+  if (PROD) return null;
+  return "dev-local";
 }
 
 /** Sliding-window rate limit. `bucket` namespaces the limit; `key` is the per-caller key (IP or userId). */
