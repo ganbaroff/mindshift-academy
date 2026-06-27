@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { moderate } from "@/lib/moderation";
-import { rateLimit } from "@/lib/ratelimit";
+import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
 
 // Zod Schema for validation
 const chatRequestSchema = z.object({
@@ -240,9 +240,16 @@ export async function POST(req: Request) {
   const startTime = Date.now();
   
   try {
-    // 1. Rate Limiting — real Upstash in prod, loud in-memory fallback in dev (@/lib/ratelimit)
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
-    const rl = await rateLimit("chat", ip, 20, 10);
+    // Auth up front so the rate-limit keys by a non-spoofable userId (not raw XFF).
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId: clerkId } = await auth();
+
+    // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +
+    //    judge + tutor + output x2), so it MUST fail-closed in prod without a distributed limiter.
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+    }
+    const rl = await rateLimit("chat", clerkId ?? publicClientKey(req), 20, 10);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
     }
@@ -272,9 +279,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fetch or create User (per-clerkId row for signed-in users)
-    const { auth } = await import("@clerk/nextjs/server");
-    const { userId: clerkId } = await auth();
+    // Fetch or create User (per-clerkId row for signed-in users) — clerkId resolved above.
     let dbUser;
     if (clerkId) {
       dbUser = await prisma.user.findUnique({

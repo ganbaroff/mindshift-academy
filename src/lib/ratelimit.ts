@@ -35,6 +35,19 @@ export function rateLimitMisconfiguredInProd(): boolean {
   return PROD && !DISTRIBUTED;
 }
 
+/**
+ * Trusted per-caller key for PUBLIC (unauthenticated) endpoints.
+ * Uses `x-real-ip` — set by the platform edge (Vercel) and NOT client-forgeable — and
+ * DELIBERATELY ignores raw `x-forwarded-for`, which the client controls and can rotate per
+ * request to spawn a fresh bucket (i.e. fully bypass the limit). For authenticated endpoints
+ * key by the userId instead (also unspoofable). In dev there is no trusted IP → one global
+ * bucket (still functional; just not per-client). For stricter guarantees on Vercel, use
+ * `ipAddress()` from `@vercel/functions`.
+ */
+export function publicClientKey(req: Request): string {
+  return req.headers.get("x-real-ip") || "global-dev";
+}
+
 /** Sliding-window rate limit. `bucket` namespaces the limit; `key` is the per-caller key (IP or userId). */
 export async function rateLimit(
   bucket: string,

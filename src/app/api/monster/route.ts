@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
   try {
@@ -9,6 +10,16 @@ export async function POST(req: Request) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // P0-4: per-user rate limit + prod fail-closed — this can run a PAID gpt-image generation,
+    // so a shared invite or "regenerate" spam must not burn it unthrottled.
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+    }
+    const rl = await rateLimit("monster", clerkId, 10, 60);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Слишком часто. Подожди немного." }, { status: 429 });
     }
 
     const { name, emoji, color, promptUsed, skipImage } = await req.json();

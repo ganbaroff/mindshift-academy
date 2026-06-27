@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import OpenAI from "openai";
 import { moderate } from "@/lib/moderation";
-import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
+import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
 
 const requestSchema = z.object({
   words: z.array(z.string().trim().min(1).max(32)).length(3),
@@ -37,8 +37,9 @@ export async function POST(req: Request) {
     if (rateLimitMisconfiguredInProd()) {
       return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
     }
-    const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
-    const rl = await rateLimit("silhouette", ip, 6, 60);
+    // Key by a trusted source (x-real-ip), NOT raw x-forwarded-for — the latter is client-set
+    // and rotatable per request, which would spawn a fresh bucket and bypass the limit entirely.
+    const rl = await rateLimit("silhouette", publicClientKey(req), 6, 60);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много запросов, попробуй чуть позже." }, { status: 429 });
     }
