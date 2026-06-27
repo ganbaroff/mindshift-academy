@@ -4,6 +4,13 @@ import OpenAI from "openai";
 
 export async function POST(req: Request) {
   try {
+    // P0-4: require authentication FIRST — before any (potentially paid) image generation.
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { name, emoji, color, promptUsed, skipImage } = await req.json();
 
     if (!name || !emoji || !color || !promptUsed) {
@@ -34,45 +41,12 @@ export async function POST(req: Request) {
       imageUrl = imageBase64 ? `data:image/png;base64,${imageBase64}` : "";
     }
 
-    // 2. Fetch or create User (per-clerkId row for signed-in users)
-    const { auth } = await import("@clerk/nextjs/server");
-    const { userId: clerkId } = await auth();
-    let user;
-    if (clerkId) {
-      user = await prisma.user.findUnique({
-        where: { clerkId },
-      });
-      if (!user) {
-        // First interaction for this Clerk account — create their own row
-        user = await prisma.user.create({
-          data: {
-            clerkId,
-            username: name || "Uchenik",
-            xp: 0,
-            crystals: 0,
-            streak: 0,
-            activeStep: 1,
-          },
-        });
-      }
-    }
-
+    // 2. Fetch or create THIS user's row (auth already required above; no anonymous fallback).
+    let user = await prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
-      // Anonymous / no Clerk session — shared demo user
-      user = await prisma.user.findUnique({
-        where: { username: "Uchenik" },
+      user = await prisma.user.create({
+        data: { clerkId, username: name || "Uchenik", xp: 0, crystals: 0, streak: 0, activeStep: 1 },
       });
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            username: "Uchenik",
-            xp: 0,
-            crystals: 0,
-            streak: 0,
-            activeStep: 1,
-          },
-        });
-      }
     }
 
     // 3. Save/Update monster to the SQLite DB using upsert
@@ -86,4 +60,21 @@ export async function POST(req: Request) {
         imageUrl,
       },
       create: {
-        userId: user.id
+        userId: user.id,
+        name,
+        emoji,
+        color,
+        promptUsed: `[redacted-${promptUsed.length}ch]`, // COPPA: don't store raw child input
+        imageUrl,
+      },
+    });
+
+    return NextResponse.json(savedMonster);
+  } catch (error: unknown) {
+    console.error("Failed to generate monster:", error);
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again later." },
+      { status: 500 }
+    );
+  }
+}

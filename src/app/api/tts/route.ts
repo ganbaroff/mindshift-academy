@@ -1,8 +1,30 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// Best-effort in-memory per-user rate limit (single-instance; prod should use Upstash/Redis).
+const ttsHits = new Map<string, number[]>();
+const TTS_LIMIT = 15;
+const TTS_WINDOW_MS = 60_000;
+function ttsRateLimited(key: string): boolean {
+  const now = Date.now();
+  const recent = (ttsHits.get(key) || []).filter((t) => now - t < TTS_WINDOW_MS);
+  recent.push(now);
+  ttsHits.set(key, recent);
+  return recent.length > TTS_LIMIT;
+}
+
 export async function POST(req: Request) {
   try {
+    // P0-4: require auth — closes the unauthenticated paid-TTS proxy on arbitrary text.
+    const { auth } = await import("@clerk/nextjs/server");
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (ttsRateLimited(clerkId)) {
+      return NextResponse.json({ error: "Rate limit exceeded. Please wait." }, { status: 429 });
+    }
+
     const { text } = await req.json();
     if (!text) {
       return NextResponse.json({ error: "Text field is required" }, { status: 400 });
