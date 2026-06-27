@@ -21,7 +21,7 @@ export const MonsterCard = () => {
   if (!generatedMonster) return null;
 
   return (
-    <div className="fixed inset-0 z-[1100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-500">
+    <div className="fixed inset-0 z-[1100] bg-black/95 flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-500">
       <div className="bg-[#0d1527] border border-white/10 rounded-3xl p-6 md:p-8 max-w-[480px] w-full text-center relative shadow-[0_0_50px_rgba(139,92,246,0.2)]">
         
         {/* Holographic Header */}

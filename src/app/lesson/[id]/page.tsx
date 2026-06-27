@@ -6,6 +6,7 @@ import { useGameStore } from "@/stores/game";
 import { Header } from "@/components/layout/Header";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { PromptInput } from "@/components/chat/PromptInput";
+import { MonsterCard } from "@/components/modals/MonsterCard";
 import { GachaCalendar } from "@/components/gamification/GachaCalendar";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
 import { BookOpen, Trophy, ShieldCheck, ChevronRight } from "lucide-react";
@@ -137,7 +138,7 @@ export default function LessonPage() {
     <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-sans relative">
       <AnimatePresence>
         {showSplash && (
-          <div className="fixed inset-0 z-[110] bg-[#070b14]/95 backdrop-blur-md flex flex-col items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-[110] bg-[#070b14]/97 flex flex-col items-center justify-center pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -317,8 +318,8 @@ export default function LessonPage() {
       {/* Reward modal popup */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/60 backdrop-blur-md" 
+          <div
+            className="absolute inset-0 bg-black/80"
             onClick={() => setIsModalOpen(false)}
           />
           <div className="bg-[#111625] border border-white/10 rounded-[32px] p-8 max-w-sm w-full relative z-10 text-center shadow-2xl space-y-6">
@@ -328,19 +329,9 @@ export default function LessonPage() {
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className="w-20 h-20 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-4xl mx-auto shadow-[0_0_40px_rgba(245,158,11,0.2)]"
             >
-              <motion.span
-                animate={{
-                  y: [0, -8, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                className="inline-block select-none"
-              >
-                💎
-              </motion.span>
+              {/* Static gem — the parent's spring entrance gives it life; an infinite y-bob under
+                  a full-viewport backdrop forced a 45s GPU recomposite freeze on the iPad target. */}
+              <span className="inline-block select-none">💎</span>
             </motion.div>
             <div className="space-y-2">
               <h3 className="text-2xl font-black text-white">Задание выполнено!</h3>
@@ -366,7 +357,10 @@ export default function LessonPage() {
         </div>
       )}
 
+      {/* The graduation payoff card. Renders only when generatedMonster is set (after "Оживить").
+          Was defined but never mounted, so the reward never appeared. */}
+      <MonsterCard />
+
     </div>
   );
 }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

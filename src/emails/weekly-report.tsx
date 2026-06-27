@@ -107,7 +107,7 @@ export default function WeeklyReport({
 
             <Text style={footerTextStyle}>
               Этот отчёт создан автоматически платформой MindShift Academy.
-              Все голосовые данные вашего ребёнка удаляются в течение 48 часов.
+              Голос ребёнка мы не записываем.
             </Text>
           </Section>
         </Container>

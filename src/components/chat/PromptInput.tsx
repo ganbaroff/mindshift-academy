@@ -5,6 +5,7 @@ import { Send, Volume2, VolumeX, ShieldCheck, CheckCircle2 } from "lucide-react"
 import { useGameStore } from "@/stores/game";
 import { Message } from "@/types";
 import confetti from "canvas-confetti";
+import { useReducedMotion } from "framer-motion";
 import { soundEngine } from "@/lib/sound-engine";
 
 export const PromptInput = () => {
@@ -19,13 +20,18 @@ export const PromptInput = () => {
     steps, generatedMonster, setIsGeneratingMonster, setGeneratedMonster, monsterColor
   } = useGameStore();
 
+  const prefersReducedMotion = useReducedMotion();
+
   const handleChallengeSuccess = () => {
-    confetti({
-      particleCount: 120,
-      spread: 80,
-      origin: { y: 0.55 },
-      colors: ["#a78bfa", "#22d3ee", "#e9c400", "#c084fc"]
-    });
+    // Confetti is canvas-drawn (bypasses the CSS reduced-motion guard) — gate it explicitly.
+    if (!prefersReducedMotion) {
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.55 },
+        colors: ["#a78bfa", "#22d3ee", "#e9c400", "#c084fc"]
+      });
+    }
     soundEngine.play("success");
     if (activeStepId === 1) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));

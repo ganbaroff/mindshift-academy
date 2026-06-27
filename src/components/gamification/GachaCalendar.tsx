@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Gift, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
+import { Gift, CheckCircle2, ChevronDown } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,6 +17,8 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<any | null>(null);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
+  // Secondary to the lesson itself — collapsed by default so the chat stays the one primary action.
+  const [expanded, setExpanded] = useState(false);
 
   // Map user streak into claimed days in the 7-day cycle
   useEffect(() => {
@@ -88,21 +90,37 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
   const nextClaimDay = (claimedDays.length % 7) + 1;
 
   return (
-    <div className="rounded-[24px] border border-white/5 bg-surface p-6 shadow-xl flex flex-col gap-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h3 className="font-extrabold text-lg text-white flex items-center gap-2">
-            <Gift className="w-5 h-5 text-violet-400" />
-            Календарь Наград
-          </h3>
-          <p className="text-xs text-gray-400 mt-1">Заходи каждый день и забирай подарки для питомца!</p>
-        </div>
-        <span className="text-xs font-bold bg-violet-500/10 border border-violet-500/20 text-violet-300 px-3 py-1 rounded-full">
-          День {claimedDays.length}/7
+    <div className="rounded-[20px] border border-white/5 bg-surface/60 p-4 flex flex-col gap-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <span className="flex items-center gap-2 text-sm font-semibold text-white/75">
+          <Gift className="w-4 h-4 text-violet-400" />
+          Календарь наград
+          <span className="text-[10px] font-bold bg-violet-500/10 border border-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
+            День {claimedDays.length}/7
+          </span>
         </span>
-      </div>
+        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${expanded ? "rotate-180" : ""}`} />
+      </button>
 
-      <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
+      {!expanded && !hasClaimedToday && !claimedDays.includes(nextClaimDay) && (
+        <button
+          onClick={handleClaim}
+          disabled={isClaiming}
+          className="self-start rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200 transition-colors hover:bg-violet-500/20 disabled:opacity-60"
+        >
+          {isClaiming ? "Сбор..." : "🎁 Забрать награду дня"}
+        </button>
+      )}
+
+      {expanded && (
+        <>
+          <p className="text-xs text-gray-400">Заходи каждый день и забирай подарки для питомца!</p>
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
         {[1, 2, 3, 4, 5, 6, 7].map((day) => {
           const isCollected = claimedDays.includes(day);
           const isCurrent = day === nextClaimDay;
@@ -145,30 +163,32 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
         })}
       </div>
 
-      <div className="flex gap-4 items-center mt-2 border-t border-white/5 pt-4">
-        <button
-          onClick={handleClaim}
-          disabled={isClaiming || hasClaimedToday || claimedDays.includes(nextClaimDay)}
-          className={`flex-grow font-extrabold py-3.5 px-6 rounded-full shadow-lg transition-all text-sm uppercase tracking-wider text-center cursor-pointer ${
-            hasClaimedToday || claimedDays.includes(nextClaimDay)
-              ? "bg-white/5 border border-white/5 text-gray-500 cursor-not-allowed shadow-none"
-              : "bg-gradient-to-r from-violet-500 to-cyan-400 hover:from-violet-600 hover:to-cyan-500 text-white hover:scale-[1.02]"
-          }`}
-        >
-          {isClaiming
-            ? "Сбор..."
-            : hasClaimedToday || claimedDays.includes(nextClaimDay)
-            ? "Награда собрана"
-            : "Получить награду дня"}
-        </button>
-      </div>
+          <div className="flex gap-4 items-center mt-1 border-t border-white/5 pt-4">
+            <button
+              onClick={handleClaim}
+              disabled={isClaiming || hasClaimedToday || claimedDays.includes(nextClaimDay)}
+              className={`flex-grow font-semibold py-2.5 px-6 rounded-full transition-colors text-xs text-center cursor-pointer ${
+                hasClaimedToday || claimedDays.includes(nextClaimDay)
+                  ? "bg-white/5 border border-white/5 text-gray-500 cursor-not-allowed"
+                  : "bg-violet-500/10 border border-violet-500/25 text-violet-200 hover:bg-violet-500/20"
+              }`}
+            >
+              {isClaiming
+                ? "Сбор..."
+                : hasClaimedToday || claimedDays.includes(nextClaimDay)
+                ? "Награда собрана"
+                : "Получить награду дня"}
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Claim Result Popup */}
       <AnimatePresence>
         {claimResult && (
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
             <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80"
               onClick={() => setClaimResult(null)}
             />
             <motion.div
