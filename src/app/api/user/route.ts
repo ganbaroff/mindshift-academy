@@ -40,7 +40,7 @@ export async function GET() {
           user = await prisma.user.create({
             data: {
               clerkId,
-              username: "Uchenik",
+              username: clerkId, // #1: unique per user (was hardcoded "Uchenik" → P2002 on 2nd child)
               xp: 0,
               crystals: 0,
               streak: 0,

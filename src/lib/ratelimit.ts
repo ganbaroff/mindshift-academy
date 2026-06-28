@@ -59,7 +59,12 @@ export async function rateLimit(
   key: string,
   limit: number,
   windowSec: number
-): Promise<{ success: boolean; source: "upstash" | "in-memory" }> {
+): Promise<{ success: boolean; source: "upstash" | "in-memory" | "fail-closed" }> {
+  // Footgun fix: fail CLOSED here too. Even if a route forgets rateLimitMisconfiguredInProd(),
+  // it still cannot run unthrottled in prod without a distributed limiter.
+  if (PROD && !DISTRIBUTED) {
+    return { success: false, source: "fail-closed" };
+  }
   if (redis) {
     let rl = upstashCache.get(bucket);
     if (!rl) {

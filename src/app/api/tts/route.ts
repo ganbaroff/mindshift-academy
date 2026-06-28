@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const apiKey = process.env.OPENAI_API_KEY;
     if (apiKey && apiKey !== "YOUR_API_KEY_HERE") {
       // OpenAI TTS (paid, high quality)
-      const openai = new OpenAI({ apiKey });
+      const openai = new OpenAI({ apiKey, timeout: 8000, maxRetries: 0 });
       const response = await openai.audio.speech.create({
         model: "tts-1",
         voice: "alloy",
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
       text: text.slice(0, 500),
     }, { status: 503 });
   } catch (error: unknown) {
-    console.error("TTS generation failed:", error);
+    console.error("[tts] generation failed:", (error as any)?.name ?? "Error");
     return NextResponse.json({ error: "Failed to generate voice output" }, { status: 500 });
   }
 }

@@ -110,9 +110,16 @@ Format your response as a strict JSON object with fields: "name", "emoji", "colo
     }
 
     const data = JSON.parse(content);
+
+    // NV4: moderate the model's free-text OUTPUT (description) before returning it to the child.
+    const outMod = await moderate(ai.client, ai.model, String(data?.description ?? ""));
+    if (!outMod.safe) {
+      data.description = "Твой питомец почти готов — продолжим в игре!";
+    }
+
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Failed to generate silhouette:", error);
+    console.error("[silhouette] generation failed:", (error as any)?.name ?? "Error");
     return NextResponse.json(
       { error: "Не удалось запустить силуэт." },
       { status: 500 }

@@ -28,6 +28,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
+    // NV2: constrain child-supplied strings so they can't restructure the image prompt
+    // (no newlines/quotes, bounded length, hex-validated colour).
+    const safeName = String(name).replace(/[\r\n"]/g, " ").slice(0, 40);
+    const safeEmoji = String(emoji).replace(/[\r\n"\s]/g, "").slice(0, 8);
+    const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(String(color)) ? String(color) : "#8b5cf6";
+
     const apiKey = process.env.OPENAI_API_KEY;
     let imageUrl = "";
 
@@ -38,7 +44,7 @@ export async function POST(req: Request) {
       imageUrl = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><defs><radialGradient id="grad" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="${encodeURIComponent(color)}" stop-opacity="0.4"/><stop offset="100%" stop-color="%23090d16" stop-opacity="1"/></radialGradient></defs><rect width="400" height="400" fill="%23090d16"/><circle cx="200" cy="180" r="120" fill="url(%23grad)"/><text x="200" y="210" font-size="100" text-anchor="middle">${encodeURIComponent(emoji)}</text><text x="200" y="310" font-family="sans-serif" font-weight="bold" font-size="22" fill="white" text-anchor="middle">${encodeURIComponent(name)}</text><text x="200" y="345" font-family="sans-serif" font-size="12" fill="%239ca3af" text-anchor="middle">MindShift Academy AI Partner</text></svg>`;
     } else {
       const openai = new OpenAI({ apiKey });
-      const imagePrompt = `A cute 3D cartoon style mascot creature, friendly little monster, representing: ${name}. Character style is closely matching emoji: ${emoji}. Colorful glowing magic aura of ${color}, highly detailed, Pixar style rendering, 3D render, white smooth background, 8k resolution.`;
+      const imagePrompt = `A cute 3D cartoon style mascot creature, friendly little monster, representing: ${safeName}. Character style is closely matching emoji: ${safeEmoji}. Colorful glowing magic aura of ${safeColor}, highly detailed, Pixar style rendering, 3D render, white smooth background, 8k resolution.`;
 
       const imageResponse = await openai.images.generate({
         model: "gpt-image-2",
@@ -56,7 +62,7 @@ export async function POST(req: Request) {
     let user = await prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
       user = await prisma.user.create({
-        data: { clerkId, username: name || "Uchenik", xp: 0, crystals: 0, streak: 0, activeStep: 1 },
+        data: { clerkId, username: clerkId, xp: 0, crystals: 0, streak: 0, activeStep: 1 }, // #1: unique per user (monster name lives on Monster.name)
       });
     }
 
@@ -82,7 +88,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(savedMonster);
   } catch (error: unknown) {
-    console.error("Failed to generate monster:", error);
+    console.error("[monster] generation failed:", (error as any)?.name ?? "Error");
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

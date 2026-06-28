@@ -295,7 +295,7 @@ export async function POST(req: Request) {
         dbUser = await prisma.user.create({
           data: {
             clerkId,
-            username: "Uchenik",
+            username: clerkId, // NV/#1: unique per user (was hardcoded "Uchenik" → P2002 on 2nd child)
             xp: 0,
             crystals: 0,
             streak: 0,
@@ -464,7 +464,8 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     // SECURITY: Do not leak raw error messages to the client
-    console.error("OpenAI API Error:", error.message || error);
+    // NV1: never log the raw error/body — it can contain the child's message. Type only.
+    console.error("[chat] LLM error:", (error as any)?.name ?? "Error", (error as any)?.status ?? "");
     return NextResponse.json({
       response: "Упс! Произошла техническая ошибка на сервере. Пожалуйста, попробуй позже.",
       safetyPassed: true,

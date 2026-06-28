@@ -69,6 +69,8 @@ export async function moderate(client: OpenAI, tutorModel: string, text: string)
   const [lg, kn] = await Promise.all([llamaGuard(client, text), kidNet(client, tutorModel, text)]);
   if (!lg.safe && !lg.error) return { safe: false, category: lg.category, source: lg.source };
   if (!kn.safe && !kn.error) return { safe: false, category: kn.category, source: kn.source };
-  if (lg.error && kn.error) return { safe: false, category: "classifiers unavailable", source: "fail-closed" };
+  // Fail CLOSED for kids: ANY classifier error (incl. an 8s timeout) blocks — not only when BOTH error.
+  // Safety > availability on a child path.
+  if (lg.error || kn.error) return { safe: false, category: "classifier unavailable", source: "fail-closed" };
   return { safe: true, category: "", source: "classifier" };
 }
