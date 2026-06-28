@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { moderate } from "@/lib/moderation";
 import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
+import { minimizeChildText } from "@/lib/privacy";
 
 // Zod Schema for validation
 const chatRequestSchema = z.object({
@@ -348,7 +349,7 @@ export async function POST(req: Request) {
     // skill — not just whether a keyword is present. The keyword check stays ONLY as
     // an offline (no provider) fallback so lessons aren't bricked without an API key.
     const verdict = ai
-      ? await judgeComprehension(ai, userPrompt, serverStepId)
+      ? await judgeComprehension(ai, minimizeChildText(userPrompt), serverStepId)
       : { pass: checkChallengeSuccess(userPrompt, serverStepId), reason: "офлайн-режим (без ИИ-судьи)" };
     const challengeCompleted = verdict.pass;
 
@@ -424,7 +425,8 @@ export async function POST(req: Request) {
       { role: "system", content: systemInstruction },
       ...messages.map((m: any) => ({
         role: m.sender === "user" ? "user" : "assistant",
-        content: m.text
+        // COPPA: minimize identifiable child text before it leaves for the tutor LLM
+        content: m.sender === "user" ? minimizeChildText(m.text) : m.text
       }))
     ];
 
