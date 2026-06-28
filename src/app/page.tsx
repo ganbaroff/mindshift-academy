@@ -18,7 +18,7 @@ const benefitsRu = [
   },
   {
     title: "Конфиденциальность",
-    copy: "Мы не записываем голос ребёнка.",
+    copy: "Сообщения проверяет система безопасности; из текста для ответов вырезаются почты, телефоны и числа; сообщения и голос не храним.",
     icon: Award,
   },
 ] as const;
@@ -36,7 +36,7 @@ const benefitsAz = [
   },
   {
     title: "Məxfilik qorunması",
-    copy: "Uşağın səsini qeydə almırıq.",
+    copy: "Mesajları təhlükəsizlik sistemi yoxlayır; cavablar üçün mətndən e-poçt, telefon və rəqəmlər silinir; mesajları və səsi saxlamırıq.",
     icon: Award,
   },
 ] as const;
