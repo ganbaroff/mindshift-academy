@@ -49,3 +49,4 @@ next-env.d.ts
 /dev.db
 /prisma/dev.db
 *.db
+!.env.example
