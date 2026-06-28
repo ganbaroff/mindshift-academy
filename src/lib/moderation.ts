@@ -15,14 +15,30 @@ const GUARD_MODEL = "meta/llama-guard-4-12b";
 export type ModerationResult = { safe: boolean; category: string; source: string };
 type Internal = ModerationResult & { error?: boolean };
 
+// Retry ONCE, only on a timeout / connection error (the slow free-tier model) — NEVER on a
+// returned classification (not even an "unsafe" verdict). A slow model must neither let unsafe
+// through nor false-block a safe child message because it stalled once.
+function isTimeoutErr(e: unknown): boolean {
+  const x = e as { name?: string; message?: string } | null;
+  return x?.name === "APIConnectionTimeoutError" || /timed out|ETIMEDOUT|ECONNRESET/i.test(String(x?.message ?? ""));
+}
+async function withTimeoutRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    if (isTimeoutErr(e)) return await fn();
+    throw e;
+  }
+}
+
 async function llamaGuard(client: OpenAI, text: string): Promise<Internal> {
   try {
-    const r = await client.chat.completions.create({
+    const r = await withTimeoutRetry(() => client.chat.completions.create({
       model: GUARD_MODEL,
       messages: [{ role: "user", content: text }],
       max_tokens: 30,
       temperature: 0,
-    });
+    }));
     const out = (r.choices[0]?.message?.content || "").trim().toLowerCase();
     if (out.startsWith("unsafe")) {
       return { safe: false, category: out.replace(/\s+/g, " ").slice(0, 40), source: "llama-guard" };
@@ -35,7 +51,7 @@ async function llamaGuard(client: OpenAI, text: string): Promise<Internal> {
 
 async function kidNet(client: OpenAI, model: string, text: string): Promise<Internal> {
   try {
-    const r = await client.chat.completions.create({
+    const r = await withTimeoutRetry(() => client.chat.completions.create({
       model,
       max_tokens: 60,
       temperature: 0,
@@ -55,7 +71,7 @@ async function kidNet(client: OpenAI, model: string, text: string): Promise<Inte
         },
         { role: "user", content: text },
       ],
-    });
+    }));
     const d = JSON.parse(r.choices[0]?.message?.content || "{}");
     return { safe: d.unsafe !== true, category: String(d.category || "kid-net"), source: "kid-net" };
   } catch {
@@ -69,7 +85,7 @@ export async function moderate(client: OpenAI, tutorModel: string, text: string)
   const [lg, kn] = await Promise.all([llamaGuard(client, text), kidNet(client, tutorModel, text)]);
   if (!lg.safe && !lg.error) return { safe: false, category: lg.category, source: lg.source };
   if (!kn.safe && !kn.error) return { safe: false, category: kn.category, source: kn.source };
-  // Fail CLOSED for kids: ANY classifier error (incl. an 8s timeout) blocks — not only when BOTH error.
+  // Fail CLOSED for kids: ANY classifier error (incl. a 12s timeout, after one timeout-only retry) blocks — not only when BOTH error.
   // Safety > availability on a child path.
   if (lg.error || kn.error) return { safe: false, category: "classifier unavailable", source: "fail-closed" };
   return { safe: true, category: "", source: "classifier" };
