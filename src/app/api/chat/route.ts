@@ -5,6 +5,18 @@ import { z } from "zod";
 import { moderate } from "@/lib/moderation";
 import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
+import { LESSON_PROMPTS } from "@/lib/curriculum";
+
+// SOUL: map the authoritative server step (1..5) to its lesson persona prompt.
+// The lesson route builds the SAME key (`lesson${lessonId}`, lessonId = 1..5) from
+// the URL param, and the client mirrors that step into activeStepId. We key off the
+// server-side step (dbUser.activeStep) so the persona can't be spoofed from the client.
+// Returns the lesson's systemPrompt, or null for free chat / unknown step.
+function getLessonPersona(stepId: number): string | null {
+  const key = `lesson${stepId}` as keyof typeof LESSON_PROMPTS;
+  const lesson = LESSON_PROMPTS[key];
+  return lesson ? lesson.systemPrompt : null;
+}
 
 // Zod Schema for validation
 const chatRequestSchema = z.object({
@@ -409,10 +421,16 @@ export async function POST(req: Request) {
     }
 
     // AI Provider Integration (NVIDIA or OpenAI)
-    const systemInstruction = `
+    // SOUL: the lesson persona (curriculum.ts) drives the tutor's in-lesson BEHAVIOR
+    // (lesson2 IF/THEN rule, lesson3 cipher, lesson5 boss, etc). It is COMBINED with —
+    // never replaces — the monster persona (skin/name) and the child-safety framing.
+    // Keyed off serverStepId (authoritative, non-spoofable); null => free chat / no lesson.
+    const lessonPersona = getLessonPersona(serverStepId);
+
+    const baseInstruction = `
       Ты - дружелюбный, воодушевляющий игровой напарник по обучению программированию для ребенка 9-14 лет.
       Сейчас ты отыгрываешь облик: "${activeSkin} ${activeMonsterName}".
-      
+
       ТВОИ ПРАВИЛА:
       1. Отвечай коротко - максимум 2-3 предложения. Язык общения: русский.
       2. Веди себя в соответствии со своей ролью (${activeMonsterName}). Используй эмодзи.
@@ -420,6 +438,16 @@ export async function POST(req: Request) {
       4. Помогай ребенку с заданиями, но не давай готовое решение сразу. Задавай наводящие вопросы.
       5. Если ребенок попросил тебя шифровать слова (Шаг 3), выполняй его инструкции.
     `;
+
+    // Combine: safety-framed base persona + the active lesson's pedagogy (if a lesson is
+    // active). The lesson block is appended so the monster PLAYS the lesson, but the base
+    // rules above (esp. rule 3 safety) still bound its behavior.
+    const systemInstruction = lessonPersona
+      ? `${baseInstruction}
+      РОЛЬ ТЕКУЩЕГО УРОКА (отыгрывай её ПОВЕРХ облика "${activeMonsterName}", но НЕ нарушая правил безопасности выше):
+      ${lessonPersona}
+    `
+      : baseInstruction;
 
     const openAiMessages = [
       { role: "system", content: systemInstruction },
