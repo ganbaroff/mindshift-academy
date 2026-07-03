@@ -31,6 +31,11 @@ const chatRequestSchema = z.object({
   activeStepId: z.number().int().min(1).max(5),
   activeSkin: z.string(),
   activeMonsterName: z.string(),
+  // IDEMPOTENCY: client-generated UUID for THIS lesson-completion attempt. Lets the
+  // server award xp/crystals at most once even if the same request is retried. Optional
+  // so older clients / non-completion chats still work (a completion without it simply
+  // isn't dedup-guarded, matching prior behavior).
+  eventId: z.string().min(8).max(100).optional(),
 });
 
 // Simple local safety check to block bad words
@@ -181,9 +186,26 @@ async function getOrCreateLesson(stepId: number) {
   return lesson;
 }
 
-// Helper to update user rewards and lesson progress in DB
-async function updateUserRewards(userId: string, stepId: number) {
+// Helper to update user rewards and lesson progress in DB.
+// IDEMPOTENT: when an eventId is supplied we first try to INSERT it as a RewardEvent
+// (eventId is the PK). A replayed eventId throws P2002 → we skip the whole award, so a
+// retry never double-increments xp/crystals. Without an eventId we fall back to the
+// prior (non-guarded) behavior. Returns true if the award was applied, false if skipped.
+async function updateUserRewards(userId: string, stepId: number, eventId?: string): Promise<boolean> {
   try {
+    if (eventId) {
+      try {
+        await prisma.rewardEvent.create({ data: { eventId, userId, stepId } });
+      } catch (e: any) {
+        // P2002 = unique constraint (eventId already recorded) → this is a replay.
+        if (e?.code === "P2002") {
+          console.warn(`[rewards] duplicate eventId, skipping double-award (step ${stepId})`);
+          return false;
+        }
+        throw e;
+      }
+    }
+
     let xpGain = 0;
     let crystalsGain = 0;
     let nextStep = stepId;
@@ -244,8 +266,11 @@ async function updateUserRewards(userId: string, stepId: number) {
         score: 100,
       },
     });
+
+    return true;
   } catch (err) {
     console.error("Database rewards update failed:", err);
+    return false;
   }
 }
 
@@ -279,7 +304,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payload data", details: parseResult.error.format() }, { status: 400 });
     }
 
-    const { messages, activeStepId, activeSkin, activeMonsterName } = parseResult.data;
+    const { messages, activeStepId, activeSkin, activeMonsterName, eventId } = parseResult.data;
 
     const latestMessage = messages[messages.length - 1];
     const userPrompt = latestMessage.text;
@@ -366,8 +391,9 @@ export async function POST(req: Request) {
     const challengeCompleted = verdict.pass;
 
     if (challengeCompleted && serverStepId === activeStepId) {
-      // Only reward if client step matches server state (prevents replay)
-      await updateUserRewards(dbUser.id, serverStepId);
+      // Anti-cheat: only reward if the client step matches authoritative server state.
+      // Idempotency: eventId dedups retries so the award can't be applied twice.
+      await updateUserRewards(dbUser.id, serverStepId, eventId);
     }
 
     // Simulated Mode (no API key)

@@ -71,3 +71,14 @@ model LessonProgress {
 
   @@unique([userId, lessonId])
 }
+
+// IDEMPOTENCY: the reward write increments xp/crystals, which double-awards on any
+// client retry (network hiccup, double-tap, F5-and-resend). Each lesson-completion
+// carries a client-generated UUID; we record it here BEFORE awarding. The @unique
+// eventId means a replayed eventId hits P2002 on create, so the award is skipped.
+model RewardEvent {
+  eventId   String   @id
+  userId    String
+  stepId    Int
+  createdAt DateTime @default(now())
+}

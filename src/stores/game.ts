@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Message, Step, Achievement, Skin, Monster } from '@/types';
 
 interface GameState {
@@ -58,7 +59,9 @@ interface GameState {
   updateXP: (amount: number) => void;
 }
 
-export const useGameStore = create<GameState>((set, get) => ({
+export const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
   activeSkin: "🐲",
   activeMonsterName: "Огненный Дракончик",
   monsterColor: "#8b5cf6",
@@ -136,4 +139,43 @@ export const useGameStore = create<GameState>((set, get) => ({
       return { totalXp: next };
     });
   }
-}));
+    }),
+    {
+      name: "mindshift-game-v1",
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      // Persist ONLY client-side UI state that is safe to restore after F5.
+      // Deliberately EXCLUDES server-authoritative progress (totalXp, crystals,
+      // activeStepId) and transient/render-only fields — the server is the source
+      // of truth for progress, re-fetched on load (see lesson page /api/user).
+      // Also excludes latency/currentCost/promptCount/generatedMonster and modal
+      // flags so a reload never resurrects a stale modal or a mid-flight cost.
+      partialize: (state) => ({
+        messages: state.messages,
+        steps: state.steps,
+        achievements: state.achievements,
+        activeSkin: state.activeSkin,
+        activeMonsterName: state.activeMonsterName,
+        monsterColor: state.monsterColor,
+        isVoiceActive: state.isVoiceActive,
+      }),
+      // Server-authoritative merge: start from the current (fresh) state, layer the
+      // cached UI state on top, but NEVER let cached progress win — totalXp/crystals/
+      // activeStepId are intentionally not in the persisted slice, and we hard-guard
+      // here so a future partialize change can't silently regress progress. The lesson
+      // page's /api/user fetch then sets the true server values after rehydration.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<GameState>;
+        return {
+          ...current,
+          ...p,
+          // Progress fields are always taken from the freshly-created store defaults
+          // (which the server load then overwrites) — cached values must not lower them.
+          totalXp: current.totalXp,
+          crystals: current.crystals,
+          activeStepId: current.activeStepId,
+        };
+      },
+    }
+  )
+);

@@ -71,6 +71,14 @@ export const PromptInput = () => {
     const prompt = promptInput.trim();
     if (!prompt) return;
 
+    // IDEMPOTENCY: one UUID per send attempt. If this exact request is retried
+    // (network stall, double-submit), the server dedups on this id and won't
+    // double-award xp/crystals. A new user message gets a fresh id.
+    const eventId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
     soundEngine.play("click");
 
     const userMsg: Message = {
@@ -94,7 +102,8 @@ export const PromptInput = () => {
           messages: updatedMessages,
           activeStepId,
           activeSkin,
-          activeMonsterName
+          activeMonsterName,
+          eventId
         }),
       });
 
