@@ -138,7 +138,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
               }`}
             >
               {isCurrent && (
-                <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-violet-400 rounded-full animate-ping" />
+                <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-violet-400 rounded-full animate-ping motion-reduce:animate-none" />
               )}
               
               <span className="text-[10px] font-bold uppercase tracking-wider">День {day}</span>

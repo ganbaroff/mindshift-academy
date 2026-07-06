@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { ChatWindow } from "@/components/chat/ChatWindow";
 import { PromptInput } from "@/components/chat/PromptInput";
 import { MonsterCard } from "@/components/modals/MonsterCard";
+import { GeneratingOverlay } from "@/components/modals/GeneratingOverlay";
 import { GachaCalendar } from "@/components/gamification/GachaCalendar";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
 import { BookOpen, Trophy, ShieldCheck, ChevronRight } from "lucide-react";
@@ -152,7 +153,7 @@ export default function LessonPage() {
               <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight px-6 max-w-4xl leading-tight">
                 {splashTitle}
               </h1>
-              <div className="h-1.5 w-24 bg-gradient-to-r from-violet-500 to-cyan-400 mx-auto rounded-full mt-6 shadow-[0_0_15px_rgba(139,92,246,0.5)] animate-pulse" />
+              <div className="h-1.5 w-24 bg-gradient-to-r from-violet-500 to-cyan-400 mx-auto rounded-full mt-6 shadow-[0_0_15px_rgba(139,92,246,0.5)] animate-pulse motion-reduce:animate-none" />
             </motion.div>
           </div>
         )}
@@ -296,7 +297,7 @@ export default function LessonPage() {
             
             <div className="flex items-center justify-between border-b border-white/5 pb-3">
               <h3 className="font-bold text-xs text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse motion-reduce:animate-none" />
                 Терминал настройки монстра
               </h3>
               <div className="flex items-center gap-2 text-[10px] text-gray-400 font-semibold bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
@@ -360,6 +361,10 @@ export default function LessonPage() {
       {/* The graduation payoff card. Renders only when generatedMonster is set (after "Оживить").
           Was defined but never mounted, so the reward never appeared. */}
       <MonsterCard />
+
+      {/* Loading feedback during the ~10-30s DALL-E graduation-card generation.
+          Self-gates on isGeneratingMonster; without it the "Оживить" button froze silently. */}
+      <GeneratingOverlay />
 
     </div>
   );

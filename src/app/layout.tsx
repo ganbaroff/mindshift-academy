@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 import { ClerkProvider } from '@clerk/nextjs'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 
 export const metadata: Metadata = {
   title: {
@@ -39,7 +40,9 @@ export default function RootLayout({
         lang="ru"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
-        <body className="min-h-full flex flex-col">{children}</body>
+        <body className="min-h-full flex flex-col">
+          <MotionProvider>{children}</MotionProvider>
+        </body>
       </html>
     </ClerkProvider>
   );

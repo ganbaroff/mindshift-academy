@@ -11,7 +11,12 @@ export const ChatWindow = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // A JS `behavior` option overrides the CSS scroll-behavior guard, so branch
+    // on the OS reduced-motion preference to avoid animating for those users.
+    const smooth =
+      typeof window !== "undefined" &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    chatEndRef.current?.scrollIntoView({ behavior: smooth ? "smooth" : "auto" });
   }, [messages, latency]);
 
   return (
@@ -47,9 +52,9 @@ export const ChatWindow = () => {
             <MonsterAvatar size={32} mood="thinking" color={monsterColor} />
           </div>
           <div className="p-3.5 rounded-2xl border border-cyan-500/10 bg-cyan-500/5 text-sm flex items-center gap-1.5 min-w-[60px] justify-center">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.3s]" />
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce [animation-delay:-0.15s]" />
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce" />
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce motion-reduce:animate-none [animation-delay:-0.3s]" />
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce motion-reduce:animate-none [animation-delay:-0.15s]" />
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-bounce motion-reduce:animate-none" />
           </div>
         </div>
       )}

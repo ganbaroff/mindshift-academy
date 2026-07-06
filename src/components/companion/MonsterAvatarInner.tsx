@@ -2,6 +2,7 @@
 
 import React from "react";
 import Lottie from "lottie-react";
+import { useReducedMotion } from "framer-motion";
 import happyAnimation from "../../../public/lottie/happy.json";
 import thinkingAnimation from "../../../public/lottie/thinking.json";
 import sadAnimation from "../../../public/lottie/sad.json";
@@ -22,6 +23,7 @@ export default function MonsterAvatarInner({
   size = 120,
   className = "",
 }: MonsterAvatarInnerProps) {
+  const prefersReducedMotion = useReducedMotion();
   let animationData;
   switch (mood) {
     case "thinking":
@@ -60,7 +62,8 @@ export default function MonsterAvatarInner({
       <div className="relative z-10 w-full h-full flex items-center justify-center">
         <Lottie
           animationData={animationData}
-          loop={true}
+          loop={!prefersReducedMotion}
+          autoplay={!prefersReducedMotion}
           style={{ width: "92%", height: "92%" }}
         />
       </div>
