@@ -61,14 +61,15 @@ function checkChallengeSuccess(prompt: string, stepId: number): boolean {
     return words.length >= 3;
   }
   if (stepId === 2) {
-    // Lesson 2: Emotions. User should instruct the monster on the IF/THEN rule.
-    return lowercase.includes("рычи") || 
-           lowercase.includes("рычать") || 
-           lowercase.includes("рычишь") || 
-           lowercase.includes("динозавр") || 
+    // Lesson 2: Emotions. User should instruct the monster to roar (рычи/рычать).
+    // Canonical persona is РЫЧИ (roar); the orphan "солнце" accept-token was removed
+    // 2026-07-07 (CEO-authorized) so the offline path matches the tutor + judge + UI.
+    return lowercase.includes("рычи") ||
+           lowercase.includes("рычать") ||
+           lowercase.includes("рычишь") ||
+           lowercase.includes("динозавр") ||
            lowercase.includes("ррр") ||
-           lowercase.includes("если") ||
-           lowercase.includes("солнце");
+           lowercase.includes("если");
   }
   if (stepId === 3) {
     // Lesson 3: Cipher. User sets cipher algorithm.
