@@ -10,7 +10,11 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // P1-D: fail CLOSED. When CRON_SECRET is unset OR the header doesn't match, reject.
+  // (Old guard was fail-OPEN — anyone could trigger real parent emails when the secret
+  // was absent, which it is by default.) This endpoint also emails a child's name/progress,
+  // so leave it disabled in prod until the COPPA consent model is confirmed (CEO-gated).
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

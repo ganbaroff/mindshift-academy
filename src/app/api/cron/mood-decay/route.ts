@@ -6,11 +6,14 @@ import { applyMoodDecay, getMissedDays, shouldWarnParent } from "@/lib/retention
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/mood-decay", "schedule": "0 3 * * *" }] }
 
 export async function GET(req: Request) {
-  // Verify cron secret to prevent unauthorized triggers
+  // Verify cron secret to prevent unauthorized triggers.
+  // P1-D: fail CLOSED. When CRON_SECRET is unset OR the header doesn't match, reject.
+  // (Old guard was fail-OPEN — anyone could mutate every monster.mood when the secret
+  // was absent, which it is by default.)
   const authHeader = req.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
