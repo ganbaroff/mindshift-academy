@@ -7,6 +7,10 @@ export const MonsterCard = () => {
   const generatedMonster = useGameStore((state) => state.generatedMonster);
 
   const handleResetApp = async () => {
+    const confirmed = window.confirm(
+      "Начать заново? Весь твой прогресс будет сброшен, и ты начнёшь обучение с самого начала."
+    );
+    if (!confirmed) return;
     try {
       await fetch("/api/reset", {
         method: "POST"
@@ -91,11 +95,11 @@ export const MonsterCard = () => {
             </button>
           </div>
 
-          <button 
+          <button
             onClick={handleResetApp}
-            className="w-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600 text-white font-bold py-3.5 rounded-full text-sm hover:shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:scale-[1.01] transform transition-all cursor-pointer mt-2"
+            className="self-center text-xs font-semibold text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors cursor-pointer mt-1"
           >
-            🎮 Начать заново (Сбросить БД)
+            Начать заново
           </button>
         </div>
         

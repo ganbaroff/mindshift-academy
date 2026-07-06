@@ -133,8 +133,14 @@ export const useGameStore = create<GameState>()(
     set((state) => {
       let next = state.totalXp + amount;
       if (next >= 1000) {
-        alert("Поздравляем! Вы получили Новый Уровень (Уровень 3)!");
         next = next - 1000;
+        // Route the level-up milestone through the branded in-app reward modal
+        // (confetti/gem UI) instead of a blocking native alert().
+        return {
+          totalXp: next,
+          modalDesc: "Новый уровень! Ты достиг Уровня 3 — твой ИИ-питомец стал сильнее!",
+          isModalOpen: true,
+        };
       }
       return { totalXp: next };
     });

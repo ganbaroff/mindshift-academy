@@ -205,7 +205,9 @@ export const PromptInput = () => {
     if (nextVoice) {
       setAchievements((prev: any) => prev.map((a: any) => a.id === 3 ? { ...a, unlocked: true } : a));
       updateXP(50);
-      alert("Голосовая озвучка включена! +50 XP");
+      soundEngine.play("success");
+      setModalDesc("Голосовая озвучка включена! Твой питомец теперь говорит вслух. +50 XP");
+      setIsModalOpen(true);
     }
   };
 
