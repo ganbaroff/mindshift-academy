@@ -342,10 +342,18 @@ export async function POST(req: Request) {
       const inMod = await moderate(ai.client, ai.model, userPrompt);
       if (!inMod.safe) {
         console.warn(`[MODERATION] input blocked (${inMod.source}: ${inMod.category})`);
+        // COPY SPLIT (P1-G): distinguish a CLASSIFIER OUTAGE (fail-closed on
+        // timeout/error) from a REAL unsafe verdict. A safe battle-prompt that merely
+        // hit a 12s timeout must NOT be told it was "rude"/inappropriate — that shames
+        // the child for our infra hiccup. Shame-free copy, and it's a retry, not a scold.
+        // (The classifier threshold itself is unchanged — only the message wording.)
+        const isClassifierOutage = inMod.source === "fail-closed";
         return NextResponse.json({
-          response: "Ой! Давай общаться по-доброму и по теме урока 😊. А если тебя кто-то обидел или тебе тревожно — лучше расскажи об этом взрослому, которому доверяешь.",
+          response: isClassifierOutage
+            ? "Хм, я на секунду задумался и не успел проверить твоё сообщение 🐲. Это не твоя вина — просто попробуй отправить ещё раз!"
+            : "Ой! Давай общаться по-доброму и по теме урока 😊. А если тебя кто-то обидел или тебе тревожно — лучше расскажи об этом взрослому, которому доверяешь.",
           safetyPassed: false,
-          toxicityScore: 0.99,
+          toxicityScore: isClassifierOutage ? 0.0 : 0.99,
           latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
           cost: "$0.00000",
           challengeCompleted: false,
