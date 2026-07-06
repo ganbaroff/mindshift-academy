@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import OpenAI from "openai";
 import { moderate } from "@/lib/moderation";
@@ -30,6 +31,18 @@ const fallbackColors = [
 ];
 const fallbackNames = ["Огняш", "Бублик", "Зефир", "Шустрик", "Кристаллик", "Луник"];
 
+// Deterministic, no-LLM preview. This is what the PUBLIC landing gets — no child words
+// egress to the live model before sign-up (COPPA/consent is CEO-gated; until wired, the
+// public funnel must not send free-text to NVIDIA/OpenAI).
+function deterministicSilhouette(words: string[]) {
+  const seed = hashWords(words);
+  const emoji = fallbackEmojis[seed % fallbackEmojis.length];
+  const color = fallbackColors[seed % fallbackColors.length];
+  const name = fallbackNames[seed % fallbackNames.length];
+  const description = `Этот питомец появился из слов: ${words.join(", ")}. Он ждет пробуждения.`;
+  return { name, emoji, color, description };
+}
+
 export async function POST(req: Request) {
   try {
     // P0-4: IP-based rate limit on this PUBLIC LLM/image endpoint — keep it public, cap abuse.
@@ -59,17 +72,20 @@ export async function POST(req: Request) {
     }
 
     const words = parsed.data.words;
+
+    // P0-C: the PUBLIC landing preview must NOT egress child free-text to the live model
+    // before sign-up/consent (consent is CEO-gated). Unauthenticated callers get the
+    // deterministic no-LLM fallback. Only a signed-in caller reaches the live model path.
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return NextResponse.json(deterministicSilhouette(words));
+    }
+
     const ai = (await import("@/lib/ai-provider")).getAIClient();
 
     if (!ai) {
       // Fallback generator — no API key configured
-      const seed = hashWords(words);
-      const emoji = fallbackEmojis[seed % fallbackEmojis.length];
-      const color = fallbackColors[seed % fallbackColors.length];
-      const name = fallbackNames[seed % fallbackNames.length];
-      const description = `Этот питомец появился из слов: ${words.join(", ")}. Он ждет пробуждения.`;
-
-      return NextResponse.json({ name, emoji, color, description });
+      return NextResponse.json(deterministicSilhouette(words));
     }
 
     // P0-2 SAFETY: moderate the child's 3 words before sending them to the model.
