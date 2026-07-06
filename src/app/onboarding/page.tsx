@@ -15,6 +15,25 @@ const HATCH_MESSAGES = [
   "Твой питомец просыпается!",
 ];
 
+const PET_NAME_MAX = 24;
+
+// P1-H (defense-in-depth at entry): the pet-name is free child text that later gets
+// spliced into the tutor system prompt (server-side sanitizeForPrompt() is the hard
+// gate). Bound it here too so obviously-injectiony/PII-ish input never even reaches
+// state: drop control chars, prompt-structure chars (quotes/backticks/braces/angle-
+// brackets), and email/phone/long-digit runs; cap length. Empty result is allowed —
+// the confirm button already disables on an empty trimmed name.
+function sanitizePetName(raw: string): string {
+  return raw
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\u0000-\u001F\u007F]/g, "") // control chars
+    .replace(/[<>{}"'`\\]/g, "") // prompt-structure / injection chars
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/gi, "") // emails
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "") // phone-like sequences
+    .replace(/\d{5,}/g, "") // long digit runs
+    .slice(0, PET_NAME_MAX);
+}
+
 function OnboardingContent() {
   const router = useRouter();
   const params = useSearchParams();
@@ -22,7 +41,8 @@ function OnboardingContent() {
 
   const monsterEmoji = params.get("emoji") || "🐉";
   const monsterColor = params.get("color") || "#a78bfa";
-  const defaultName = params.get("name") || "Огняш";
+  // Sanitize the seed name too — it arrives via URL query (attacker-controllable).
+  const defaultName = sanitizePetName(params.get("name") || "") || "Огняш";
 
   const [phase, setPhase] = useState<Phase>("hatching");
   const [hatchStep, setHatchStep] = useState(0);
@@ -170,8 +190,8 @@ function OnboardingContent() {
 
             <input
               value={petName}
-              onChange={(e) => setPetName(e.target.value)}
-              maxLength={24}
+              onChange={(e) => setPetName(sanitizePetName(e.target.value))}
+              maxLength={PET_NAME_MAX}
               className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
               autoFocus
             />
