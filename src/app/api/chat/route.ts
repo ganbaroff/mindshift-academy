@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { moderate } from "@/lib/moderation";
-import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
 
@@ -283,16 +283,20 @@ export async function POST(req: Request) {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
 
+    // AUTH GATE (P0-B): this endpoint runs the full NVIDIA pipeline and writes child
+    // progress. It MUST require a signed-in Clerk session — no anonymous access. The
+    // old anon fallback wrote every unauthenticated child onto ONE shared "Uchenik"
+    // row (progress cross-contamination + no consent/rate-key). Reject up front.
+    if (!clerkId) {
+      return NextResponse.json({ error: "Требуется вход в аккаунт." }, { status: 401 });
+    }
+
     // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +
     //    judge + tutor + output x2), so it MUST fail-closed in prod without a distributed limiter.
     if (rateLimitMisconfiguredInProd()) {
       return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
     }
-    const rlKey = clerkId ?? publicClientKey(req);
-    if (!rlKey) {
-      return NextResponse.json({ error: "Не удалось проверить источник запроса." }, { status: 429 });
-    }
-    const rl = await rateLimit("chat", rlKey, 20, 10);
+    const rl = await rateLimit("chat", clerkId, 20, 10);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
     }
@@ -322,44 +326,21 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fetch or create User (per-clerkId row for signed-in users) — clerkId resolved above.
-    let dbUser;
-    if (clerkId) {
-      dbUser = await prisma.user.findUnique({
-        where: { clerkId },
-      });
-      if (!dbUser) {
-        // First chat for this Clerk account — create their own row
-        dbUser = await prisma.user.create({
-          data: {
-            clerkId,
-            username: clerkId, // NV/#1: unique per user (was hardcoded "Uchenik" → P2002 on 2nd child)
-            xp: 0,
-            crystals: 0,
-            streak: 0,
-            activeStep: 1,
-          },
-        });
-      }
-    }
-
-    if (!dbUser) {
-      // Anonymous / no Clerk session — shared demo user
-      dbUser = await prisma.user.findUnique({
-        where: { username: "Uchenik" },
-      });
-      if (!dbUser) {
-        dbUser = await prisma.user.create({
-          data: {
-            username: "Uchenik",
-            xp: 0,
-            crystals: 0,
-            streak: 0,
-            activeStep: 1,
-          },
-        });
-      }
-    }
+    // Fetch or create User — per-clerkId row (clerkId guaranteed by the auth gate above).
+    // IDEMPOTENT: upsert on the unique clerkId so two concurrent first-chats for the same
+    // account can't P2002-race the create. No anonymous shared-row path exists (P0-B).
+    const dbUser = await prisma.user.upsert({
+      where: { clerkId },
+      update: {},
+      create: {
+        clerkId,
+        username: clerkId, // unique per user (was hardcoded "Uchenik" → P2002 on 2nd child)
+        xp: 0,
+        crystals: 0,
+        streak: 0,
+        activeStep: 1,
+      },
+    });
 
     const ai = (await import("@/lib/ai-provider")).getAIClient();
 
