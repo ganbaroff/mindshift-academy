@@ -5,17 +5,16 @@ import { z } from "zod";
 import { moderate } from "@/lib/moderation";
 import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
-import { LESSON_PROMPTS } from "@/lib/curriculum";
+import { getLesson } from "@/lib/curriculum";
 
 // SOUL: map the authoritative server step (1..5) to its lesson persona prompt.
 // The lesson route builds the SAME key (`lesson${lessonId}`, lessonId = 1..5) from
 // the URL param, and the client mirrors that step into activeStepId. We key off the
 // server-side step (dbUser.activeStep) so the persona can't be spoofed from the client.
 // Returns the lesson's systemPrompt, or null for free chat / unknown step.
+// Persona + rubric come from ONE shared definition (curriculum.ts) so they can't drift.
 function getLessonPersona(stepId: number): string | null {
-  const key = `lesson${stepId}` as keyof typeof LESSON_PROMPTS;
-  const lesson = LESSON_PROMPTS[key];
-  return lesson ? lesson.systemPrompt : null;
+  return getLesson(stepId)?.systemPrompt ?? null;
 }
 
 // Zod Schema for validation
@@ -105,22 +104,15 @@ function checkChallengeSuccess(prompt: string, stepId: number): boolean {
   return false;
 }
 
-// PEDAGOGY: what REAL comprehension looks like per lesson (not "contains a keyword").
-const LESSON_RUBRICS: Record<number, string> = {
-  1: "Урок «Пробуждение». Засчитывается, только если ребёнок описал монстра, дав минимум ТРИ разных осмысленных качества/характеристики (например: храбрый, быстрый, огненный). Случайный набор слов, цифры или бессмысленные слова, не являющиеся качествами, — НЕ засчитывать.",
-  2: "Урок «Характер». Засчитывается, только если ребёнок дал монстру ИНСТРУКЦИЮ, как себя вести/говорить/реагировать (например: «рычи перед каждым словом», «говори как грозный дракон и дыши огнём»). Фраза не про поведение монстра — НЕ засчитывать.",
-  3: "Урок «Секретный язык». Засчитывается, только если ребёнок задал ПРАВИЛО шифра — конкретное преобразование текста (например: «заменяй все гласные на звёздочки»). Если правила преобразования нет (одиночный символ, случайная фраза) — НЕ засчитывать.",
-  4: "Урок «Машинное зрение». ИИ ошибочно решил, что на картинке кошка. Засчитывается, только если ребёнок именно ИСПРАВИЛ ошибку — указал, что это НЕ кошка, и/или дал команду исправить, назвав верный объект (собаку). Одно голое слово-объект (например просто «собака») без акта исправления — НЕ засчитывать.",
-  5: "Урок «Битва промптов». Засчитывается, только если ребёнок написал промпт с ОСМЫСЛЕННЫМ логическим условием, реально управляющим поведением (структура «если … то … [иначе …]» с понятным смыслом, например: «если видишь врага, то атакуй, иначе защищайся»). Бессмысленная присказка со словами «если/тогда» без реальной логики — НЕ засчитывать.",
-};
-
 // LLM-as-judge: decide if the child's message genuinely performs the lesson skill.
+// The rubric (what REAL comprehension looks like) comes from the SAME shared lesson
+// definition (curriculum.ts) that drives the tutor persona — no separate rubric map.
 async function judgeComprehension(
   ai: any,
   prompt: string,
   stepId: number
 ): Promise<{ pass: boolean; reason: string }> {
-  const rubric = LESSON_RUBRICS[stepId];
+  const rubric = getLesson(stepId)?.rubric;
   if (!rubric) return { pass: false, reason: "Неизвестный урок." };
 
   try {
