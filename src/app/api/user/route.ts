@@ -36,9 +36,13 @@ export async function GET() {
         }
 
         if (!user) {
-          // 3. First visit for this Clerk account — create their own row
-          user = await prisma.user.create({
-            data: {
+          // 3. First visit for this Clerk account — create their own row.
+          // IDEMPOTENT (P1-I): upsert on unique clerkId so two concurrent first-visits
+          // for the same account can't P2002-race the create.
+          user = await prisma.user.upsert({
+            where: { clerkId },
+            update: {},
+            create: {
               clerkId,
               username: clerkId, // #1: unique per user (was hardcoded "Uchenik" → P2002 on 2nd child)
               xp: 0,
@@ -52,25 +56,24 @@ export async function GET() {
       }
     }
 
-    // 4. Fallback to shared demo user for anonymous sessions
+    // 4. Fallback to shared demo user for anonymous sessions.
+    // IDEMPOTENT (P1-I): upsert on the unique username so two concurrent anon reads
+    // can't P2002-race the "Uchenik" create. (This GET is read-mostly and unauthenticated
+    // callers still need a row to render; the write path that actually mutates child
+    // progress — /api/chat — is now auth-gated with no anon row, per P0-B.)
     if (!user) {
-      user = await prisma.user.findUnique({
+      user = await prisma.user.upsert({
         where: { username: "Uchenik" },
+        update: {},
+        create: {
+          username: "Uchenik",
+          xp: 0,
+          crystals: 0,
+          streak: 0,
+          activeStep: 1,
+        },
         include: { monster: true },
       });
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            username: "Uchenik",
-            xp: 0,
-            crystals: 0,
-            streak: 0,
-            activeStep: 1,
-          },
-          include: { monster: true },
-        });
-      }
     }
 
     return NextResponse.json(user);
