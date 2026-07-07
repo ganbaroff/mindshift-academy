@@ -32,27 +32,6 @@ export default function LessonPage() {
   const [splashTitle, setSplashTitle] = useState("");
   const [splashChapter, setSplashChapter] = useState(1);
 
-  useEffect(() => {
-    if (lessonData) {
-      setSplashChapter(lessonId);
-      setSplashTitle(lessonData.title);
-      setShowSplash(true);
-      // Lock the chat input while the intro splash animates so a fast child's
-      // first message isn't fired into a chat the mount effect is about to reset
-      // (which silently dropped it). Unlocks when the splash settles.
-      setInputLocked(true);
-      const timer = setTimeout(() => {
-        setShowSplash(false);
-        setInputLocked(false);
-      }, 1800);
-      return () => {
-        clearTimeout(timer);
-        // Leaving/renavigating mid-splash must not strand the input locked.
-        setInputLocked(false);
-      };
-    }
-  }, [lessonId, lessonData]);
-
   const {
     activeStepId,
     setActiveStepId,
@@ -71,6 +50,26 @@ export default function LessonPage() {
     setTotalXp,
     setInputLocked
   } = useGameStore();
+
+  useEffect(() => {
+    if (lessonData) {
+      setSplashChapter(lessonId);
+      setSplashTitle(lessonData.title);
+      setShowSplash(true);
+      const timer = setTimeout(() => setShowSplash(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [lessonId, lessonData]);
+
+  // Lock the chat input while the intro splash is on screen so a fast child's
+  // first message isn't fired into a chat the mount effect is about to reset to
+  // the intro (which silently dropped it). Driven directly off showSplash — a
+  // single source of truth — so StrictMode's setup→cleanup→setup double-invoke
+  // and the splash timer can't leave the flag stuck in the wrong state.
+  useEffect(() => {
+    setInputLocked(showSplash);
+    return () => setInputLocked(false);
+  }, [showSplash, setInputLocked]);
 
   useEffect(() => {
     soundEngine.preload();

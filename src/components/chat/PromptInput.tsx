@@ -79,8 +79,10 @@ export const PromptInput = () => {
   const handleSend = async () => {
     // Guard against the splash-race: while the intro splash is animating the
     // chat is about to be (re)set to the intro message, so a send here would be
-    // silently discarded. Block it until the input unlocks.
-    if (inputLocked) return;
+    // silently discarded. Read the flag from the store at call-time (not the
+    // render-closure) so the guard holds even if a re-render was deferred
+    // (e.g. background tab) and the closed-over inputLocked is stale.
+    if (useGameStore.getState().inputLocked) return;
     const prompt = promptInput.trim();
     if (!prompt) return;
 
