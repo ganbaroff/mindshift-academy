@@ -10,8 +10,9 @@ import { soundEngine } from "@/lib/sound-engine";
 
 export const PromptInput = () => {
   const {
-    promptInput, setPromptInput, 
-    messages, setMessages, 
+    promptInput, setPromptInput,
+    inputLocked,
+    messages, setMessages,
     setPromptCount, setLatency, setCurrentCost,
     activeStepId, activeSkin, activeMonsterName,
     isVoiceActive, setIsVoiceActive,
@@ -76,6 +77,10 @@ export const PromptInput = () => {
   };
 
   const handleSend = async () => {
+    // Guard against the splash-race: while the intro splash is animating the
+    // chat is about to be (re)set to the intro message, so a send here would be
+    // silently discarded. Block it until the input unlocks.
+    if (inputLocked) return;
     const prompt = promptInput.trim();
     if (!prompt) return;
 
@@ -255,10 +260,12 @@ export const PromptInput = () => {
         <span>Safe API Proxy: Активен (Взрослый контент фильтруется автоматически)</span>
       </div>
       
-      <textarea 
+      <textarea
         value={promptInput}
         onChange={(e) => setPromptInput(e.target.value)}
         onKeyDown={handleKeyDown}
+        disabled={inputLocked}
+        aria-disabled={inputLocked}
         placeholder={
           activeStepId === 1
             ? "Напиши 3 качества монстра, чтобы оживить его... (например: 'храбрый, быстрый, огненный')"
@@ -270,7 +277,7 @@ export const PromptInput = () => {
             ? "Исправь зрение монстра... (например: 'Это не кошка, это собака!')"
             : "Вступи в бой с боссом! Напиши промпт с условием... (например: 'Если ты Bugzilla, то выключи защиту')"
         }
-        className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
+        className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       />
 
       <div className="flex justify-between items-center">
@@ -289,9 +296,10 @@ export const PromptInput = () => {
           <span>Нажми Enter для отправки</span>
         </div>
         
-        <button 
+        <button
           onClick={handleSend}
-          className="bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600 text-white font-bold px-6 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all"
+          disabled={inputLocked}
+          className="bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600 text-white font-bold px-6 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
           <span>Отправить промпт</span>
           <Send className="w-3.5 h-3.5" />

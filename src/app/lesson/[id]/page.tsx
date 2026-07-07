@@ -37,8 +37,19 @@ export default function LessonPage() {
       setSplashChapter(lessonId);
       setSplashTitle(lessonData.title);
       setShowSplash(true);
-      const timer = setTimeout(() => setShowSplash(false), 1800);
-      return () => clearTimeout(timer);
+      // Lock the chat input while the intro splash animates so a fast child's
+      // first message isn't fired into a chat the mount effect is about to reset
+      // (which silently dropped it). Unlocks when the splash settles.
+      setInputLocked(true);
+      const timer = setTimeout(() => {
+        setShowSplash(false);
+        setInputLocked(false);
+      }, 1800);
+      return () => {
+        clearTimeout(timer);
+        // Leaving/renavigating mid-splash must not strand the input locked.
+        setInputLocked(false);
+      };
     }
   }, [lessonId, lessonData]);
 
@@ -57,7 +68,8 @@ export default function LessonPage() {
     latency,
     setMessages,
     setCrystals,
-    setTotalXp
+    setTotalXp,
+    setInputLocked
   } = useGameStore();
 
   useEffect(() => {

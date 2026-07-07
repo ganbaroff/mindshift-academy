@@ -23,6 +23,11 @@ interface GameState {
   
   // UI states
   promptInput: string;
+  // True while the lesson intro splash is animating. The chat input is disabled
+  // during this window so a fast child's first message isn't sent into a chat
+  // that the mount/navigation effect is about to reset to the intro (which
+  // silently dropped the message). Transient — never persisted.
+  inputLocked: boolean;
   isProxyView: boolean;
   promptCount: number;
   currentCost: number;
@@ -47,6 +52,7 @@ interface GameState {
   setCrystals: (val: number | ((prev: number) => number)) => void;
   setActiveStepId: (id: number) => void;
   setPromptInput: (val: string) => void;
+  setInputLocked: (val: boolean) => void;
   setMessages: (val: Message[] | ((prev: Message[]) => Message[])) => void;
   setPromptCount: (val: number | ((prev: number) => number)) => void;
   setLatency: (val: string) => void;
@@ -79,6 +85,7 @@ export const useGameStore = create<GameState>()(
   activeStepId: 1,
   completedLessons: [],
   promptInput: "",
+  inputLocked: false,
   isProxyView: false,
   promptCount: 0,
   currentCost: 0.00018,
@@ -117,6 +124,7 @@ export const useGameStore = create<GameState>()(
   setCrystals: (val) => set((state) => ({ crystals: typeof val === 'function' ? val(state.crystals) : val })),
   setActiveStepId: (id) => set({ activeStepId: id }),
   setPromptInput: (val) => set({ promptInput: val }),
+  setInputLocked: (val) => set({ inputLocked: val }),
   setMessages: (val) => set((state) => ({ messages: typeof val === 'function' ? val(state.messages) : val })),
   setPromptCount: (val) => set((state) => ({ promptCount: typeof val === 'function' ? val(state.promptCount) : val })),
   setLatency: (val) => set({ latency: val }),
