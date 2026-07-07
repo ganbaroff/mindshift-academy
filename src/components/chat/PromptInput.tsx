@@ -24,6 +24,13 @@ export const PromptInput = () => {
 
   const prefersReducedMotion = useReducedMotion();
 
+  // In-flight guard against double-submit. A ref (not state) so it updates
+  // synchronously — two Enter presses fired in the same tick both read the
+  // latest value, so the second is rejected before it can open a second
+  // /api/chat request (which the server would score as a separate completion
+  // and double-award XP/crystals, since each send carries its own eventId).
+  const sendingRef = React.useRef(false);
+
   // SINGLE SOURCE OF TRUTH: the child's XP/crystal totals come from the SERVER
   // (updateUserRewards, returned as `rewardTotals` on the chat response). We set them
   // directly here instead of optimistically incrementing on the client — the old code
@@ -85,6 +92,14 @@ export const PromptInput = () => {
     if (useGameStore.getState().inputLocked) return;
     const prompt = promptInput.trim();
     if (!prompt) return;
+
+    // DOUBLE-SUBMIT GUARD: reject a send while one is already in flight. Two
+    // rapid Enter presses would otherwise both pass the promptInput check (the
+    // "" clear hasn't re-rendered yet) and fire two independent /api/chat
+    // requests — each with its own eventId — which the server scores as two
+    // separate completions, double-awarding XP/crystals.
+    if (sendingRef.current) return;
+    sendingRef.current = true;
 
     // IDEMPOTENCY: one UUID per send attempt. If this exact request is retried
     // (network stall, double-submit), the server dedups on this id and won't
@@ -185,6 +200,10 @@ export const PromptInput = () => {
           text: "Произошла ошибка при отправке запроса на сервер. Убедись, что Next.js работает!"
         }
       ]);
+    } finally {
+      // Release the in-flight guard once this send fully settles (success or
+      // error), so the next legitimate message can be sent.
+      sendingRef.current = false;
     }
   };
 

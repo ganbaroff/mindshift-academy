@@ -32,6 +32,12 @@ export default function LessonPage() {
   const [splashTitle, setSplashTitle] = useState("");
   const [splashChapter, setSplashChapter] = useState(1);
 
+  // Track persist rehydration so the jump-ahead guard below doesn't bounce a
+  // legitimately-unlocked deep lesson on refresh before completedLessons loads.
+  // Start false (persist API isn't attached during SSR); the effect below flips
+  // it once hydration has finished on the client.
+  const [hydrated, setHydrated] = useState(false);
+
   const {
     activeStepId,
     setActiveStepId,
@@ -93,6 +99,36 @@ export default function LessonPage() {
       soundEngine.play("crystal");
     }
   }, [isModalOpen]);
+
+  // Mark hydration complete once the persisted store finishes rehydrating.
+  // Client-only: the persist API is not present on the SSR pass.
+  useEffect(() => {
+    const persist = useGameStore.persist;
+    if (!persist) {
+      setHydrated(true);
+      return;
+    }
+    if (persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    const unsub = persist.onFinishHydration(() => setHydrated(true));
+    return unsub;
+  }, []);
+
+  // Jump-ahead guard: block direct-URL access to a still-locked lesson (the nav
+  // links already block clicks, but a typed/bookmarked URL bypassed them). The
+  // furthest reachable lesson is highestCompleted+1 (lesson 1 always open). Only
+  // enforce after hydration so a refresh on a genuinely-unlocked lesson isn't
+  // bounced before completedLessons has loaded.
+  useEffect(() => {
+    if (!hydrated || !lessonData) return;
+    const highestCompleted = completedLessons.length ? Math.max(...completedLessons) : 0;
+    const maxUnlocked = Math.max(1, highestCompleted + 1);
+    if (lessonId > maxUnlocked) {
+      router.replace(`/lesson/${maxUnlocked}`);
+    }
+  }, [hydrated, lessonId, completedLessons, lessonData, router]);
 
   // Navigation effect: fires only on a real lesson change. Sets the active step
   // and resets the chat to the lesson intro. Intentionally does NOT depend on
