@@ -16,13 +16,19 @@ export const PromptInput = () => {
     activeStepId, activeSkin, activeMonsterName,
     isVoiceActive, setIsVoiceActive,
     setAchievements, updateXP,
-    setSteps, setCrystals, setIsModalOpen, setModalDesc,
+    setSteps, setCrystals, setTotalXp, setIsModalOpen, setModalDesc,
     steps, generatedMonster, setIsGeneratingMonster, setGeneratedMonster, monsterColor
   } = useGameStore();
 
   const prefersReducedMotion = useReducedMotion();
 
-  const handleChallengeSuccess = () => {
+  // SINGLE SOURCE OF TRUTH: the child's XP/crystal totals come from the SERVER
+  // (updateUserRewards, returned as `rewardTotals` on the chat response). We set them
+  // directly here instead of optimistically incrementing on the client — the old code
+  // did BOTH (client bump + server increment), so the shown numbers doubled until the
+  // next /api/user refetch. When the server didn't return totals (older response / no
+  // award), we leave the counters untouched rather than guess.
+  const handleChallengeSuccess = (rewardTotals?: { xp: number; crystals: number } | null) => {
     // Confetti is canvas-drawn (bypasses the CSS reduced-motion guard) — gate it explicitly.
     if (!prefersReducedMotion) {
       confetti({
@@ -33,35 +39,31 @@ export const PromptInput = () => {
       });
     }
     soundEngine.play("success");
+
+    if (rewardTotals) {
+      setTotalXp(rewardTotals.xp);
+      setCrystals(rewardTotals.crystals);
+    }
+
     if (activeStepId === 1) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));
-      updateXP(100);
-      setCrystals((prev: number) => prev + 10);
       setModalDesc("Поздравляем! Твой питомец вылупился из яйца благодаря твоим характеристикам. Пришло время научить его говорить!");
       setIsModalOpen(true);
     } else if (activeStepId === 2) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 2 ? { ...s, status: "completed" } : s.id === 3 ? { ...s, status: "active" } : s));
       setAchievements((prev: any) => prev.map((a: any) => a.id === 2 ? { ...a, unlocked: true } : a));
-      updateXP(150);
-      setCrystals((prev: number) => prev + 15);
       setModalDesc("Поздравляем! Ты успешно изменил характер своего ИИ-питомца с помощью точного промпта. Твой дракончик зарычал!");
       setIsModalOpen(true);
     } else if (activeStepId === 3) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 3 ? { ...s, status: "completed" } : s.id === 4 ? { ...s, status: "active" } : s));
-      updateXP(200);
-      setCrystals((prev: number) => prev + 20);
       setModalDesc("Вау! Ты разблокировал шифровальный код. Теперь твой ИИ-питомец умеет скрывать сообщения по секретному алгоритму!");
       setIsModalOpen(true);
     } else if (activeStepId === 4) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 4 ? { ...s, status: "completed" } : s.id === 5 ? { ...s, status: "active" } : s));
-      updateXP(250);
-      setCrystals((prev: number) => prev + 30);
       setModalDesc("Отлично! Ты помог монстру исправить ошибку машинного зрения с помощью промпт-тюнинга!");
       setIsModalOpen(true);
     } else if (activeStepId === 5) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 5 ? { ...s, status: "completed" } : s));
-      updateXP(500);
-      setCrystals((prev: number) => prev + 100);
       setModalDesc("УРА! Вы с питомцем победили главного босса Bugzilla с помощью продвинутого промпта и условий!");
       setIsModalOpen(true);
     }
@@ -155,7 +157,7 @@ export const PromptInput = () => {
       }
 
       if (data.challengeCompleted) {
-        handleChallengeSuccess();
+        handleChallengeSuccess(data.rewardTotals);
       }
 
     } catch (error) {
@@ -193,7 +195,10 @@ export const PromptInput = () => {
       setGeneratedMonster(data);
     } catch (error) {
       console.error("Error generating monster card:", error);
-      alert("Не удалось сгенерировать карточку. Проверьте подключение.");
+      // Branded, shame-free error via the in-app modal (same pattern as the reward modal)
+      // instead of a blocking native popup that breaks the game's look and motion-safety.
+      setModalDesc("Ой, карточка не оживилась с первого раза 🐲. Это не твоя вина — проверь интернет и попробуй ещё раз!");
+      setIsModalOpen(true);
     } finally {
       setIsGeneratingMonster(false);
     }

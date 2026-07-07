@@ -209,7 +209,14 @@ async function getOrCreateLesson(stepId: number) {
 // (eventId is the PK). A replayed eventId throws P2002 → we skip the whole award, so a
 // retry never double-increments xp/crystals. Without an eventId we fall back to the
 // prior (non-guarded) behavior. Returns true if the award was applied, false if skipped.
-async function updateUserRewards(userId: string, stepId: number, eventId?: string): Promise<boolean> {
+// Returns the authoritative post-award totals { xp, crystals } so the client can render the
+// SERVER value as the single source of truth (no optimistic client increment → no doubling).
+// awarded=false when the award was skipped (replayed eventId); totals still reflect current DB.
+async function updateUserRewards(
+  userId: string,
+  stepId: number,
+  eventId?: string
+): Promise<{ awarded: boolean; xp: number; crystals: number }> {
   try {
     if (eventId) {
       try {
@@ -218,7 +225,12 @@ async function updateUserRewards(userId: string, stepId: number, eventId?: strin
         // P2002 = unique constraint (eventId already recorded) → this is a replay.
         if (e?.code === "P2002") {
           console.warn(`[rewards] duplicate eventId, skipping double-award (step ${stepId})`);
-          return false;
+          // Return the CURRENT (already-awarded once) totals so the client still shows truth.
+          const cur = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { xp: true, crystals: true },
+          });
+          return { awarded: false, xp: cur?.xp ?? 0, crystals: cur?.crystals ?? 0 };
         }
         throw e;
       }
@@ -250,14 +262,15 @@ async function updateUserRewards(userId: string, stepId: number, eventId?: strin
       nextStep = 5;
     }
 
-    // 1. Update user profile statistics
-    await prisma.user.update({
+    // 1. Update user profile statistics (returns the authoritative post-increment totals)
+    const updated = await prisma.user.update({
       where: { id: userId },
       data: {
         xp: { increment: xpGain },
         crystals: { increment: crystalsGain },
         activeStep: nextStep
-      }
+      },
+      select: { xp: true, crystals: true },
     });
 
     // 2. Ensure the lesson model is initialized in database
@@ -285,10 +298,10 @@ async function updateUserRewards(userId: string, stepId: number, eventId?: strin
       },
     });
 
-    return true;
+    return { awarded: true, xp: updated.xp, crystals: updated.crystals };
   } catch (err) {
     console.error("Database rewards update failed:", err);
-    return false;
+    return { awarded: false, xp: 0, crystals: 0 };
   }
 }
 
@@ -403,10 +416,14 @@ export async function POST(req: Request) {
       : { pass: checkChallengeSuccess(userPrompt, serverStepId), reason: "офлайн-режим (без ИИ-судьи)" };
     const challengeCompleted = verdict.pass;
 
+    // Authoritative post-award totals, when a reward was applied this turn. The client renders
+    // THESE (single source of truth) instead of optimistically incrementing → no double-count.
+    let rewardTotals: { xp: number; crystals: number } | null = null;
     if (challengeCompleted && serverStepId === activeStepId) {
       // Anti-cheat: only reward if the client step matches authoritative server state.
       // Idempotency: eventId dedups retries so the award can't be applied twice.
-      await updateUserRewards(dbUser.id, serverStepId, eventId);
+      const res = await updateUserRewards(dbUser.id, serverStepId, eventId);
+      rewardTotals = { xp: res.xp, crystals: res.crystals };
     }
 
     // Simulated Mode (no API key)
@@ -455,6 +472,7 @@ export async function POST(req: Request) {
         latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
         cost: "$0.00002 (симуляция)",
         challengeCompleted,
+        rewardTotals,
         judgeReason: verdict.reason
       });
     }
@@ -517,6 +535,7 @@ export async function POST(req: Request) {
         latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
         cost: "$0.00000",
         challengeCompleted,
+        rewardTotals,
         judgeReason: verdict.reason,
       });
     }
@@ -543,6 +562,7 @@ export async function POST(req: Request) {
       latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
       cost: `$${costEstimate}`,
       challengeCompleted,
+      rewardTotals,
       judgeReason: verdict.reason
     });
 
