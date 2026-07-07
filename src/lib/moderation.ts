@@ -13,14 +13,17 @@ import type OpenAI from "openai";
 const GUARD_MODEL = "meta/llama-guard-4-12b";
 
 // LATENCY BUDGET (2026-07-07): the child chat path awaits FOUR classifier calls total
-// (input llamaGuard+kidNet, output llamaGuard+kidNet). To keep the whole request inside a
-// ~8-10s human-tolerable bound we cap EACH classifier call at ~4s via a per-request timeout
-// (below the shared client's 12s default) and retry AT MOST once on a timeout only. Worst
-// case per classifier is ~2×4s=8s, but the two run in parallel (Promise.all), so an input
-// or output moderation gate resolves in ≤~8s even if both attempts of one classifier stall.
-// NOTE: this changes ONLY latency. The safe/unsafe verdict + fail-closed logic is untouched:
-// a call that still times out after its retry surfaces as error → fail-closed (blocks).
-const CLASSIFIER_TIMEOUT_MS = 4000;
+// (input llamaGuard+kidNet, output llamaGuard+kidNet). Measured live latency of the working
+// models on this NVIDIA tier is ~0.4-0.8s per call (llama-guard-4-12b + llama-3.1-8b-instruct;
+// see scripts/measure-nvidia*.mjs). We set the per-call timeout to 8s — comfortably above the
+// measured latency (>10× margin) so a HEALTHY call always COMPLETES instead of being clipped
+// into a fail-closed block, while still bounding a genuinely stuck call. Retry AT MOST once on
+// a timeout only; the two classifiers run in parallel (Promise.all) so an input or output gate
+// resolves in ≤~16s worst case, typically <1s. NOTE: this changes ONLY latency. The safe/unsafe
+// verdict + fail-closed logic is untouched: a call that still times out after its retry surfaces
+// as error → fail-closed (blocks). Raising this lets the safety check actually RUN; it does not
+// weaken the threshold or verdict.
+const CLASSIFIER_TIMEOUT_MS = 8000;
 
 export type ModerationResult = { safe: boolean; category: string; source: string };
 type Internal = ModerationResult & { error?: boolean };
