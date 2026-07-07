@@ -12,6 +12,16 @@ import type OpenAI from "openai";
 
 const GUARD_MODEL = "meta/llama-guard-4-12b";
 
+// LATENCY BUDGET (2026-07-07): the child chat path awaits FOUR classifier calls total
+// (input llamaGuard+kidNet, output llamaGuard+kidNet). To keep the whole request inside a
+// ~8-10s human-tolerable bound we cap EACH classifier call at ~4s via a per-request timeout
+// (below the shared client's 12s default) and retry AT MOST once on a timeout only. Worst
+// case per classifier is ~2×4s=8s, but the two run in parallel (Promise.all), so an input
+// or output moderation gate resolves in ≤~8s even if both attempts of one classifier stall.
+// NOTE: this changes ONLY latency. The safe/unsafe verdict + fail-closed logic is untouched:
+// a call that still times out after its retry surfaces as error → fail-closed (blocks).
+const CLASSIFIER_TIMEOUT_MS = 4000;
+
 export type ModerationResult = { safe: boolean; category: string; source: string };
 type Internal = ModerationResult & { error?: boolean };
 
@@ -38,7 +48,7 @@ async function llamaGuard(client: OpenAI, text: string): Promise<Internal> {
       messages: [{ role: "user", content: text }],
       max_tokens: 30,
       temperature: 0,
-    }));
+    }, { timeout: CLASSIFIER_TIMEOUT_MS }));
     const out = (r.choices[0]?.message?.content || "").trim().toLowerCase();
     if (out.startsWith("unsafe")) {
       return { safe: false, category: out.replace(/\s+/g, " ").slice(0, 40), source: "llama-guard" };
@@ -71,7 +81,7 @@ async function kidNet(client: OpenAI, model: string, text: string): Promise<Inte
         },
         { role: "user", content: text },
       ],
-    }));
+    }, { timeout: CLASSIFIER_TIMEOUT_MS }));
     const d = JSON.parse(r.choices[0]?.message?.content || "{}");
     return { safe: d.unsafe !== true, category: String(d.category || "kid-net"), source: "kid-net" };
   } catch {

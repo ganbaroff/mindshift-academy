@@ -158,7 +158,10 @@ async function judgeComprehension(
           content: `Критерий урока: ${rubric}\n\nСообщение ребёнка: "${prompt}"`,
         },
       ],
-    });
+    // LATENCY: bound the judge to ~6s (below the client's 12s default) via a per-request
+    // timeout. On timeout it throws → caught below → offline keyword fallback, so a slow
+    // judge can't hang the request. Graceful degrade of the PEDAGOGY check, not SAFETY.
+    }, { timeout: 6000 });
 
     const data = JSON.parse(judge.choices[0]?.message?.content || "{}");
     return {
@@ -494,12 +497,29 @@ export async function POST(req: Request) {
       }))
     ];
 
-    const response = await ai.client.chat.completions.create({
-      model: ai.model,
-      messages: openAiMessages as any,
-      max_tokens: 150,
-      temperature: 0.7,
-    });
+    // LATENCY: the tutor generation gets its OWN tight ~8s timeout (below the client's 12s
+    // default). On timeout/transient error we DON'T hang or hard-500 — we return the warm,
+    // shame-free retry message fast, so the child sees a friendly reply within the bound.
+    let response: OpenAI.Chat.Completions.ChatCompletion | null = null;
+    try {
+      response = await ai.client.chat.completions.create({
+        model: ai.model,
+        messages: openAiMessages as any,
+        max_tokens: 150,
+        temperature: 0.7,
+      }, { timeout: 8000 });
+    } catch (genErr: any) {
+      console.warn("[chat] tutor generation slow/failed:", genErr?.name ?? "Error", genErr?.status ?? "");
+      return NextResponse.json({
+        response: "Хм, я на секунду задумался и не успел ответить 🐲. Это не твоя вина — просто попробуй отправить ещё раз!",
+        safetyPassed: true,
+        toxicityScore: 0.0,
+        latency: `${((Date.now() - startTime) / 1000).toFixed(2)} сек`,
+        cost: "$0.00000",
+        challengeCompleted,
+        judgeReason: verdict.reason,
+      });
+    }
 
     let aiMessageText = response.choices[0]?.message?.content || "Монстр задумался... Попробуй ещё раз!";
 
