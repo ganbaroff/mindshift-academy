@@ -8,7 +8,7 @@ export const MonsterCard = () => {
 
   const handleResetApp = async () => {
     const confirmed = window.confirm(
-      "Начать заново? Весь твой прогресс будет сброшен, и ты начнёшь обучение с самого начала."
+      "Начать новое приключение? Весь твой прогресс сбросится, и ты начнёшь обучение с самого начала."
     );
     if (!confirmed) return;
     try {
@@ -99,7 +99,7 @@ export const MonsterCard = () => {
             onClick={handleResetApp}
             className="self-center text-xs font-semibold text-gray-500 hover:text-gray-300 underline underline-offset-2 transition-colors cursor-pointer mt-1"
           >
-            Начать заново
+            Начать новое приключение?
           </button>
         </div>
         
