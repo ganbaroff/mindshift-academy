@@ -50,6 +50,7 @@ export default function LessonPage() {
     monsterColor,
     steps,
     setSteps,
+    completedLessons,
     isModalOpen,
     setIsModalOpen,
     modalDesc,
@@ -82,29 +83,18 @@ export default function LessonPage() {
     }
   }, [isModalOpen]);
 
+  // Navigation effect: fires only on a real lesson change. Sets the active step
+  // and resets the chat to the lesson intro. Intentionally does NOT depend on
+  // completedLessons — otherwise finishing a lesson (which marks it completed)
+  // would instantly wipe the reward conversation back to the intro.
   useEffect(() => {
     if (!lessonData) {
       router.replace("/lesson/1");
       return;
     }
 
-    // Set the active step in Zustand store
     setActiveStepId(lessonId);
 
-    // Update active/locked statuses of steps dynamically
-    setSteps((prev: any[]) =>
-      prev.map((step) => {
-        if (step.id < lessonId) {
-          return { ...step, status: "completed" };
-        } else if (step.id === lessonId) {
-          return { ...step, status: "active" };
-        } else {
-          return { ...step, status: "locked" };
-        }
-      })
-    );
-
-    // Reset chat messages for the new lesson to introduce the task
     const introductionText = getIntroductionText(lessonId, activeMonsterName, activeSkin);
     setMessages([
       {
@@ -115,6 +105,30 @@ export default function LessonPage() {
       },
     ]);
   }, [lessonId, activeMonsterName, activeSkin]);
+
+  // Lock/complete derivation: depends on REAL per-lesson completion
+  // (completedLessons), NOT on the current position. The furthest lesson the
+  // child may reach is the one right after their highest completed lesson
+  // (lesson 1 is always open). Navigating backward therefore never relocks
+  // later lessons. Runs on its own so marking a lesson done updates the nav
+  // list WITHOUT resetting the chat.
+  useEffect(() => {
+    if (!lessonData) return;
+    setSteps((prev: any[]) => {
+      const highestCompleted = completedLessons.length ? Math.max(...completedLessons) : 0;
+      const maxUnlocked = Math.max(1, highestCompleted + 1);
+      return prev.map((step) => {
+        const isDone = completedLessons.includes(step.id);
+        if (step.id === lessonId) {
+          // The lesson being viewed shows as active unless already completed.
+          return { ...step, status: isDone ? "completed" : "active" };
+        }
+        if (isDone) return { ...step, status: "completed" };
+        if (step.id <= maxUnlocked) return { ...step, status: "active" };
+        return { ...step, status: "locked" };
+      });
+    });
+  }, [lessonId, completedLessons, lessonData]);
 
   function getIntroductionText(step: number, name: string, emoji: string): string {
     switch (step) {

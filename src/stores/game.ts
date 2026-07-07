@@ -15,6 +15,11 @@ interface GameState {
   // Game progression
   isVoiceActive: boolean;
   activeStepId: number;
+  // Real per-lesson completion, persisted. This is the source of truth for
+  // lock/unlock — NOT the current lessonId position. Navigating backward to an
+  // earlier lesson must never relock later lessons, so lock state is derived
+  // from this set (see lesson page), never recomputed from position.
+  completedLessons: number[];
   
   // UI states
   promptInput: string;
@@ -57,6 +62,9 @@ interface GameState {
   setIsGeneratingMonster: (val: boolean) => void;
   setGeneratedMonster: (val: Monster | null) => void;
   updateXP: (amount: number) => void;
+  // Idempotently record a lesson as completed. Additive only — never removes,
+  // so backward navigation can't regress progress.
+  markLessonCompleted: (lessonId: number) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -69,6 +77,7 @@ export const useGameStore = create<GameState>()(
   crystals: 0,
   isVoiceActive: false,
   activeStepId: 1,
+  completedLessons: [],
   promptInput: "",
   isProxyView: false,
   promptCount: 0,
@@ -128,6 +137,12 @@ export const useGameStore = create<GameState>()(
   setIsPlaying: (val) => set({ isPlaying: val }),
   setIsGeneratingMonster: (val) => set({ isGeneratingMonster: val }),
   setGeneratedMonster: (val) => set({ generatedMonster: val }),
+
+  markLessonCompleted: (lessonId) => set((state) =>
+    state.completedLessons.includes(lessonId)
+      ? state
+      : { completedLessons: [...state.completedLessons, lessonId] }
+  ),
   
   updateXP: (amount: number) => {
     set((state) => {
@@ -164,6 +179,10 @@ export const useGameStore = create<GameState>()(
         activeMonsterName: state.activeMonsterName,
         monsterColor: state.monsterColor,
         isVoiceActive: state.isVoiceActive,
+        // Which lessons the child has actually completed — the unlock source of
+        // truth. Additive-only + used only to UNLOCK (never to lower XP/crystals),
+        // so persisting it can't regress server-authoritative progress.
+        completedLessons: state.completedLessons,
       }),
       // Server-authoritative merge: start from the current (fresh) state, layer the
       // cached UI state on top, but NEVER let cached progress win — totalXp/crystals/

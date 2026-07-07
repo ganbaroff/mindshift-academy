@@ -17,7 +17,8 @@ export const PromptInput = () => {
     isVoiceActive, setIsVoiceActive,
     setAchievements, updateXP,
     setSteps, setCrystals, setTotalXp, setIsModalOpen, setModalDesc,
-    steps, generatedMonster, setIsGeneratingMonster, setGeneratedMonster, monsterColor
+    steps, generatedMonster, setIsGeneratingMonster, setGeneratedMonster, monsterColor,
+    markLessonCompleted
   } = useGameStore();
 
   const prefersReducedMotion = useReducedMotion();
@@ -44,6 +45,11 @@ export const PromptInput = () => {
       setTotalXp(rewardTotals.xp);
       setCrystals(rewardTotals.crystals);
     }
+
+    // Persist REAL per-lesson completion so the nav list derives lock/unlock
+    // from actual progress. Without this, navigating back to an earlier lesson
+    // relocked the later ones (they were only "completed" in transient step state).
+    markLessonCompleted(activeStepId);
 
     if (activeStepId === 1) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));
