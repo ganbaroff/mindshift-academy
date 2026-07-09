@@ -76,7 +76,18 @@ export async function POST(req: Request) {
     // P0-C: the PUBLIC landing preview must NOT egress child free-text to the live model
     // before sign-up/consent (consent is CEO-gated). Unauthenticated callers get the
     // deterministic no-LLM fallback. Only a signed-in caller reaches the live model path.
-    const { userId: clerkId } = await auth();
+    let clerkId: string | null = null;
+    const isDev = process.env.NODE_ENV === "development";
+    // test seam for safety.test.mjs; inert in prod (NODE_ENV gate); remove before real-user launch
+    const testBypass = req.headers.get("x-test-bypass") === "true";
+
+    if (isDev && testBypass) {
+      clerkId = "test_user_id";
+    } else {
+      const session = await auth();
+      clerkId = session.userId;
+    }
+
     if (!clerkId) {
       return NextResponse.json(deterministicSilhouette(words));
     }

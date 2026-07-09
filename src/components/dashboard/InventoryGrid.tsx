@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Package, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface InventoryItem {
   id: string;
@@ -32,6 +32,8 @@ const RARITY_COLORS: Record<string, string> = {
 };
 
 export const InventoryGrid = ({ items }: InventoryGridProps) => {
+  const shouldReduceMotion = useReducedMotion();
+
   if (items.length === 0) {
     return (
       <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
@@ -48,9 +50,9 @@ export const InventoryGrid = ({ items }: InventoryGridProps) => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-violet-400" />
-        <h4 className="text-xs font-bold uppercase tracking-widest text-white/50">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-white/50">
           Коллекция ({items.length})
-        </h4>
+        </h3>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
@@ -65,12 +67,12 @@ export const InventoryGrid = ({ items }: InventoryGridProps) => {
           return (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.08, duration: 0.3 }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
+              animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+              transition={shouldReduceMotion ? undefined : { delay: idx * 0.08, duration: 0.3 }}
               className="rounded-2xl border border-white/8 bg-white/[0.03] p-3 flex flex-col items-center gap-2 hover:bg-white/[0.06] transition-colors"
             >
-              <span className="text-2xl">{display.emoji}</span>
+              <span className="text-2xl" aria-hidden="true">{display.emoji}</span>
               <span className="text-[11px] font-bold text-white/80 text-center leading-tight">
                 {display.label}
               </span>

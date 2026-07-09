@@ -50,3 +50,5 @@ next-env.d.ts
 /prisma/dev.db
 *.db
 !.env.example
+
+.vercel

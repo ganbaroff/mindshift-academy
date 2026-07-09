@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Loader2, RotateCcw, Sparkles, WandSparkles } from "lucide-react";
 
@@ -43,7 +43,9 @@ export function InteractiveShowcase() {
   const [phase, setPhase] = useState<"draft" | "locked">("draft");
   const [status, setStatus] = useState("Введите ровно 3 слова, чтобы запустить силуэт.");
   const [error, setError] = useState<string | null>(null);
+  const [inputError, setInputError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [monsterData, setMonsterData] = useState<{
     name: string;
     emoji: string;
@@ -62,10 +64,10 @@ export function InteractiveShowcase() {
   const ctaLabel =
     phase === "draft"
       ? isSubmitting
-        ? "Генерируем силуэт..."
+        ? "Генерируем силуэт…"
         : "Создать силуэт"
       : isSubmitting
-        ? "Открываем..."
+        ? "Открываем…"
         : "Продолжить бесплатно";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -74,12 +76,18 @@ export function InteractiveShowcase() {
 
     if (phase === "draft") {
       if (!isReady) {
-        setStatus("Нужно ввести ровно 3 слова.");
+        const message = "Нужно ввести ровно 3 слова.";
+        setStatus(message);
+        // Surface the validation inline next to the field and move focus there so
+        // keyboard/screen-reader users land on the problem instead of hunting for it.
+        setInputError(message);
+        inputRef.current?.focus();
         return;
       }
 
+      setInputError(null);
       setIsSubmitting(true);
-      setStatus("Пробуждаем силуэт монстра...");
+      setStatus("Пробуждаем силуэт монстра…");
 
       try {
         const response = await fetch("/api/generate-silhouette", {
@@ -108,7 +116,7 @@ export function InteractiveShowcase() {
     }
 
     setIsSubmitting(true);
-    setStatus("Открываем твоего питомца...");
+    setStatus("Открываем твоего питомца…");
     window.location.assign(buildContinueUrl(words, monsterData));
   };
 
@@ -135,10 +143,15 @@ export function InteractiveShowcase() {
         <label className="block space-y-2">
           <span className="text-sm font-medium text-white/70">Введите 3 слова-описания монстра</span>
           <input
+            ref={inputRef}
+            name="monster-words"
             value={input}
+            aria-invalid={inputError ? true : undefined}
+            aria-describedby={inputError ? "monster-words-error" : undefined}
             onChange={(event) => {
               setInput(event.target.value);
               setError(null);
+              setInputError(null);
               if (phase === "locked") {
                 setPhase("draft");
                 setMonsterData(null);
@@ -147,11 +160,16 @@ export function InteractiveShowcase() {
                 setStatus("Введите ровно 3 слова, чтобы запустить силуэт.");
               }
             }}
-            placeholder="добрый огненный дракон"
+            placeholder="храбрый быстрый весёлый"
             autoComplete="off"
             spellCheck={false}
             className="h-14 w-full rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-base text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
           />
+          {inputError ? (
+            <span id="monster-words-error" role="alert" className="block text-sm font-medium text-warning">
+              {inputError}
+            </span>
+          ) : null}
         </label>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -264,7 +282,7 @@ export function InteractiveShowcase() {
         </div>
 
         <div className="mt-6 flex items-start justify-between gap-4 border-t border-white/8 pt-4">
-          <div className="space-y-1">
+          <div className="space-y-1" role="status" aria-live="polite">
             {monsterData?.description && phase === "locked" ? (
               <p className="text-sm font-medium text-white/90">{monsterData.description}</p>
             ) : null}

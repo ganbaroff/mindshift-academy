@@ -71,6 +71,10 @@ interface GameState {
   // Idempotently record a lesson as completed. Additive only — never removes,
   // so backward navigation can't regress progress.
   markLessonCompleted: (lessonId: number) => void;
+  // Server-authoritative reconcile: REPLACE the completed-lesson set with server truth
+  // (the /api/user response) on load. localStorage is only an optimistic cache — server
+  // truth overwrites it so a fresh device / re-login rebuilds real unlock state.
+  setCompletedLessons: (lessonIds: number[]) => void;
 }
 
 export const useGameStore = create<GameState>()(
@@ -98,16 +102,16 @@ export const useGameStore = create<GameState>()(
       id: "init",
       sender: "monster",
       avatar: "🐲",
-      text: `Привет, будущий повелитель драконов! 🐲 Я твой новый огненный помощник. Пока что я говорю обычным голосом. Измени мой характер в поле ввода снизу! Например, напиши: "Говори как грозный, но добрый дракон, рычи перед каждым предложением!"`,
+      text: `Привет, будущий повелитель драконов! 🐲 Я твой новый ИИ-помощник. Пока что я говорю обычным голосом. Измени мой стиль речи в поле ввода снизу! Например, напиши: "Пой весело и добавляй огонёк 🔥 к каждому слову!"`,
     }
   ],
   
   steps: [
     { id: 1, name: "Пробуждение яйца: вылупи питомца", xp: "+100 XP • Награда: Питомец 🥚", status: "active", hint: "3 качества" },
-    { id: 2, name: "Настройка характера: научи монстра говорить", xp: "+150 XP • Награда: Ачивка 👾", status: "locked", hint: "рычи" },
-    { id: 3, name: "Секретный язык: сделай шифр для общения", xp: "+200 XP • Награда: Ачивка 🗣️", status: "locked", hint: "звезд" },
+    { id: 2, name: "Эмоциональный спектр: настрой стиль речи", xp: "+150 XP • Награда: Ачивка 👾", status: "locked", hint: "пой / огонёк 🔥" },
+    { id: 3, name: "Секретный код: сделай шифр для друзей", xp: "+200 XP • Награда: Ачивка 🗣️", status: "locked", hint: "звезд" },
     { id: 4, name: "Машинное зрение: исправь ошибку ИИ", xp: "+250 XP • Награда: Карта 🗺️", status: "locked", hint: "не кошка" },
-    { id: 5, name: "Битва промптов: одолей Bugzilla", xp: "+500 XP • Награда: Корона 👑", status: "locked", hint: "сложные условия" }
+    { id: 5, name: "Финальный квест: пройди лабиринт", xp: "+500 XP • Награда: Корона 👑", status: "locked", hint: "если … то …" }
   ],
   
   achievements: [
@@ -151,6 +155,10 @@ export const useGameStore = create<GameState>()(
       ? state
       : { completedLessons: [...state.completedLessons, lessonId] }
   ),
+
+  setCompletedLessons: (lessonIds) => set({
+    completedLessons: Array.from(new Set(lessonIds)).sort((a, b) => a - b),
+  }),
   
   updateXP: (amount: number) => {
     set((state) => {

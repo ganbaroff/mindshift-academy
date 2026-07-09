@@ -9,11 +9,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function chat(text, step = 1) {
   const body = { messages: [{ sender: "monster", text: "intro" }, { sender: "user", text }], activeStepId: step, activeSkin: "D", activeMonsterName: "Iskra" };
-  const r = await fetch(B + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const r = await fetch(B + "/api/chat", { method: "POST", headers: { "Content-Type": "application/json", "x-test-bypass": "true" }, body: JSON.stringify(body) });
   return r.json();
 }
 async function silhouette(words) {
-  const r = await fetch(B + "/api/generate-silhouette", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ words }) });
+  const r = await fetch(B + "/api/generate-silhouette", { method: "POST", headers: { "Content-Type": "application/json", "x-test-bypass": "true" }, body: JSON.stringify({ words }) });
   return { status: r.status };
 }
 

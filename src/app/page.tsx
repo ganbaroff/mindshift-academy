@@ -50,7 +50,7 @@ const COPY = {
     badge: "Интерактивный курс",
     h1: "Ваш ребёнок научится управлять ИИ за 5 игровых уроков",
     subtitle:
-      "Мы превратили программирование искусственного интеллекта в увлекательную сказку. Ребёнок создаёт цифрового питомца, обучает его командам и защищает от вирусов, осваивая базовые принципы инженерии запросов без скучных лекций.",
+      "Мы превратили программирование искусственного интеллекта в увлекательную сказку. Ребёнок создаёт цифрового питомца, обучает его командам и придумывает с ним секретный код, осваивая базовые принципы инженерии запросов без скучных лекций.",
     benefits: benefitsRu,
     howTitle: "Как это работает?",
     steps: [
@@ -77,7 +77,7 @@ const COPY = {
     badge: "İnteraktiv kurs",
     h1: "Övladınız 5 oyun dərsi ilə Süni İntellekti idarə etməyi öyrənəcək",
     subtitle:
-      "Biz süni intellekt proqramlaşdırmasını maraqlı nağıla çevirdik. Övladınız rəqəmsal köməkçi yaradacaq, ona əmrlər öyrədəcək və sistemləri qoruyacaq. Bu prosesdə heç bir sıxıcı mühazirə olmadan mühüm rəqəmsal bacarıqlara yiyələnəcək.",
+      "Biz süni intellekt proqramlaşdırmasını maraqlı nağıla çevirdik. Övladınız rəqəmsal köməkçi yaradacaq, ona əmrlər öyrədəcək və onunla birlikdə gizli kod düşünəcək. Bu prosesdə heç bir sıxıcı mühazirə olmadan mühüm rəqəmsal bacarıqlara yiyələnəcək.",
     benefits: benefitsAz,
     howTitle: "Bu necə işləyir?",
     steps: [
@@ -128,7 +128,7 @@ export default function HomePage() {
                 type="button"
                 onClick={() => setLang(l)}
                 aria-pressed={lang === l}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors ${
+                className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
                   lang === l ? "bg-primary text-white" : "text-white/55 hover:text-white/85"
                 }`}
               >
@@ -139,16 +139,16 @@ export default function HomePage() {
 
           <Link
             href="/dashboard?demo=1"
-            className="hidden rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 transition-colors hover:bg-white/[0.08] sm:inline-flex"
+            className="hidden rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:inline-flex"
           >
             {t.parentDashboard}
           </Link>
           <Link
             href="/sign-in"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06]"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
             {t.signIn}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </div>
       </header>
@@ -157,7 +157,7 @@ export default function HomePage() {
       <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-14 pt-6 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:px-8 lg:pb-20 lg:pt-10">
         <div className="space-y-8 flex flex-col justify-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-warning">
-            <Star className="h-4 w-4 fill-warning/20 text-warning" />
+            <Star className="h-4 w-4 fill-warning/20 text-warning" aria-hidden="true" />
             {t.badge}
           </div>
 
@@ -178,7 +178,7 @@ export default function HomePage() {
                 >
                   <div>
                     <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] mb-3">
-                      <Icon className="h-5 w-5 text-violet-400" />
+                      <Icon className="h-5 w-5 text-violet-400" aria-hidden="true" />
                     </span>
                     <p className="text-sm font-semibold text-white">{pillar.title}</p>
                     <p className="mt-1.5 text-xs leading-5 text-white/60">{pillar.copy}</p>

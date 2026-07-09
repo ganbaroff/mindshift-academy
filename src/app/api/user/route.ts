@@ -76,7 +76,21 @@ export async function GET() {
       });
     }
 
-    return NextResponse.json(user);
+    // SERVER-AUTHORITATIVE PROGRESSION (state-ownership cure): return the set of lesson
+    // orders the child has actually completed (LessonProgress.completed=true), alongside
+    // the activeStep + monster already on `user`. The lesson page rebuilds its unlock state
+    // from THIS server truth on load — instead of an independent localStorage ledger — so a
+    // fresh device / re-login shows real progress rather than an empty (relocked) cache.
+    const completedRows = await prisma.lessonProgress.findMany({
+      where: { userId: user.id, completed: true },
+      select: { lesson: { select: { order: true } } },
+    });
+    const completedLessonIds = completedRows
+      .map((r) => r.lesson?.order)
+      .filter((n): n is number => typeof n === "number")
+      .sort((a, b) => a - b);
+
+    return NextResponse.json({ ...user, completedLessonIds });
   } catch (error: any) {
     console.error("Database user error:", error);
     return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });

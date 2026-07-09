@@ -131,7 +131,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
           </span>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06]"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             На главную
             <LinkIcon className="h-4 w-4" />
@@ -167,7 +167,10 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                 <p className="mt-3 text-2xl font-semibold text-white flex items-center gap-2">
                   {item.value}
                   {item.isStreak && (
-                    <span className={`inline-flex items-center ${streak > 5 ? "animate-pulse drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]" : ""}`}>
+                    <span
+                      aria-hidden="true"
+                      className={`inline-flex items-center ${streak > 5 ? "animate-pulse drop-shadow-[0_0_8px_rgba(234,179,8,0.6)] motion-reduce:animate-none" : ""}`}
+                    >
                       🔥
                     </span>
                   )}
@@ -244,7 +247,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                 </div>
                 <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-white/10">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-500"
+                    className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-[width] duration-500 motion-reduce:transition-none"
                     style={{ width: `${monsterMood}%` }}
                   />
                 </div>
@@ -253,11 +256,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">XP</p>
-                  <p className="mt-2 text-xl font-semibold text-white">{totalXp}</p>
+                  <p className="mt-2 text-xl font-semibold text-white tabular-nums">{totalXp}</p>
                 </div>
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-white/45">Кристаллы</p>
-                  <p className="mt-2 text-xl font-semibold text-white">{crystals}</p>
+                  <p className="mt-2 text-xl font-semibold text-white tabular-nums">{crystals}</p>
                 </div>
               </div>
 

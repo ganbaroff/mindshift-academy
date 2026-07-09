@@ -20,7 +20,13 @@ export const ChatWindow = () => {
   }, [messages, latency]);
 
   return (
-    <div className="flex-grow border border-white/5 bg-black/20 rounded-xl p-4 flex flex-col gap-4 overflow-y-auto max-h-[380px] min-h-[300px]">
+    <div
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Чат с питомцем"
+      className="flex-grow border border-white/5 bg-black/20 rounded-xl p-4 flex flex-col gap-4 overflow-y-auto max-h-[380px] min-h-[300px]"
+    >
       {messages.map((msg) => (
         <div 
           key={msg.id}
@@ -37,7 +43,7 @@ export const ChatWindow = () => {
               <MonsterAvatar size={32} mood="happy" color={monsterColor} />
             )}
           </div>
-          <div className={`p-3 rounded-2xl border text-sm leading-relaxed ${
+          <div className={`p-3 rounded-2xl border text-sm leading-relaxed min-w-0 break-words ${
             msg.sender === "user"
               ? "bg-violet-500/10 border-violet-500/20"
               : "bg-cyan-500/5 border-cyan-500/10"

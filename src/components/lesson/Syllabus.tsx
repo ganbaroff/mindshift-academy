@@ -8,16 +8,18 @@ export const Syllabus = () => {
   const steps = useGameStore((state) => state.steps);
   const activeStepId = useGameStore((state) => state.activeStepId);
   const setActiveStepId = useGameStore((state) => state.setActiveStepId);
+  const [gateMessage, setGateMessage] = React.useState("");
 
   const handleSelectStep = (stepId: number) => {
     const step = steps.find(s => s.id === stepId);
     if (!step) return;
-    
+
     if (stepId === 3 && steps.find(s => s.id === 2)?.status !== "completed") {
-      alert("Пожалуйста, сначала выполните Шаг 2!");
+      setGateMessage("Сначала закончи Шаг 2 — и этот шаг откроется!");
       return;
     }
-    
+
+    setGateMessage("");
     setActiveStepId(stepId);
   };
 
@@ -32,14 +34,22 @@ export const Syllabus = () => {
         Мы настраиваем ИИ-ассистента, с которым ты будешь учиться дальше. Преврати его в монстра с помощью промпта!
       </p>
       
+      {gateMessage && (
+        <p role="status" aria-live="polite" className="text-xs font-semibold text-amber-400">
+          {gateMessage}
+        </p>
+      )}
+
       <div className="flex flex-col gap-3">
         {steps.map(step => (
-          <div 
+          <button
             key={step.id}
+            type="button"
             onClick={() => handleSelectStep(step.id)}
-            className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-              step.status === "completed" 
-                ? "bg-white/5 border-white/5 opacity-80" 
+            aria-current={step.id === activeStepId ? "step" : undefined}
+            className={`flex items-start gap-4 p-4 rounded-xl border text-left w-full transition-[transform,opacity,background-color] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111928] ${
+              step.status === "completed"
+                ? "bg-white/5 border-white/5 opacity-80"
                 : step.status === "active" && step.id === activeStepId
                 ? "bg-violet-500/10 border-violet-500 shadow-[0_0_15px_rgba(139,92,246,0.1)]"
                 : "bg-white/5 border-white/5"
@@ -63,7 +73,7 @@ export const Syllabus = () => {
               </span>
               <span className="text-[11px] font-bold text-amber-500">{step.xp}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

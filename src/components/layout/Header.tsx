@@ -28,19 +28,26 @@ export const Header = () => {
         <div className="flex flex-col gap-1 w-[150px]">
           <div className="flex justify-between text-[11px] font-bold text-gray-400">
             <span>Уровень 2</span>
-            <span>{totalXp} / 1000 XP</span>
+            <span className="tabular-nums">{totalXp} / 1000 XP</span>
           </div>
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <div 
+          <div
+            role="progressbar"
+            aria-valuenow={totalXp}
+            aria-valuemin={0}
+            aria-valuemax={1000}
+            aria-label="Прогресс до следующего уровня"
+            className="h-1.5 bg-white/10 rounded-full overflow-hidden"
+          >
+            <div
               className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all duration-500"
               style={{ width: `${(totalXp / 1000) * 100}%` }}
             />
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-white/5 border border-amber-500/20 rounded-full px-4 py-2 text-sm font-semibold text-amber-400">
-          <span>💎</span>
-          <span>{crystals}</span>
+          <span aria-hidden="true">💎</span>
+          <span className="tabular-nums">{crystals}</span>
         </div>
       </div>
     </header>

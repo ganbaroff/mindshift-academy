@@ -9,9 +9,9 @@ import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 type Phase = "hatching" | "naming" | "ready";
 
 const HATCH_MESSAGES = [
-  "Яйцо трескается...",
-  "Что-то шевелится внутри...",
-  "Свет пробивается сквозь скорлупу...",
+  "Яйцо трескается…",
+  "Что-то шевелится внутри…",
+  "Свет пробивается сквозь скорлупу…",
   "Твой питомец просыпается!",
 ];
 
@@ -134,7 +134,7 @@ function OnboardingContent() {
               {HATCH_MESSAGES.map((_, i) => (
                 <span
                   key={i}
-                  className={`h-1.5 rounded-full transition-all ${
+                  className={`h-1.5 rounded-full transition-[width,background-color] motion-reduce:transition-none ${
                     i <= hatchStep ? "w-5 bg-primary" : "w-1.5 bg-white/15"
                   }`}
                 />
@@ -180,20 +180,21 @@ function OnboardingContent() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xl font-semibold text-white">
+              <label htmlFor="pet-name" className="block text-xl font-semibold text-white">
                 Как зовут твоего питомца?
-              </p>
-              <p className="text-sm text-white/60">
+              </label>
+              <p id="pet-name-hint" className="text-sm text-white/60">
                 Можешь оставить имя или придумать своё
               </p>
             </div>
 
             <input
+              id="pet-name"
               value={petName}
               onChange={(e) => setPetName(sanitizePetName(e.target.value))}
               maxLength={PET_NAME_MAX}
+              aria-describedby="pet-name-hint"
               className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
-              autoFocus
             />
 
             <button
@@ -267,8 +268,8 @@ export default function OnboardingPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center text-white font-sans">
-        <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin" />
-        <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора...</p>
+        <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin motion-reduce:animate-none" />
+        <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора…</p>
       </div>
     }>
       <OnboardingContent />

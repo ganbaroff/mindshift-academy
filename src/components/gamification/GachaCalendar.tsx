@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Gift, CheckCircle2, ChevronDown } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,7 +16,9 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
   const [claimedDays, setClaimedDays] = useState<number[]>([]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimResult, setClaimResult] = useState<any | null>(null);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
+  const dialogCloseRef = useRef<HTMLButtonElement>(null);
   // Secondary to the lesson itself — collapsed by default so the chat stays the one primary action.
   const [expanded, setExpanded] = useState(false);
 
@@ -45,8 +47,20 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
     setHasClaimedToday(isSameDay);
   }, [lastActive]);
 
+  // When the reward popup opens, move focus into it and allow Escape to dismiss.
+  useEffect(() => {
+    if (!claimResult) return;
+    dialogCloseRef.current?.focus();
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setClaimResult(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [claimResult]);
+
   const handleClaim = async () => {
     setIsClaiming(true);
+    setClaimError(null);
     try {
       const res = await fetch("/api/gacha/claim", { method: "POST" });
       if (!res.ok) throw new Error("Failed to claim daily reward");
@@ -71,7 +85,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
       }
     } catch (err) {
       console.error(err);
-      alert("Не удалось забрать награду. Попробуй позже!");
+      setClaimError("Не удалось забрать награду. Попробуй позже!");
     } finally {
       setIsClaiming(false);
     }
@@ -95,7 +109,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        className="flex w-full items-center justify-between gap-2 text-left"
+        className="flex w-full items-center justify-between gap-2 text-left rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-white/75">
           <Gift className="w-4 h-4 text-violet-400" />
@@ -107,13 +121,22 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
         <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${expanded ? "rotate-180" : ""}`} />
       </button>
 
+      <p role="status" aria-live="polite" className="sr-only">
+        {isClaiming ? "Собираем награду…" : ""}
+      </p>
+      {claimError && (
+        <p role="alert" className="text-xs font-semibold text-[#D4B4FF]">
+          {claimError}
+        </p>
+      )}
+
       {!expanded && !hasClaimedToday && !claimedDays.includes(nextClaimDay) && (
         <button
           onClick={handleClaim}
           disabled={isClaiming}
-          className="self-start rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200 transition-colors hover:bg-violet-500/20 disabled:opacity-60"
+          className="self-start rounded-full border border-violet-500/25 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200 transition-colors hover:bg-violet-500/20 disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
         >
-          {isClaiming ? "Сбор..." : "🎁 Забрать награду дня"}
+          {isClaiming ? "Сбор…" : "🎁 Забрать награду дня"}
         </button>
       )}
 
@@ -129,7 +152,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
           return (
             <div
               key={day}
-              className={`rounded-2xl border p-3 flex flex-col items-center justify-between gap-2 text-center relative overflow-hidden transition-all duration-300 ${
+              className={`rounded-2xl border p-3 flex flex-col items-center justify-between gap-2 text-center relative overflow-hidden transition-transform duration-300 ${
                 isCollected
                   ? "bg-cyan-500/5 border-cyan-500/15 text-cyan-400"
                   : isCurrent
@@ -167,14 +190,14 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
             <button
               onClick={handleClaim}
               disabled={isClaiming || hasClaimedToday || claimedDays.includes(nextClaimDay)}
-              className={`flex-grow font-semibold py-2.5 px-6 rounded-full transition-colors text-xs text-center cursor-pointer ${
+              className={`flex-grow font-semibold py-2.5 px-6 rounded-full transition-colors text-xs text-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface ${
                 hasClaimedToday || claimedDays.includes(nextClaimDay)
                   ? "bg-white/5 border border-white/5 text-gray-500 cursor-not-allowed"
                   : "bg-violet-500/10 border border-violet-500/25 text-violet-200 hover:bg-violet-500/20"
               }`}
             >
               {isClaiming
-                ? "Сбор..."
+                ? "Сбор…"
                 : hasClaimedToday || claimedDays.includes(nextClaimDay)
                 ? "Награда собрана"
                 : "Получить награду дня"}
@@ -186,12 +209,17 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
       {/* Claim Result Popup */}
       <AnimatePresence>
         {claimResult && (
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-            <div
-              className="absolute inset-0 bg-black/80"
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overscroll-contain">
+            <button
+              type="button"
+              aria-label="Закрыть"
+              className="absolute inset-0 bg-black/80 cursor-default"
               onClick={() => setClaimResult(null)}
             />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="gacha-reward-title"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
@@ -201,7 +229,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
                 {claimResult.type === "crystals" ? "💎" : "🎁"}
               </div>
               <div className="space-y-2">
-                <h3 className="text-2xl font-black text-white">Награда получена!</h3>
+                <h3 id="gacha-reward-title" className="text-2xl font-black text-white">Награда получена!</h3>
                 <p className="text-sm text-gray-300 font-bold">
                   {getRewardName(claimResult)}
                 </p>
@@ -210,8 +238,9 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
                 </p>
               </div>
               <button
+                ref={dialogCloseRef}
                 onClick={() => setClaimResult(null)}
-                className="w-full bg-gradient-to-r from-violet-500 to-cyan-400 hover:from-violet-600 hover:to-cyan-500 text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg transition-all text-sm uppercase tracking-wider cursor-pointer"
+                className="w-full bg-gradient-to-r from-violet-500 to-cyan-400 hover:from-violet-600 hover:to-cyan-500 text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg transition-colors text-sm uppercase tracking-wider cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#111625]"
               >
                 Отлично!
               </button>

@@ -8,6 +8,7 @@ export const VideoSimulator = () => {
   const { isPlaying, setIsPlaying, setSteps, updateXP } = useGameStore();
   const [videoTime, setVideoTime] = useState("0:00 / 1:30");
   const [videoProgress, setVideoProgress] = useState(0);
+  const [rewardStatus, setRewardStatus] = useState("");
   
   const videoInterval = useRef<NodeJS.Timeout | null>(null);
   const videoCurrentTime = useRef(0);
@@ -21,7 +22,7 @@ export const VideoSimulator = () => {
           if (videoInterval.current) clearInterval(videoInterval.current);
           setIsPlaying(false);
           setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s));
-          alert("Вы посмотрели видео-инструкцию и получили +100 XP!");
+          setRewardStatus("Ты посмотрел видео-инструкцию и получил +100 XP!");
           updateXP(100);
         }
         const percent = (videoCurrentTime.current / 90) * 100;
@@ -52,22 +53,34 @@ export const VideoSimulator = () => {
         Инструкция ИИ-гида
       </span>
       
-      <button 
+      <button
         onClick={togglePlay}
-        className="relative w-16 h-16 rounded-full bg-violet-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:bg-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105 z-20"
+        aria-label={isPlaying ? "Пауза видео-инструкции" : "Смотреть видео-инструкцию"}
+        aria-pressed={isPlaying}
+        className="relative w-16 h-16 rounded-full bg-violet-500 flex items-center justify-center text-white shadow-[0_0_30px_rgba(139,92,246,0.4)] hover:bg-cyan-500 hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-[transform,box-shadow,background-color] transform hover:scale-105 motion-reduce:transition-none motion-reduce:hover:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 z-20"
       >
-        {isPlaying ? <Pause className="w-6 h-6 fill-white" /> : <Play className="w-6 h-6 fill-white translate-x-[2px]" />}
+        {isPlaying ? <Pause aria-hidden="true" className="w-6 h-6 fill-white" /> : <Play aria-hidden="true" className="w-6 h-6 fill-white translate-x-[2px]" />}
       </button>
-      
+
+      <p role="status" aria-live="polite" className="sr-only">{rewardStatus}</p>
+
       <div className="absolute bottom-4 left-4 right-4 flex flex-col gap-2 z-20">
-        <div className="h-1 bg-white/20 rounded-full overflow-hidden cursor-pointer">
-          <div 
-            className="h-full bg-cyan-400 transition-all duration-300"
+        <div
+          className="h-1 bg-white/20 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-label="Прогресс видео"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(videoProgress)}
+          aria-valuetext={videoTime}
+        >
+          <div
+            className="h-full bg-cyan-400 transition-[width] duration-300 motion-reduce:transition-none"
             style={{ width: `${videoProgress}%` }}
           />
         </div>
         <div className="flex justify-between text-xs text-gray-400">
-          <span>{videoTime}</span>
+          <span className="tabular-nums">{videoTime}</span>
           <span>1080p AI Avatar</span>
         </div>
       </div>

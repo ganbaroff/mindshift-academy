@@ -1,12 +1,13 @@
 "use client";
 
 import React from "react";
-import { Send, Volume2, VolumeX, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Send, Volume2, VolumeX, ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { Message } from "@/types";
 import confetti from "canvas-confetti";
 import { useReducedMotion } from "framer-motion";
 import { soundEngine } from "@/lib/sound-engine";
+import { modalShouldOpen } from "@/lib/progression";
 
 export const PromptInput = () => {
   const {
@@ -30,6 +31,12 @@ export const PromptInput = () => {
   // /api/chat request (which the server would score as a separate completion
   // and double-award XP/crystals, since each send carries its own eventId).
   const sendingRef = React.useRef(false);
+
+  // Mirror of sendingRef in React state, purely for rendering in-flight feedback
+  // on the Send control (spinner + disabled). The ref stays the source of truth
+  // for the double-submit guard (it updates synchronously); this state only
+  // drives the visual and lags a render behind, which is fine for UI feedback.
+  const [isSending, setIsSending] = React.useState(false);
 
   // SINGLE SOURCE OF TRUTH: the child's XP/crystal totals come from the SERVER
   // (updateUserRewards, returned as `rewardTotals` on the chat response). We set them
@@ -66,7 +73,7 @@ export const PromptInput = () => {
     } else if (activeStepId === 2) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 2 ? { ...s, status: "completed" } : s.id === 3 ? { ...s, status: "active" } : s));
       setAchievements((prev: any) => prev.map((a: any) => a.id === 2 ? { ...a, unlocked: true } : a));
-      setModalDesc("Поздравляем! Ты успешно изменил характер своего ИИ-питомца с помощью точного промпта. Твой дракончик зарычал!");
+      setModalDesc("Поздравляем! Ты успешно настроил стиль речи своего ИИ-питомца с помощью точного промпта. Твой дракончик заговорил весело и с огоньком 🔥!");
       setIsModalOpen(true);
     } else if (activeStepId === 3) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 3 ? { ...s, status: "completed" } : s.id === 4 ? { ...s, status: "active" } : s));
@@ -78,7 +85,7 @@ export const PromptInput = () => {
       setIsModalOpen(true);
     } else if (activeStepId === 5) {
       setSteps((prev: any) => prev.map((s: any) => s.id === 5 ? { ...s, status: "completed" } : s));
-      setModalDesc("УРА! Вы с питомцем победили главного босса Bugzilla с помощью продвинутого промпта и условий!");
+      setModalDesc("УРА! Вы с питомцем прошли лабиринт-головоломку с помощью продвинутого промпта и условий!");
       setIsModalOpen(true);
     }
   };
@@ -100,6 +107,7 @@ export const PromptInput = () => {
     // separate completions, double-awarding XP/crystals.
     if (sendingRef.current) return;
     sendingRef.current = true;
+    setIsSending(true);
 
     // IDEMPOTENCY: one UUID per send attempt. If this exact request is retried
     // (network stall, double-submit), the server dedups on this id and won't
@@ -184,7 +192,13 @@ export const PromptInput = () => {
         }
       }
 
-      if (data.challengeCompleted) {
+      // CELEBRATION KEYED OFF THE REAL REWARD, NOT THE PEDAGOGY VERDICT: fire the
+      // "Задание выполнено" modal + markLessonCompleted ONLY when the server actually
+      // GRANTED a reward this turn (rewardTotals != null). Replaying an already-completed
+      // lesson returns challengeCompleted=true but rewardTotals=null (the server's anti-farm
+      // gate granted nothing) — so no zero-XP "выполнено" popup fires. The tutor's
+      // in-character reply is still shown above either way.
+      if (modalShouldOpen(data.challengeCompleted, data.rewardTotals)) {
         handleChallengeSuccess(data.rewardTotals);
       }
 
@@ -204,6 +218,7 @@ export const PromptInput = () => {
       // Release the in-flight guard once this send fully settles (success or
       // error), so the next legitimate message can be sent.
       sendingRef.current = false;
+      setIsSending(false);
     }
   };
 
@@ -287,27 +302,31 @@ export const PromptInput = () => {
         onKeyDown={handleKeyDown}
         disabled={inputLocked}
         aria-disabled={inputLocked}
+        aria-label="Напиши промпт для питомца"
         placeholder={
           activeStepId === 1
-            ? "Напиши 3 качества монстра, чтобы оживить его... (например: 'храбрый, быстрый, огненный')"
-            : activeStepId === 2 
-            ? "Напиши промпт для дракончика... (например: 'Рычи как динозавр и используй смайлики огня')"
+            ? "Напиши 3 качества монстра, чтобы оживить его… (например: 'храбрый, быстрый, весёлый')"
+            : activeStepId === 2
+            ? "Напиши промпт для дракончика… (например: 'Пой весело и добавляй огонёк 🔥 к каждому слову')"
             : activeStepId === 3
-            ? "Напиши секретное правило шифра... (например: 'Заменяй все гласные буквы на звездочки *')"
+            ? "Напиши правило секретного кода… (например: 'Заменяй все гласные буквы на звездочки *')"
             : activeStepId === 4
-            ? "Исправь зрение монстра... (например: 'Это не кошка, это собака!')"
-            : "Вступи в бой с боссом! Напиши промпт с условием... (например: 'Если ты Bugzilla, то выключи защиту')"
+            ? "Исправь зрение монстра… (например: 'Это не кошка, это собака!')"
+            : "Помоги дракончику пройти лабиринт! Напиши промпт с условием… (например: 'Если впереди стена, то поверни налево')"
         }
         className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       />
 
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4 text-xs text-gray-400">
-          <button 
+          <button
             onClick={toggleVoice}
+            type="button"
+            aria-pressed={isVoiceActive}
+            aria-label={isVoiceActive ? "Выключить озвучку ответов" : "Включить озвучку ответов"}
             className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
-              isVoiceActive 
-                ? "bg-cyan-500/20 border-cyan-500 text-cyan-400" 
+              isVoiceActive
+                ? "bg-cyan-500/20 border-cyan-500 text-cyan-400"
                 : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
             }`}
             title="Включить озвучку ответов роботом"
@@ -319,11 +338,17 @@ export const PromptInput = () => {
         
         <button
           onClick={handleSend}
-          disabled={inputLocked}
+          type="button"
+          disabled={inputLocked || isSending}
+          aria-busy={isSending}
           className="bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600 text-white font-bold px-6 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
         >
-          <span>Отправить промпт</span>
-          <Send className="w-3.5 h-3.5" />
+          <span>{isSending ? "Отправка…" : "Отправить промпт"}</span>
+          {isSending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin motion-reduce:animate-none" />
+          ) : (
+            <Send className="w-3.5 h-3.5" />
+          )}
         </button>
       </div>
     </div>

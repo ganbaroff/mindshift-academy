@@ -36,7 +36,9 @@ export const SkinSelector = () => {
           <button
             key={skin.emoji}
             onClick={() => handleSkinChange(skin.emoji, skin.name, skin.color)}
-            className={`aspect-square rounded-xl border text-xl flex items-center justify-center transition-all ${
+            aria-label={skin.name}
+            aria-pressed={activeSkin === skin.emoji}
+            className={`aspect-square rounded-xl border text-xl flex items-center justify-center transition-[colors,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
               activeSkin === skin.emoji
                 ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                 : "border-white/5 bg-white/5 hover:bg-white/10"

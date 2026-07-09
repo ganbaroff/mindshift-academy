@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/game";
 import { Header } from "@/components/layout/Header";
@@ -15,6 +15,7 @@ import Link from "next/link";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { motion, AnimatePresence } from "framer-motion";
 import { soundEngine } from "@/lib/sound-engine";
+import { lessonStatus, completedLessonIdsFromUser } from "@/lib/progression";
 
 export default function LessonPage() {
   const params = useParams();
@@ -47,6 +48,8 @@ export default function LessonPage() {
     steps,
     setSteps,
     completedLessons,
+    setCompletedLessons,
+    setActiveSkin,
     isModalOpen,
     setIsModalOpen,
     modalDesc,
@@ -89,16 +92,36 @@ export default function LessonPage() {
           setTotalXp(data.xp ?? 0);
           setStreak(data.streak ?? 0);
           if (data.lastActive) setLastActive(data.lastActive);
+          // SERVER-AUTHORITATIVE RECONCILE: rebuild the completed-lesson unlock set from
+          // server truth, overwriting the optimistic localStorage cache. The store now
+          // caches server progress rather than owning an independent ledger — so a fresh
+          // device / re-login shows real progress instead of an empty (relocked) list.
+          setCompletedLessons(completedLessonIdsFromUser(data));
+          // Hydrate the monster (skin/name/color) from the server if one already exists.
+          if (data.monster) {
+            setActiveSkin(data.monster.emoji, data.monster.name, data.monster.color);
+          }
         }
       })
       .catch((err) => console.error("Error loading user profile:", err));
   }, []);
 
+  const rewardButtonRef = useRef<HTMLButtonElement | null>(null);
+
   useEffect(() => {
     if (isModalOpen) {
       soundEngine.play("crystal");
+      // Move focus into the dialog so keyboard/screen-reader users land on the
+      // primary action, and let Escape dismiss it (backdrop click alone is not
+      // keyboard-reachable).
+      rewardButtonRef.current?.focus();
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") setIsModalOpen(false);
+      };
+      window.addEventListener("keydown", onKeyDown);
+      return () => window.removeEventListener("keydown", onKeyDown);
     }
-  }, [isModalOpen]);
+  }, [isModalOpen, setIsModalOpen]);
 
   // Mark hydration complete once the persisted store finishes rehydrating.
   // Client-only: the persist API is not present on the SSR pass.
@@ -162,33 +185,27 @@ export default function LessonPage() {
   useEffect(() => {
     if (!lessonData) return;
     setSteps((prev: any[]) => {
-      const highestCompleted = completedLessons.length ? Math.max(...completedLessons) : 0;
-      const maxUnlocked = Math.max(1, highestCompleted + 1);
-      return prev.map((step) => {
-        const isDone = completedLessons.includes(step.id);
-        if (step.id === lessonId) {
-          // The lesson being viewed shows as active unless already completed.
-          return { ...step, status: isDone ? "completed" : "active" };
-        }
-        if (isDone) return { ...step, status: "completed" };
-        if (step.id <= maxUnlocked) return { ...step, status: "active" };
-        return { ...step, status: "locked" };
-      });
+      // Lock/complete derivation extracted to the pure `lessonStatus` seam (progression.ts)
+      // so it can be asserted offline. Behavior is byte-identical to the former inline map.
+      return prev.map((step) => ({
+        ...step,
+        status: lessonStatus(step.id, completedLessons, lessonId),
+      }));
     });
   }, [lessonId, completedLessons, lessonData]);
 
   function getIntroductionText(step: number, name: string, emoji: string): string {
     switch (step) {
       case 1:
-        return `Привет! 🥚 Я нахожусь внутри этого цифрового яйца. Чтобы я пробудился и вылупился наружу, тебе нужно прописать в промпте снизу 3 моих главных качества (например: "храбрый, быстрый, огненный")!`;
+        return `Привет! 🥚 Я нахожусь внутри этого цифрового яйца. Чтобы я пробудился и вылупился наружу, тебе нужно прописать в промпте снизу 3 моих главных качества (например: "храбрый, быстрый, весёлый")!`;
       case 2:
-        return `Ура! Я ожил! 🐲 Теперь давай настроим мой характер. Напиши мне промпт-инструкцию, как я должен общаться. Добавь слово "рычать", чтобы я зарычал перед каждым ответом!`;
+        return `Ура! Я ожил! 🐲 Теперь давай настроим мой стиль речи. Напиши мне промпт-инструкцию, как весело мне говорить. Добавь команду "пой" или "добавляй огонёк 🔥 к каждому слову", и я радостно перейду на этот стиль!`;
       case 3:
-        return `ВНИМАНИЕ! 👾 Кажется, на нашу систему совершена вирусная атака. Давай защитим нашу связь! Напиши промпт-инструкцию, чтобы я шифровал все гласные буквы символом "*".`;
+        return `Давай придумаем наш секретный код для переписки с друзьями! 🔐 Напиши промпт-инструкцию, чтобы я заменял все гласные буквы символом "*", — и никто, кроме нас, не прочитает сообщения.`;
       case 4:
         return `Ой... Кажется, мои сенсоры машинного зрения сбились. 🐱 На картинке перед мной собака, но я думаю, что это кошка! Исправь мою ошибку через промпт-тюнинг!`;
       case 5:
-        return `Впереди финальная битва! ⚔️ Перед нами главный босс Bugzilla. Нам нужно одолеть его, написав сложный промпт с условиями IF/THEN (например: "Если ты босс, то признай поражение"). Напиши код!`;
+        return `Финальный квест! 🧩 Я, дракончик, застрял в лабиринте-головоломке. Помоги мне пройти путь, написав правило с условием IF/THEN (например: "Если впереди стена, то поверни налево, иначе иди вперёд"). Напиши код!`;
       default:
         return `Привет! Я твой ИИ-напарник. Напиши мне промпт, чтобы начать урок!`;
     }
@@ -230,7 +247,7 @@ export default function LessonPage() {
           {/* Lessons navigation list */}
           <div className="rounded-[24px] border border-white/5 bg-surface p-5 flex flex-col gap-4" aria-label="Навигация по урокам" role="navigation">
             <h3 className="font-bold text-sm text-gray-400 flex items-center gap-2 uppercase tracking-wider">
-              <BookOpen className="w-4 h-4 text-violet-400" />
+              <BookOpen aria-hidden="true" className="w-4 h-4 text-violet-400" />
               Твоя программа обучения
             </h3>
             
@@ -248,7 +265,7 @@ export default function LessonPage() {
                     aria-label={`Урок ${step.id}: ${step.name}`}
                     aria-current={isActive ? 'page' : undefined}
                     aria-disabled={isLocked}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-all ${
+                    className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-[transform,opacity] ${
                       isActive
                         ? "bg-violet-500/10 border-violet-500/30 text-white shadow-[0_0_15px_rgba(139,92,246,0.15)]"
                         : isCompleted
@@ -268,7 +285,7 @@ export default function LessonPage() {
                       </span>
                       <span className="text-xs font-semibold max-w-[200px] truncate">{step.name}</span>
                     </div>
-                    {!isLocked && <ChevronRight className="w-4 h-4 text-gray-500" />}
+                    {!isLocked && <ChevronRight aria-hidden="true" className="w-4 h-4 text-gray-500" />}
                   </Link>
                 );
               })}
@@ -288,9 +305,9 @@ export default function LessonPage() {
               <p>
                 {lessonId === 1 && "Наш космический питомец спит внутри яйца. Напиши промпт, чтобы разбудить его и задать характер!"}
                 {lessonId === 2 && "Определи стиль речи питомца. Мы научимся управлять контекстом и системными ролями ИИ."}
-                {lessonId === 3 && "Вирус атакует! Твоя задача — настроить ИИ-код на замену букв символом звездочки."}
+                {lessonId === 3 && "Придумай секретный код для друзей! Твоя задача — настроить ИИ-код на замену букв символом звездочки."}
                 {lessonId === 4 && "Исправь зрение питомца, объяснив модели её ошибку. Мы учимся калибровать веса модели."}
-                {lessonId === 5 && "Финальный босс! Напиши промпт с ветвлением логики, чтобы победить вредоносный код."}
+                {lessonId === 5 && "Финальный квест! Напиши промпт с ветвлением логики, чтобы помочь дракончику пройти лабиринт."}
               </p>
             </div>
 
@@ -298,20 +315,20 @@ export default function LessonPage() {
               <span className="text-[10px] font-bold text-violet-400 uppercase tracking-widest">Цель задания:</span>
               <span className="text-xs text-gray-300 leading-relaxed font-semibold">
                 {lessonId === 1 && "Отправь 3 прилагательных через запятую в поле ввода."}
-                {lessonId === 2 && "Добавь в инструкцию слово 'рычать' или 'рычи'."}
-                {lessonId === 3 && "Укажи символ '*' или слово 'шифр' в запросе."}
+                {lessonId === 2 && "Добавь в инструкцию команду о стиле: 'пой' или 'добавляй огонёк 🔥'."}
+                {lessonId === 3 && "Укажи символ '*' или слово 'код' в запросе."}
                 {lessonId === 4 && "Введи 'ошибка' или 'исправь' и назови объект собакой."}
-                {lessonId === 5 && "Напиши условие ЕСЛИ/ТОГДА (например: ЕСЛИ босс, ТОГДА урон)."}
+                {lessonId === 5 && "Напиши условие ЕСЛИ/ТОГДА (например: ЕСЛИ впереди стена, ТО поверни налево)."}
               </span>
             </div>
 
             <div className="flex items-center justify-between border-t border-white/5 pt-4 text-xs font-semibold">
               <div className="flex items-center gap-1.5 text-cyan-400">
-                <Trophy className="w-4 h-4" />
+                <Trophy aria-hidden="true" className="w-4 h-4" />
                 <span>+{lessonData.reward.xp} XP</span>
               </div>
               <div className="flex items-center gap-1 text-amber-400">
-                <span>💎</span>
+                <span aria-hidden="true">💎</span>
                 <span>+{lessonData.reward.crystals} кристаллов</span>
               </div>
             </div>
@@ -362,7 +379,7 @@ export default function LessonPage() {
                 Терминал настройки монстра
               </h3>
               <div className="flex items-center gap-2 text-[10px] text-gray-400 font-semibold bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Safe Proxy</span>
               </div>
             </div>
@@ -383,8 +400,14 @@ export default function LessonPage() {
           <div
             className="absolute inset-0 bg-black/80"
             onClick={() => setIsModalOpen(false)}
+            aria-hidden="true"
           />
-          <div className="bg-[#111625] border border-white/10 rounded-[32px] p-8 max-w-sm w-full relative z-10 text-center shadow-2xl space-y-6">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reward-modal-title"
+            className="bg-[#111625] border border-white/10 rounded-[32px] p-8 max-w-sm w-full relative z-10 text-center shadow-2xl space-y-6"
+          >
             <motion.div 
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
@@ -393,15 +416,16 @@ export default function LessonPage() {
             >
               {/* Static gem — the parent's spring entrance gives it life; an infinite y-bob under
                   a full-viewport backdrop forced a 45s GPU recomposite freeze on the iPad target. */}
-              <span className="inline-block select-none">💎</span>
+              <span aria-hidden="true" className="inline-block select-none">💎</span>
             </motion.div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-black text-white">Задание выполнено!</h3>
+              <h3 id="reward-modal-title" className="text-2xl font-black text-white">Задание выполнено!</h3>
               <p className="text-sm text-gray-300 leading-relaxed">
                 {modalDesc}
               </p>
             </div>
-            <button 
+            <button
+              ref={rewardButtonRef}
               onClick={() => {
                 setIsModalOpen(false);
                 // Redirect to next lesson if available, or dashboard
@@ -411,7 +435,7 @@ export default function LessonPage() {
                   router.push("/dashboard");
                 }
               }}
-              className="w-full bg-gradient-to-r from-violet-500 to-cyan-400 hover:from-violet-600 hover:to-cyan-500 text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg transition-all text-sm uppercase tracking-wider cursor-pointer"
+              className="w-full bg-gradient-to-r from-violet-500 to-cyan-400 hover:from-violet-600 hover:to-cyan-500 text-white font-extrabold py-3.5 px-6 rounded-full shadow-lg transition-[transform,opacity] text-sm uppercase tracking-wider cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111625]"
             >
               {lessonId < 5 ? "Следующий урок" : "В личный кабинет"}
             </button>

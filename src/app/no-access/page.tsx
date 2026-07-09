@@ -21,7 +21,7 @@ export default function NoAccessPage() {
 
         <Link
           href="/"
-          className="mt-7 inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+          className="mt-7 inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
           На главную
         </Link>

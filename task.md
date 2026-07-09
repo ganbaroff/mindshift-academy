@@ -1,52 +1,50 @@
-# MindShift Academy: Execution Roadmap
-> Updated 2026-06-24 by Antigravity — Phase 1-5 completed.
+# MindShift Academy — HONEST status
 
-## Phase 0: Foundation (DONE — Antigravity, June 23)
-- `[x]` Initialize Next.js 15 App Router project.
-- `[x]` Set up Turso (LibSQL) and Prisma schema.
-- `[x]` Set up Clerk Auth.
-- `[x]` Create Skeleton files for Onboarding and Dashboard.
-- `[x]` Write the Master Architecture Library (docs/architecture/*).
+> Rewritten 2026-07-10 by Atlas to replace the earlier "Phase 6 100% / all DONE / 16 checks passed"
+> claims, which were overreach: the "16 checks" are the moderation-classifier unit tests
+> (`tests/safety.test.mjs`), NOT the 5-lesson loop. The real per-lesson end-to-end was only ever
+> proven for lesson 2. "Done" is now defined by `node scripts/regression.mjs` going green, not by
+> a human clicking the live site.
 
-## Phase 1: The Funnel & Payment Wall (DONE — Antigravity + Atlas)
-- `[x]` **Landing Page UI:** Hero + pillars + funnel cards. *(Antigravity)*
-- `[x]` **3-Word Prompt API:** `/api/generate-silhouette` with gpt-4o-mini + hash fallback. *(Antigravity)*
-- `[x]` **Silhouette Reveal UI:** FunnelExperience.tsx, 550ms Framer Motion. *(Antigravity)*
-- `[x]` **LemonSqueezy Webhook:** Webhook→Prisma creates User+Monster on payment. *(Atlas)*
-- `[x]` **Clerk Auth Gate:** Force parent account creation post-payment. *(Antigravity)*
-- `[x]` **The "Hatch" UI:** `/onboarding` page, 3-phase: hatch→name→lesson tease. *(Atlas)*
+## Definition of done (executable)
+`node scripts/regression.mjs` — deterministic (non-LLM) cases must be 100% green; LLM-lane cases
+depend on NVIDIA being up. As of 2026-07-10: deterministic cases GREEN; LLM lane blocked/flaky
+(see "Blocked" below).
 
-## Phase 2: Core Chat & AI Engine (DONE — Antigravity)
-- `[x]` **Chat UI Component:** ChatWindow + PromptInput exist. *(Antigravity)*
-- `[x]` **GPT-4o-mini Integration:** `/api/chat` (rate-limited, safety-filtered). *(Antigravity)*
-- `[x]` **Lesson Route:** `/lesson/[id]` — wire curriculum.ts to chat UI. *(Antigravity)*
-- `[x]` **Zustand State Wiring:** Connect chat to `activeStepId` and `totalXp`. *(Antigravity)*
-- `[x]` **Voice (TTS) Integration:** Connect OpenAI Alloy voice to Monster replies. *(Antigravity)*
+## Genuinely done + regression-locked (proven, not narrated)
+- State ownership: server-authoritative progression, URL-derived view. `/api/user` returns
+  progression; client rebuilds `completedLessons` from server truth (no more client-only ledger).
+  Cures: persona-mismatch, replay "выполнено" modal, cross-device relock, backward-nav relock.
+  Proof: regression STATE(a/b/c) + persona-for-viewed L1..L5 green.
+- Tutor persona keyed to the VIEWED lesson (URL), not server progress. Reward gated on
+  serverStep===activeStep (anti XP-farm). Proof: L#c cases green; call site route.ts ~L347/423.
+- Safety moderation UNTOUCHED (llama-guard + kidNet, fail-closed). Proof: `git diff moderation.ts` empty.
+- Lesson themes rewritten so correct answers no longer trip the safety filter:
+  L2 roar→friendly style (пой/огонёк 🔥), L5 battle→friendly maze/puzzle (IF/THEN), L3 cipher cleaned.
+  Proof: llama-guard rates all rewritten answers "safe" (scripts/check-guard.mjs); grep shows no
+  active violence terms remain (only a history comment).
+- Design/a11y pass (focus rings, aria, reduced-motion, no red) across ~28 components. Deployed.
 
-## Phase 3: The Curriculum (The 5 Lessons) (DONE — Antigravity)
-- `[x]` **Lesson 1 Logic:** "Пробуждение" — Tone prompt verification. *(Antigravity)*
-- `[x]` **Lesson 2 Logic:** "Эмоциональный Спектр" — IF/THEN conditionals. *(Antigravity)*
-- `[x]` **Lesson 3 Logic:** "Тайный Язык" — String manipulation (vowel→*). *(Antigravity)*
-- `[x]` **Lesson 4 Logic:** "Машинное Зрение" — Hallucination correction. *(Antigravity)*
-- `[x]` **Lesson 5 Logic:** "Арена Промптов" — Boss battle synthesis. *(Antigravity)*
+## Blocked — NOT done (and why)
+- **Live child chat is DOWN when NVIDIA 8b flaps.** Moderation's kidNet runs on
+  meta/llama-3.1-8b-instruct (70b is unreachable on this free tier). When 8b times out, moderation
+  fail-closes (correct for kids) → every message blocked. Even when up, the weak 8b intermittently
+  false-flags clean answers (e.g. L3 cipher → "непонятное"). **CEO decision:** move off the flaky
+  free tier (NVIDIA Inception / Vertex / Azure) or a reliable model + DPA. Code cannot fix this
+  without weakening the child-safety filter.
+- **COPPA consent: 0% in code.** On the live (allowlist-gated) site, a signed-in child's free-text
+  egresses to NVIDIA with NO parental-consent gate (only comments + data-minimization). Critical
+  launch-blocker the moment a real family email is added to ALLOWLIST_EMAILS. **CEO decision:**
+  choose + authorize the verifiable-consent flow + sign the NVIDIA (LLM) DPA.
 
-## Phase 4: Retention & Gamification (DONE — Atlas + Antigravity)
-- `[x]` **Retention Logic:** `applyMoodDecay`, `rollGacha`, `getActiveDailyQuest` functions. *(Atlas)*
-- `[x]` **Prisma Singleton:** `src/lib/db.ts` and `src/lib/prisma.ts` configuration. *(Atlas + Antigravity)*
-- `[x]` **Tamagotchi Cron Job:** Nightly script to reduce `petMood` by 25. *(Atlas)*
-- `[x]` **Gacha UI:** 7-day login calendar visual component. *(Antigravity)*
-- `[x]` **Inventory DB Link:** Save Gacha shards and crystals to Prisma DB. *(Antigravity)*
-- `[x]` **Shame-Free Copy Audit:** No red colors or guilt-tripping text in UI. *(Antigravity)*
+## Known in-lane bugs to fix next (not yet done)
+- Double-submit reward dedup is CLIENT-ONLY (sendingRef). Server dedupes by eventId PK, not by
+  (userId, stepId) — two rapid distinct-eventId completions before activeStep advances could
+  double-award. Fix: server guard on (userId, stepId) or a unique constraint (needs a migration).
+- STATUS.md was stale (HEAD f6ab39e); superseded by this file. Legacy audit/plan .md docs remain.
+- x-test-bypass dev auth bypass in chat + generate-silhouette routes: inert in prod
+  (NODE_ENV gate), but remove before any real-user launch.
 
-## Phase 5: Parent Dashboard (DONE — Antigravity + Atlas)
-- `[x]` **Dashboard UI:** Parent control center. *(Antigravity)*
-- `[x]` **Dashboard → Real DB:** Wire to Prisma via `src/lib/prisma.ts` to show real child learning logs. *(Antigravity)*
-- `[x]` **Weekly Report Script:** Email template using React Email. *(Atlas)*
-- `[x]` **Resend Integration:** Fire Proof of Learning emails. *(Atlas)*
-- `[x]` **Crystal Upsell Button:** 2 AZN microtransaction flow. *(Antigravity)*
-
-## Phase 6: Polish & Launch (~80%)
-- `[x]` **Accessibility Pass:** Add `prefers-reduced-motion` variants. *(Antigravity)*
-- `[x]` **Mobile Optimization:** iPads (target audience). *(Antigravity)*
-- `[ ]` **E2E Testing:** Verify funnel from Landing → Payment → Hatch → Lesson 1.
-
+## Not in this repo (tracked elsewhere)
+- The marketing FUNNEL + payments (Dodo checkout, Telegram bot) live in the separate Supabase
+  project `awfoqycoltvhamtrsvxk`, NOT this codebase — its state is not represented here.

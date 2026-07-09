@@ -10,7 +10,7 @@ export default function SignUpPage() {
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
               MindShift
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Create account</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-white">Create Account</h1>
             <p className="mt-2 text-sm leading-6 text-white/62">
               Создайте доступ, чтобы продолжить funnel и открыть dashboard.
             </p>
