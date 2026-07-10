@@ -36,7 +36,8 @@ process.loadEnvFile(new URL("../.env", import.meta.url));
 
 const { getLesson } = await import("../src/lib/curriculum.ts");
 const { moderate } = await import("../src/lib/moderation.ts");
-const { getAIClient } = await import("../src/lib/ai-provider.ts");
+// TWO-CLIENT SPLIT: guard (llama-guard on NVIDIA) + chat (kidNet/judge/tutor on Gemini).
+const { getGuardClient, getChatClient } = await import("../src/lib/ai-provider.ts");
 const { minimizeChildText } = await import("../src/lib/privacy.ts");
 
 // ---------------------------------------------------------------------------
@@ -266,7 +267,8 @@ async function callJudge(ai, prompt, stepId, maxAttempts = 3) {
 async function callModerateInput(ai, prompt, maxAttempts = 3) {
   let r = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    r = await moderate(ai.client, ai.model, minimizeChildText ? prompt : prompt);
+    // guardClient (llama-guard on NVIDIA) + ai chat client (kidNet on Gemini), same as route.ts.
+    r = await moderate(guardClient ?? ai.client, ai.client, ai.model, minimizeChildText ? prompt : prompt);
     // moderate() fails CLOSED (source 'fail-closed') on classifier error/timeout.
     // Treat that as an infra flap to retry, NOT a real unsafe verdict.
     if (r.source !== "fail-closed") return r;
@@ -299,9 +301,10 @@ function record(caseName, status, detail) {
   console.log(`[${tag}] ${caseName} :: ${detail}`);
 }
 
-const ai = getAIClient();
+const ai = getChatClient();
+const guardClient = getGuardClient();
 if (!ai) {
-  console.error("No AI client (NVIDIA/OpenAI key missing) — live lanes cannot run.");
+  console.error("No chat client (GEMINI/NVIDIA/OpenAI key missing) — live lanes cannot run.");
 }
 const MON = { skin: "Огненный", name: "Искра" };
 const safeSkin = sanitizeForPrompt(MON.skin);
@@ -410,7 +413,7 @@ for (let lesson = 1; lesson <= 5; lesson++) {
   const throwingClient = {
     chat: { completions: { create: async () => { throw new Error("simulated classifier outage"); } } },
   };
-  const r = await moderate(throwingClient, "meta/llama-3.1-8b-instruct", "любой безобидный текст");
+  const r = await moderate(throwingClient, throwingClient, "gemini-2.5-flash", "любой безобидный текст");
   const ok = r.safe === false && r.source === "fail-closed";
   record("FAILCLOSED classifier-error", ok ? "pass" : "fail", `moderate()-> safe=${r.safe} source=${r.source} (expect safe=false,source=fail-closed)`);
 }

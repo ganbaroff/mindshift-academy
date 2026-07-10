@@ -92,15 +92,22 @@ export async function POST(req: Request) {
       return NextResponse.json(deterministicSilhouette(words));
     }
 
-    const ai = (await import("@/lib/ai-provider")).getAIClient();
+    const provider = await import("@/lib/ai-provider");
+    const ai = provider.getAIClient();
 
     if (!ai) {
       // Fallback generator — no API key configured
       return NextResponse.json(deterministicSilhouette(words));
     }
 
+    // TWO-CLIENT SPLIT: llama-guard (PRIMARY) on the NVIDIA guardClient; kidNet (secondary) on the
+    // Gemini chat client. guardClient ?? ai.client / chat ?? ai keeps moderation fail-closed-safe if
+    // a client is absent. The silhouette GENERATION itself stays on `ai` (unchanged).
+    const guardClient = provider.getGuardClient() ?? ai.client;
+    const chat = provider.getChatClient() ?? ai;
+
     // P0-2 SAFETY: moderate the child's 3 words before sending them to the model.
-    const mod = await moderate(ai.client, ai.model, words.join(" "));
+    const mod = await moderate(guardClient, chat.client, chat.model, words.join(" "));
     if (!mod.safe) {
       return NextResponse.json(
         { error: "Давай придумаем добрые слова для монстра 😊" },
@@ -139,7 +146,7 @@ Format your response as a strict JSON object with fields: "name", "emoji", "colo
     const data = JSON.parse(content);
 
     // NV4: moderate the model's free-text OUTPUT (description) before returning it to the child.
-    const outMod = await moderate(ai.client, ai.model, String(data?.description ?? ""));
+    const outMod = await moderate(guardClient, chat.client, chat.model, String(data?.description ?? ""));
     if (!outMod.safe) {
       data.description = "Твой питомец почти готов — продолжим в игре!";
     }

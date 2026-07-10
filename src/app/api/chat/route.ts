@@ -180,12 +180,18 @@ export async function POST(req: Request) {
       },
     });
 
-    const ai = (await import("@/lib/ai-provider")).getAIClient();
+    // TWO-CLIENT SPLIT: llama-guard (PRIMARY harm classifier) runs on the NVIDIA guardClient
+    // (reliable); kidNet (secondary) + judge + tutor run on the Gemini chat client (reliable,
+    // stronger than the flaky free-tier llama-3.1-8b). guardClient ?? chat.client keeps moderation
+    // fail-closed if NVIDIA is absent (guard model missing on Gemini → llamaGuard errors → blocks).
+    const provider = await import("@/lib/ai-provider");
+    const guardClient = provider.getGuardClient();
+    const chat = provider.getChatClient();
 
     // P0-2 SAFETY: real classifier moderation on the child's INPUT — multilingual
     // (RU/AZ/EN/translit), deterministic, NOT a word list. The tutor is not the guard.
-    if (ai) {
-      const inMod = await moderate(ai.client, ai.model, userPrompt);
+    if (chat) {
+      const inMod = await moderate(guardClient ?? chat.client, chat.client, chat.model, userPrompt);
       if (!inMod.safe) {
         console.warn(`[MODERATION] input blocked (${inMod.source}: ${inMod.category})`);
         // COPY SPLIT (P1-G): distinguish a CLASSIFIER OUTAGE (fail-closed on
@@ -222,8 +228,8 @@ export async function POST(req: Request) {
     // PEDAGOGY: an LLM judges whether the child actually demonstrated the VIEWED lesson's
     // skill — not just whether a keyword is present. The keyword check stays ONLY as
     // an offline (no provider) fallback so lessons aren't bricked without an API key.
-    const verdict = ai
-      ? await judgeComprehension(ai, minimizeChildText(userPrompt), viewedStepId)
+    const verdict = chat
+      ? await judgeComprehension(chat, minimizeChildText(userPrompt), viewedStepId)
       : { pass: checkChallengeSuccess(userPrompt, viewedStepId), reason: "офлайн-режим (без ИИ-судьи)" };
     const challengeCompleted = verdict.pass;
 
@@ -238,7 +244,7 @@ export async function POST(req: Request) {
     }
 
     // Simulated Mode (no API key)
-    if (!ai) {
+    if (!chat) {
       await new Promise((resolve) => setTimeout(resolve, 800));
       
       let simulatedResponse = "";
@@ -332,8 +338,8 @@ export async function POST(req: Request) {
     // shame-free retry message fast, so the child sees a friendly reply within the bound.
     let response: OpenAI.Chat.Completions.ChatCompletion | null = null;
     try {
-      response = await ai.client.chat.completions.create({
-        model: ai.model,
+      response = await chat.client.chat.completions.create({
+        model: chat.model,
         messages: openAiMessages as any,
         max_tokens: 150,
         temperature: 0.7,
@@ -356,7 +362,7 @@ export async function POST(req: Request) {
 
     // P0-2 SAFETY: real classifier moderation on the AI OUTPUT before it reaches the child —
     // catches the model emitting/translating insults or unsafe content, in any language.
-    const outMod = await moderate(ai.client, ai.model, aiMessageText);
+    const outMod = await moderate(guardClient ?? chat.client, chat.client, chat.model, aiMessageText);
     if (!outMod.safe) {
       console.warn(`[MODERATION] output blocked (${outMod.source}: ${outMod.category})`);
       aiMessageText = "Ой, давай поговорим о чём-нибудь добром и по теме урока! 🐲";
