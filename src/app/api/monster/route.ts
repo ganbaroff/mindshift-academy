@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import OpenAI from "openai";
 import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
+import { hasValidConsent } from "@/lib/consent";
 
 export async function POST(req: Request) {
   try {
@@ -10,6 +11,15 @@ export async function POST(req: Request) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // COPPA CONSENT GATE (spec §5): the monster stores the child's pet name/look and its
+    // prompt is child-authored — no child-data work without valid parental consent. Fail-closed.
+    if (!(await hasValidConsent(clerkId))) {
+      return NextResponse.json(
+        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { status: 403 }
+      );
     }
 
     // P0-4: per-user rate limit + prod fail-closed — this can run a PAID gpt-image generation,

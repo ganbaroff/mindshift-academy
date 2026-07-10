@@ -7,6 +7,7 @@ import { InventoryGrid } from "@/components/dashboard/InventoryGrid";
 import { prisma } from "@/lib/prisma";
 import { getViewerAccess } from "@/lib/access";
 import { DashboardMonster } from "@/components/dashboard/DashboardMonster";
+import { ManageConsent } from "@/components/dashboard/ManageConsent";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -217,6 +218,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
         </div>
 
         <div className="space-y-6">
+          {/* COPPA (§7): real (non-demo) parents can view + revoke consent here. */}
+          {!isDemo && userId && <ManageConsent />}
+
           <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
             <div className="flex items-start justify-between gap-4">
               <div>

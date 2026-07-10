@@ -6,6 +6,7 @@ import { moderate } from "@/lib/moderation";
 import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
 import { getLesson } from "@/lib/curriculum";
+import { hasValidConsent } from "@/lib/consent";
 // Pedagogy/escaping/pre-filter helpers extracted to an importable module (seam for the
 // offline regression suite). Byte-identical to the former local defs — NO behavior change.
 import { isSafePrompt, sanitizeForPrompt, checkChallengeSuccess } from "@/lib/progression";
@@ -121,6 +122,18 @@ export async function POST(req: Request) {
     // row (progress cross-contamination + no consent/rate-key). Reject up front.
     if (!clerkId) {
       return NextResponse.json({ error: "Требуется вход в аккаунт." }, { status: 401 });
+    }
+
+    // COPPA CONSENT GATE (docs/COPPA-CONSENT-SPEC.md §5): after auth, BEFORE any child-data
+    // work or external-AI call. No valid, verified, non-revoked, current-version parental
+    // consent (with BOTH the service + external-AI opt-ins) => refuse. hasValidConsent is
+    // FAIL-CLOSED (any error => blocked). The dev-only test bypass (inert in prod via the
+    // NODE_ENV gate above) skips this so the offline safety regression suite still runs.
+    if (!(isDev && testBypass) && !(await hasValidConsent(clerkId))) {
+      return NextResponse.json(
+        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { status: 403 }
+      );
     }
 
     // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +

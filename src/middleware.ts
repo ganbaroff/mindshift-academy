@@ -4,6 +4,7 @@ const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/onboarding(.*)",
   "/lesson(.*)",
+  "/consent(.*)",
 ]);
 
 const isDemoBypass = (req: Request) =>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
+import { hasValidConsent } from "@/lib/consent";
 
 export async function POST(req: Request) {
   try {
@@ -9,6 +10,15 @@ export async function POST(req: Request) {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // COPPA CONSENT GATE (spec §5): TTS voices the child's / tutor's text; gate it on valid
+    // parental consent before any (external) synthesis. Fail-closed.
+    if (!(await hasValidConsent(clerkId))) {
+      return NextResponse.json(
+        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { status: 403 }
+      );
     }
     // P0-4: in prod with no distributed limiter, refuse rather than run a paid TTS unthrottled.
     if (rateLimitMisconfiguredInProd()) {
