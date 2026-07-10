@@ -6,7 +6,11 @@ import { Resend } from "resend";
 
 export type ConsentLocale = "ru" | "az";
 
-const FROM = "MindShift Academy <noreply@mindshift.academy>";
+// Closed test: onboarding@resend.dev is Resend's universal sender that delivers WITHOUT a
+// verified domain — but ONLY to the Resend account owner's own email (fine for the CEO's own
+// family test). For real families, verify a domain in Resend and set
+// RESEND_FROM="MindShift Academy <noreply@yourdomain>".
+const FROM = process.env.RESEND_FROM || "MindShift Academy <onboarding@resend.dev>";
 
 function subjectFor(locale: ConsentLocale): string {
   return locale === "az"
