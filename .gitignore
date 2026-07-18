@@ -55,3 +55,6 @@ next-env.d.ts
 
 # E2E test-run screenshots (regenerated each run)
 scripts/e2e/*.png
+
+# Installed agent skills (dev tooling, regenerable)
+.claude/skills/

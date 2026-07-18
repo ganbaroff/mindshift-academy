@@ -253,7 +253,12 @@ export async function POST(req: Request) {
       // Anti-cheat: only reward if the client step matches authoritative server state.
       // Idempotency: eventId dedups retries so the award can't be applied twice.
       const res = await updateUserRewards(dbUser.id, serverStepId, eventId);
-      rewardTotals = { xp: res.xp, crystals: res.crystals };
+      // Surface rewardTotals ONLY when a reward was ACTUALLY granted this turn. On a replay of an
+      // already-completed lesson updateUserRewards returns awarded=false (the anti-double-award
+      // guard fired) — keeping rewardTotals null keeps modalShouldOpen() false, so re-playing a
+      // finished lesson (notably L5, whose activeStep clamps at 5 so this gate keeps firing) never
+      // pops a zero-reward "Задание выполнено" modal. (QA-2026-07-18.)
+      rewardTotals = res.awarded ? { xp: res.xp, crystals: res.crystals } : null;
     }
 
     // Simulated Mode (no API key)
