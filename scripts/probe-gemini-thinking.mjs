@@ -51,7 +51,7 @@ const b = await probe("thinking_budget_0@60", {
   response_format: { type: "json_object" },
   max_tokens: 60,
   temperature: 0,
-  // @ts-ignore Google passthrough
+  // @ts-expect-error Google passthrough
   extra_body: { extra_body: { google: { thinking_config: { thinking_budget: 0 } } } },
 });
 console.log("B) thinking_budget=0 @max_tokens60:", JSON.stringify(b));

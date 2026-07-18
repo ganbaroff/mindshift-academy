@@ -98,7 +98,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(savedMonster);
   } catch (error: unknown) {
-    console.error("[monster] generation failed:", (error as any)?.name ?? "Error");
+    console.error("[monster] generation failed:", (error as { name?: string })?.name ?? "Error");
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

@@ -1,43 +1,37 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 
+// "Start over" for the CURRENT signed-in child: resets THEIR OWN progress to a fresh state
+// (0/0/0, lesson 1) and clears THEIR monster + per-lesson progress. Requires auth and only
+// ever touches the caller's own row (keyed by clerkId), so it is safe in every environment
+// and doubles as the COPPA self-service "erase my child's data" path.
+//
+// Previously this was dev-only (403 in prod, which disabled the graduation "start over"
+// button) AND, when reachable, reset a hardcoded SHARED demo row ("Uchenik") with NO auth —
+// so an unauthenticated caller could wipe a shared dev/staging user. Both problems are gone:
+// auth is required and every write is scoped to the caller.
 export async function POST() {
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Reset disabled in production" }, { status: 403 });
+  const { userId: clerkId } = await auth();
+  if (!clerkId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Reset default user stats in SQLite database
-    // "Start over" = a genuinely fresh child state (0/0/0), matching every other
-    // create path (user/monster/chat routes). The old 450/120/3 here silently
-    // re-introduced the demo inflation the QA fix removed.
-    const resetUser = await prisma.user.upsert({
-      where: { username: "Uchenik" },
-      update: {
-        xp: 0,
-        crystals: 0,
-        streak: 0,
-        activeStep: 1
-      },
-      create: {
-        username: "Uchenik",
-        xp: 0,
-        crystals: 0,
-        streak: 0,
-        activeStep: 1
-      }
+    const user = await prisma.user.upsert({
+      where: { clerkId },
+      update: { xp: 0, crystals: 0, streak: 0, activeStep: 1 },
+      create: { clerkId, username: clerkId, xp: 0, crystals: 0, streak: 0, activeStep: 1 },
     });
 
-    // Delete THIS user's saved monster so the restart is actually clean.
-    // (Was a hardcoded fake id "child_user_782" — display-only string from
-    // SafeProxyVisualizer — which matched no row, so the monster never cleared.)
-    await prisma.monster.deleteMany({
-      where: { userId: resetUser.id }
-    });
+    // Clear this user's saved monster + lesson progress so the restart is genuinely "from the
+    // very beginning". Both cascade off userId; deleteMany is idempotent (safe to replay).
+    await prisma.monster.deleteMany({ where: { userId: user.id } });
+    await prisma.lessonProgress.deleteMany({ where: { userId: user.id } });
 
-    return NextResponse.json(resetUser);
-  } catch (error: any) {
-    console.error("Failed to reset database stats:", error);
+    return NextResponse.json({ ok: true, xp: 0, crystals: 0, streak: 0, activeStep: 1 });
+  } catch (error) {
+    console.error("[reset] failed:", (error as { name?: string })?.name ?? "Error");
     return NextResponse.json({ error: "Failed to reset stats" }, { status: 500 });
   }
 }

@@ -67,24 +67,24 @@ export const PromptInput = () => {
     markLessonCompleted(activeStepId);
 
     if (activeStepId === 1) {
-      setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));
+      setSteps((prev) => prev.map((s) => s.id === 1 ? { ...s, status: "completed" } : s.id === 2 ? { ...s, status: "active" } : s));
       setModalDesc("Поздравляем! Твой питомец вылупился из яйца благодаря твоим характеристикам. Пришло время научить его говорить!");
       setIsModalOpen(true);
     } else if (activeStepId === 2) {
-      setSteps((prev: any) => prev.map((s: any) => s.id === 2 ? { ...s, status: "completed" } : s.id === 3 ? { ...s, status: "active" } : s));
-      setAchievements((prev: any) => prev.map((a: any) => a.id === 2 ? { ...a, unlocked: true } : a));
+      setSteps((prev) => prev.map((s) => s.id === 2 ? { ...s, status: "completed" } : s.id === 3 ? { ...s, status: "active" } : s));
+      setAchievements((prev) => prev.map((a) => a.id === 2 ? { ...a, unlocked: true } : a));
       setModalDesc("Поздравляем! Ты успешно настроил стиль речи своего ИИ-питомца с помощью точного промпта. Твой дракончик заговорил весело и с огоньком 🔥!");
       setIsModalOpen(true);
     } else if (activeStepId === 3) {
-      setSteps((prev: any) => prev.map((s: any) => s.id === 3 ? { ...s, status: "completed" } : s.id === 4 ? { ...s, status: "active" } : s));
+      setSteps((prev) => prev.map((s) => s.id === 3 ? { ...s, status: "completed" } : s.id === 4 ? { ...s, status: "active" } : s));
       setModalDesc("Вау! Ты разблокировал шифровальный код. Теперь твой ИИ-питомец умеет скрывать сообщения по секретному алгоритму!");
       setIsModalOpen(true);
     } else if (activeStepId === 4) {
-      setSteps((prev: any) => prev.map((s: any) => s.id === 4 ? { ...s, status: "completed" } : s.id === 5 ? { ...s, status: "active" } : s));
+      setSteps((prev) => prev.map((s) => s.id === 4 ? { ...s, status: "completed" } : s.id === 5 ? { ...s, status: "active" } : s));
       setModalDesc("Отлично! Ты помог монстру исправить ошибку машинного зрения с помощью промпт-тюнинга!");
       setIsModalOpen(true);
     } else if (activeStepId === 5) {
-      setSteps((prev: any) => prev.map((s: any) => s.id === 5 ? { ...s, status: "completed" } : s));
+      setSteps((prev) => prev.map((s) => s.id === 5 ? { ...s, status: "completed" } : s));
       setModalDesc("УРА! Вы с питомцем прошли лабиринт-головоломку с помощью продвинутого промпта и условий!");
       setIsModalOpen(true);
     }
@@ -255,7 +255,7 @@ export const PromptInput = () => {
     const nextVoice = !isVoiceActive;
     setIsVoiceActive(nextVoice);
     if (nextVoice) {
-      setAchievements((prev: any) => prev.map((a: any) => a.id === 3 ? { ...a, unlocked: true } : a));
+      setAchievements((prev) => prev.map((a) => a.id === 3 ? { ...a, unlocked: true } : a));
       updateXP(50);
       soundEngine.play("success");
       setModalDesc("Голосовая озвучка включена! Твой питомец теперь говорит вслух. +50 XP");

@@ -54,9 +54,9 @@ export async function updateUserRewards(
     if (eventId) {
       try {
         await prisma.rewardEvent.create({ data: { eventId, userId, stepId } });
-      } catch (e: any) {
+      } catch (e) {
         // P2002 = unique constraint (eventId already recorded) → this is a replay.
-        if (e?.code === "P2002") {
+        if ((e as { code?: string })?.code === "P2002") {
           console.warn(`[rewards] duplicate eventId, skipping double-award (step ${stepId})`);
           // Return the CURRENT (already-awarded once) totals so the client still shows truth.
           const cur = await prisma.user.findUnique({
@@ -119,8 +119,8 @@ export async function updateUserRewards(
           score: 100,
         },
       });
-    } catch (e: any) {
-      if (e?.code === "P2002") {
+    } catch (e) {
+      if ((e as { code?: string })?.code === "P2002") {
         console.warn(`[rewards] lesson ${stepId} already completed, skipping double-award`);
         const cur = await prisma.user.findUnique({
           where: { id: userId },

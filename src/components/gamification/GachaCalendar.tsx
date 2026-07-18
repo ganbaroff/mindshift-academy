@@ -5,17 +5,24 @@ import { Gift, CheckCircle2, ChevronDown } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Shape of a daily-gacha reward as returned by /api/gacha/claim and surfaced in the UI.
+type GachaReward = {
+  type: "crystals" | "skin_shard" | "skin" | string;
+  amount?: number;
+  itemId?: string;
+};
+
 interface GachaCalendarProps {
   currentStreak: number;
   lastActive?: Date | string | null;
-  onClaimSuccess?: (reward: any) => void;
+  onClaimSuccess?: (reward: GachaReward) => void;
 }
 
 export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: GachaCalendarProps) => {
-  const { crystals, setCrystals } = useGameStore();
+  const { setCrystals } = useGameStore();
   const [claimedDays, setClaimedDays] = useState<number[]>([]);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [claimResult, setClaimResult] = useState<any | null>(null);
+  const [claimResult, setClaimResult] = useState<GachaReward | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
   const [hasClaimedToday, setHasClaimedToday] = useState(false);
   const dialogCloseRef = useRef<HTMLButtonElement>(null);
@@ -29,12 +36,16 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
     for (let i = 1; i <= completedDaysCount; i++) {
       completedList.push(i);
     }
+    // Sync claimed-days to the streak prop (also updated locally in handleClaim) — an
+    // intentional external→React sync on prop change, not a cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setClaimedDays(completedList);
   }, [currentStreak]);
 
   // Check if claimed today based on lastActive timestamp
   useEffect(() => {
     if (!lastActive) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHasClaimedToday(false);
       return;
     }
@@ -91,7 +102,7 @@ export const GachaCalendar = ({ currentStreak, lastActive, onClaimSuccess }: Gac
     }
   };
 
-  const getRewardName = (reward: any) => {
+  const getRewardName = (reward: GachaReward) => {
     if (reward.type === "crystals") {
       return `💎 +${reward.amount} Кристаллов`;
     }

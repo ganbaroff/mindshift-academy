@@ -32,6 +32,9 @@ export function ManageConsent() {
   }
 
   useEffect(() => {
+    // Fetch the current consent state once on mount. setStatus runs only AFTER the awaited
+    // fetch inside load(), so this is a normal data-load, not a synchronous cascading render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
   }, []);
 

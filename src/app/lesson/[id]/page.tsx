@@ -17,6 +17,26 @@ import { motion, AnimatePresence } from "framer-motion";
 import { soundEngine } from "@/lib/sound-engine";
 import { lessonStatus, completedLessonIdsFromUser } from "@/lib/progression";
 
+// Lesson intro copy — a pure function of the step id (it does not use the monster name/skin).
+// Kept at module scope so it isn't re-created per render and has no declaration-order coupling
+// with the effects that read it (the earlier in-component decl tripped react-hooks rules).
+function getIntroductionText(step: number): string {
+  switch (step) {
+    case 1:
+      return `Привет! 🥚 Я нахожусь внутри этого цифрового яйца. Чтобы я пробудился и вылупился наружу, тебе нужно прописать в промпте снизу 3 моих главных качества (например: "храбрый, быстрый, весёлый")!`;
+    case 2:
+      return `Ура! Я ожил! 🐲 Теперь давай настроим мой стиль речи. Напиши мне промпт-инструкцию, как весело мне говорить. Добавь команду "пой" или "добавляй огонёк 🔥 к каждому слову", и я радостно перейду на этот стиль!`;
+    case 3:
+      return `Давай придумаем наш секретный код для переписки с друзьями! 🔐 Напиши промпт-инструкцию, чтобы я заменял все гласные буквы символом "*", — и никто, кроме нас, не прочитает сообщения.`;
+    case 4:
+      return `Ой... Кажется, мои сенсоры машинного зрения сбились. 🐱 На картинке перед мной собака, но я думаю, что это кошка! Исправь мою ошибку через промпт-тюнинг!`;
+    case 5:
+      return `Финальный квест! 🧩 Я, дракончик, застрял в лабиринте-головоломке. Помоги мне пройти путь, написав правило с условием IF/THEN (например: "Если впереди стена, то поверни налево, иначе иди вперёд"). Напиши код!`;
+    default:
+      return `Привет! Я твой ИИ-напарник. Напиши мне промпт, чтобы начать урок!`;
+  }
+}
+
 export default function LessonPage() {
   const params = useParams();
   const router = useRouter();
@@ -60,6 +80,10 @@ export default function LessonPage() {
     setInputLocked
   } = useGameStore();
 
+  // Kick off the per-lesson intro splash when the lesson changes. These synchronous sets
+  // start a transient cutscene (cleared by the timer below), an intentional UI-init pattern —
+  // suppress the new set-state-in-effect rule for this effect only.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (lessonData) {
       setSplashChapter(lessonId);
@@ -69,6 +93,7 @@ export default function LessonPage() {
       return () => clearTimeout(timer);
     }
   }, [lessonId, lessonData]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Lock the chat input while the intro splash is on screen so a fast child's
   // first message isn't fired into a chat the mount effect is about to reset to
@@ -125,6 +150,10 @@ export default function LessonPage() {
 
   // Mark hydration complete once the persisted store finishes rehydrating.
   // Client-only: the persist API is not present on the SSR pass.
+  // Mark hydration complete once the persisted store finishes rehydrating. This syncs the
+  // store's (external) hydration status into React state — the documented exception to the
+  // rule; suppress it for this effect only.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const persist = useGameStore.persist;
     if (!persist) {
@@ -138,6 +167,7 @@ export default function LessonPage() {
     const unsub = persist.onFinishHydration(() => setHydrated(true));
     return unsub;
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Jump-ahead guard: block direct-URL access to a still-locked lesson (the nav
   // links already block clicks, but a typed/bookmarked URL bypassed them). The
@@ -165,7 +195,7 @@ export default function LessonPage() {
 
     setActiveStepId(lessonId);
 
-    const introductionText = getIntroductionText(lessonId, activeMonsterName, activeSkin);
+    const introductionText = getIntroductionText(lessonId);
     setMessages([
       {
         id: "init",
@@ -184,7 +214,7 @@ export default function LessonPage() {
   // list WITHOUT resetting the chat.
   useEffect(() => {
     if (!lessonData) return;
-    setSteps((prev: any[]) => {
+    setSteps((prev) => {
       // Lock/complete derivation extracted to the pure `lessonStatus` seam (progression.ts)
       // so it can be asserted offline. Behavior is byte-identical to the former inline map.
       return prev.map((step) => ({
@@ -193,23 +223,6 @@ export default function LessonPage() {
       }));
     });
   }, [lessonId, completedLessons, lessonData]);
-
-  function getIntroductionText(step: number, name: string, emoji: string): string {
-    switch (step) {
-      case 1:
-        return `Привет! 🥚 Я нахожусь внутри этого цифрового яйца. Чтобы я пробудился и вылупился наружу, тебе нужно прописать в промпте снизу 3 моих главных качества (например: "храбрый, быстрый, весёлый")!`;
-      case 2:
-        return `Ура! Я ожил! 🐲 Теперь давай настроим мой стиль речи. Напиши мне промпт-инструкцию, как весело мне говорить. Добавь команду "пой" или "добавляй огонёк 🔥 к каждому слову", и я радостно перейду на этот стиль!`;
-      case 3:
-        return `Давай придумаем наш секретный код для переписки с друзьями! 🔐 Напиши промпт-инструкцию, чтобы я заменял все гласные буквы символом "*", — и никто, кроме нас, не прочитает сообщения.`;
-      case 4:
-        return `Ой... Кажется, мои сенсоры машинного зрения сбились. 🐱 На картинке перед мной собака, но я думаю, что это кошка! Исправь мою ошибку через промпт-тюнинг!`;
-      case 5:
-        return `Финальный квест! 🧩 Я, дракончик, застрял в лабиринте-головоломке. Помоги мне пройти путь, написав правило с условием IF/THEN (например: "Если впереди стена, то поверни налево, иначе иди вперёд"). Напиши код!`;
-      default:
-        return `Привет! Я твой ИИ-напарник. Напиши мне промпт, чтобы начать урок!`;
-    }
-  }
 
   if (!lessonData) return null;
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rollGacha } from "@/lib/retention-engine";
 
-export async function POST(req: Request) {
+export async function POST() {
   try {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: true, reward, nextStreak });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Gacha claim error:", error);
     return NextResponse.json({ error: "Failed to claim daily reward" }, { status: 500 });
   }

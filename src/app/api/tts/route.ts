@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       text: text.slice(0, 500),
     }, { status: 503 });
   } catch (error: unknown) {
-    console.error("[tts] generation failed:", (error as any)?.name ?? "Error");
+    console.error("[tts] generation failed:", (error as { name?: string })?.name ?? "Error");
     return NextResponse.json({ error: "Failed to generate voice output" }, { status: 500 });
   }
 }

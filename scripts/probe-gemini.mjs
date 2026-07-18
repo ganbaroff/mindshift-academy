@@ -79,7 +79,7 @@ if (!jsonMode.ok || !jsonValid) {
     ],
     max_tokens: 100,
     temperature: 0,
-    // @ts-ignore - Google-specific passthrough
+    // @ts-expect-error - Google-specific passthrough
     extra_body: { response_mime_type: "application/json" },
   });
   console.log("2b) JSON via extra_body:", JSON.stringify(jsonFallback));

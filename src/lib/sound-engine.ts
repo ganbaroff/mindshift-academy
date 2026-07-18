@@ -7,7 +7,7 @@ const audioCache: Record<string, HTMLAudioElement> = {};
 function playSynthSound(type: string) {
   if (typeof window === "undefined" || isMuted) return;
   try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioContext = window.AudioContext || (window as Window & { webkitAudioContext?: typeof window.AudioContext }).webkitAudioContext;
     if (!AudioContext) return;
     
     const ctx = new AudioContext();

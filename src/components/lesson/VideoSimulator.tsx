@@ -21,7 +21,7 @@ export const VideoSimulator = () => {
           videoCurrentTime.current = 90;
           if (videoInterval.current) clearInterval(videoInterval.current);
           setIsPlaying(false);
-          setSteps((prev: any) => prev.map((s: any) => s.id === 1 ? { ...s, status: "completed" } : s));
+          setSteps((prev) => prev.map((s) => s.id === 1 ? { ...s, status: "completed" } : s));
           setRewardStatus("Ты посмотрел видео-инструкцию и получил +100 XP!");
           updateXP(100);
         }

@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const { auth, currentUser } = await import("@clerk/nextjs/server");
-    const { userId: clerkId } = await auth();
+    // Dev-only test seam (mirrors /api/chat): the E2E harness drives the flow with
+    // x-test-bypass instead of a Clerk password, so /api/user must resolve the SAME test
+    // user that /api/chat writes to — otherwise progress/unlock is read from the wrong row
+    // (the shared demo user) and later lessons never unlock. Inert in prod via the NODE_ENV gate.
+    const isDev = process.env.NODE_ENV === "development";
+    const testBypass = req.headers.get("x-test-bypass") === "true";
+    const clerkId = isDev && testBypass ? "test_user_id" : (await auth()).userId;
     let user = null;
 
     if (clerkId) {
@@ -91,7 +97,7 @@ export async function GET() {
       .sort((a, b) => a - b);
 
     return NextResponse.json({ ...user, completedLessonIds });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Database user error:", error);
     return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });
   }

@@ -7,7 +7,12 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/safety.test.mjs"
+    "test": "node tests/deterministic.mjs",
+    "test:regression": "node scripts/regression.mjs",
+    "test:live": "node tests/safety.test.mjs",
+    "test:e2e": "node scripts/e2e/lesson-flow.mjs",
+    "test:falsepos": "node scripts/measure-falsepos.mjs",
+    "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.7",
@@ -41,6 +46,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "playwright": "^1.61.1",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"

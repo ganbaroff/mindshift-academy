@@ -45,8 +45,13 @@ verified on a real Vercel deploy — it is NOT testable in dev, where `ipAddress
   AND the safety classifiers). `.env` is gitignored; check the build.nvidia.com dashboard.
 - **OPENAI_API_KEY** — optional; when set, `/api/tts` and `/api/monster` make paid calls
   (now auth + rate-limited).
-- **COPPA / GDPR-K (P0-3, NOT done):** no parental consent, no age gate, no privacy policy;
-  child prompts are sent to a foreign LLM (NVIDIA, US) with no DPA/retention. Fix the data path
-  before onboarding real under-13 users.
-- **Reward modal freeze (P0-5, NOT done):** freezes the device on the iPad target.
+- **COPPA / GDPR-K (P0-3):** ✅ parental-consent layer BUILT + enforced — fail-closed,
+  server-side on every child-data path; `/consent` email-plus flow with two opt-ins; NO child
+  free-text egresses before consent (see COPPA-CONSENT-SPEC.md). Still REQUIRED before real
+  under-13 users: **legal sign-off** on the consent/privacy copy (HANDOVER-2026-07-18.md §6.A).
+- **Reward modal freeze (P0-5):** ✅ FIXED — the reward gem is static; the infinite y-bob that
+  caused a ~45s GPU-recomposite freeze on the iPad target was removed.
 - Clerk keys are dev keys (`Clerk has been loaded with development keys`) — swap for prod.
+
+> Current open items for launch are tracked in **HANDOVER-2026-07-18.md** §6–§7. This checklist's
+> hard Upstash dependency (above) still stands.

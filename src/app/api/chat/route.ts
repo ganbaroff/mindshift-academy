@@ -54,7 +54,7 @@ const chatRequestSchema = z.object({
 // The rubric (what REAL comprehension looks like) comes from the SAME shared lesson
 // definition (curriculum.ts) that drives the tutor persona — no separate rubric map.
 async function judgeComprehension(
-  ai: any,
+  ai: { client: OpenAI; model: string },
   prompt: string,
   stepId: number
 ): Promise<{ pass: boolean; reason: string }> {
@@ -337,13 +337,14 @@ export async function POST(req: Request) {
     `
       : baseInstruction;
 
-    const openAiMessages = [
+    const openAiMessages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
       { role: "system", content: systemInstruction },
-      ...messages.map((m: any) => ({
-        role: m.sender === "user" ? "user" : "assistant",
-        // COPPA: minimize identifiable child text before it leaves for the tutor LLM
-        content: m.sender === "user" ? minimizeChildText(m.text) : m.text
-      }))
+      ...messages.map((m): OpenAI.Chat.Completions.ChatCompletionMessageParam =>
+        m.sender === "user"
+          // COPPA: minimize identifiable child text before it leaves for the tutor LLM
+          ? { role: "user", content: minimizeChildText(m.text) }
+          : { role: "assistant", content: m.text }
+      )
     ];
 
     // LATENCY: the tutor generation gets its OWN tight ~8s timeout (below the client's 12s
@@ -353,12 +354,12 @@ export async function POST(req: Request) {
     try {
       response = await chat.client.chat.completions.create({
         model: chat.model,
-        messages: openAiMessages as any,
+        messages: openAiMessages,
         max_tokens: 150,
         temperature: 0.7,
       }, { timeout: 8000 });
-    } catch (genErr: any) {
-      console.warn("[chat] tutor generation slow/failed:", genErr?.name ?? "Error", genErr?.status ?? "");
+    } catch (genErr) {
+      console.warn("[chat] tutor generation slow/failed:", (genErr as { name?: string; status?: number })?.name ?? "Error", (genErr as { name?: string; status?: number })?.status ?? "");
       return NextResponse.json({
         response: "Хм, я на секунду задумался и не успел ответить 🐲. Это не твоя вина — просто попробуй отправить ещё раз!",
         safetyPassed: true,
@@ -397,10 +398,10 @@ export async function POST(req: Request) {
       judgeReason: verdict.reason
     });
 
-  } catch (error: any) {
+  } catch (error) {
     // SECURITY: Do not leak raw error messages to the client
     // NV1: never log the raw error/body — it can contain the child's message. Type only.
-    console.error("[chat] LLM error:", (error as any)?.name ?? "Error", (error as any)?.status ?? "");
+    console.error("[chat] LLM error:", (error as { name?: string; status?: number })?.name ?? "Error", (error as { name?: string; status?: number })?.status ?? "");
     return NextResponse.json({
       response: "Упс! Произошла техническая ошибка на сервере. Пожалуйста, попробуй позже.",
       safetyPassed: true,

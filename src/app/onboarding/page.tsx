@@ -25,7 +25,6 @@ const PET_NAME_MAX = 24;
 // the confirm button already disables on an empty trimmed name.
 function sanitizePetName(raw: string): string {
   return raw
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001F\u007F]/g, "") // control chars
     .replace(/[<>{}"'`\\]/g, "") // prompt-structure / injection chars
     .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/gi, "") // emails
@@ -47,6 +46,8 @@ function OnboardingContent() {
   const [phase, setPhase] = useState<Phase>("hatching");
   const [hatchStep, setHatchStep] = useState(0);
   const [petName, setPetName] = useState(defaultName);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const lastHatchStep = HATCH_MESSAGES.length - 1;
   const isHatched = hatchStep >= lastHatchStep;
@@ -56,6 +57,9 @@ function OnboardingContent() {
   useEffect(() => {
     if (phase !== "hatching") return;
     if (prefersReducedMotion) {
+      // Reduced-motion users skip the cutscene straight to the reveal — syncing to the OS
+      // motion preference (an external system), the documented exception to this rule.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHatchStep(lastHatchStep);
       return;
     }
@@ -69,9 +73,11 @@ function OnboardingContent() {
   const skipHatch = () => setHatchStep(lastHatchStep);
 
   const confirmName = async () => {
-    if (petName.trim().length === 0) return;
+    if (petName.trim().length === 0 || saving) return;
+    setSaveError(null);
+    setSaving(true);
     try {
-      await fetch("/api/monster", {
+      const res = await fetch("/api/monster", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,8 +88,26 @@ function OnboardingContent() {
           skipImage: true
         })
       });
+      // COPPA gate: /api/monster returns 403 when parental consent isn't valid. Send the
+      // parent to the consent screen instead of silently advancing into a lesson whose
+      // chat would then 403. (The onboarding layout already gates this — belt and braces.)
+      if (res.status === 403) {
+        router.push("/consent");
+        return;
+      }
+      // A real failure must NOT advance to "ready" with an unsaved monster — surface a
+      // soft, retryable error and stay on the naming step (fixes the prior silent-advance).
+      if (!res.ok) {
+        console.error("Failed to save monster on onboarding:", res.status);
+        setSaveError("Не удалось сохранить питомца. Попробуй ещё раз.");
+        return;
+      }
     } catch (err) {
       console.error("Failed to save monster name on onboarding:", err);
+      setSaveError("Сеть недоступна. Попробуй ещё раз.");
+      return;
+    } finally {
+      setSaving(false);
     }
     setPhase("ready");
   };
@@ -199,12 +223,18 @@ function OnboardingContent() {
 
             <button
               onClick={confirmName}
-              disabled={petName.trim().length === 0}
+              disabled={saving || petName.trim().length === 0}
               className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
-              Это {petName}!
+              {saving ? "Сохраняем…" : `Это ${petName}!`}
               <ArrowRight className="h-4 w-4" />
             </button>
+
+            {saveError && (
+              <p role="alert" className="text-sm font-medium text-error">
+                {saveError}
+              </p>
+            )}
           </motion.div>
         )}
 

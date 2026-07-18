@@ -115,6 +115,9 @@ export default function ConsentPage() {
   // Default the email field to the Clerk account email once loaded.
   useEffect(() => {
     if (isLoaded && user && !email) {
+      // Default the email field to the loaded Clerk account email — syncing an external
+      // (Clerk) value into a form field once on load, not a cascading render.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEmail(user.primaryEmailAddress?.emailAddress ?? "");
     }
   }, [isLoaded, user, email]);
@@ -175,7 +178,11 @@ export default function ConsentPage() {
         setError(data?.error ?? "Код неверный.");
         return;
       }
-      router.replace("/dashboard");
+      // Fresh consent just recorded → continue the child's first-run flow (hatch + name the
+      // monster, then lesson 1). The onboarding/lesson gates now pass, so this no longer
+      // dead-ends on the parent-only dashboard. (A parent REVISITING /consent while already
+      // valid is still sent to /dashboard by the mount effect above.)
+      router.replace("/onboarding");
     } catch {
       setError("Сеть недоступна. Попробуйте ещё раз.");
     } finally {
