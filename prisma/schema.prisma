@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id            String   @id @default(uuid())
+  clerkId       String?  @unique // Clerk auth ID
+  username      String   @unique @default("Uchenik")
+  xp            Int      @default(0)
+  crystals      Int      @default(0)
+  streak        Int      @default(0)
+  streakFreezes Int      @default(0) // Monetization hook
+  lastActive    DateTime @default(now())
+  activeStep    Int      @default(1)
+  createdAt     DateTime @default(now())
+
+  monster   Monster?
+  progress  LessonProgress[]
+  inventory Inventory[]
+}
+
+model Monster {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @unique
+  name       String
+  emoji      String
+  color      String
+  promptUsed String
+  imageUrl   String   @default("")
+  mood       Int      @default(100) // Drops if user misses a day (Loss Aversion)
+  createdAt  DateTime @default(now())
+}
+
+model Inventory {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  itemType   String // "skin", "background", "gacha_ticket"
+  itemId     String // "cyber_visor"
+  acquiredAt DateTime @default(now())
+
+  @@unique([userId, itemId])
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  order       Int      @unique
+  xpReward    Int      @default(100)
+  crystalRwd  Int      @default(10)
+  createdAt   DateTime @default(now())
+
+  progress LessonProgress[]
+}
+
+model LessonProgress {
+  id          String    @id @default(uuid())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId    String
+  completed   Boolean   @default(false)
+  score       Int       @default(0)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+}
+
+// COPPA parental-consent record (docs/COPPA-CONSENT-SPEC.md §4). One row per account
+// (clerkId @unique). Valid consent = verifiedAt!=null AND serviceConsent AND
+// externalAiConsent AND revokedAt==null AND consentVersion current. The consent RESOLVER
+// (src/lib/consent.ts hasValidConsent) is FAIL-CLOSED: any error / missing field => blocked.
+// externalAiConsent is a SEPARATE explicit opt-in to the NVIDIA/Google external-AI flow
+// (§2) — email-plus alone is not adequate for third-party disclosure, so we take it apart.
+model ParentalConsent {
+  id                String    @id @default(cuid())
+  clerkId           String    @unique // the account this consent covers
+  parentEmail       String
+  method            String    @default("email-plus")
+  serviceConsent    Boolean   @default(false) // opt-in (A): collect/use child data for tutoring
+  externalAiConsent Boolean   @default(false) // opt-in (B): the NVIDIA/Google external-AI disclosure
+  consentVersion    String // e.g. "2026-06-28" — re-prompt when policy changes
+  ipAddress         String?
+  verifiedAt        DateTime? // set when the emailed code is confirmed
+  revokedAt         DateTime? // set on parent revoke — immediately blocks chat
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Short-TTL email-verification store (§3 step 3, §4 note). We NEVER store the raw 6-digit
+// code — only an HMAC-SHA256 hash with a per-row random salt. 15-min expiry, single-use
+// (consumedAt), attempt-capped (attempts) to bound brute force of the small code space.
+// One pending verification per account (clerkId @unique) — a re-request upserts/overwrites.
+model ConsentVerification {
+  id          String    @id @default(cuid())
+  clerkId     String    @unique
+  parentEmail String
+  codeHash    String // HMAC-SHA256(code, salt) — raw code is NEVER persisted
+  salt        String // per-row random salt for the hash
+  expiresAt   DateTime // createdAt + 15 min
+  consumedAt  DateTime? // single-use: set the moment a code verifies
+  attempts    Int       @default(0)
+  createdAt   DateTime  @default(now())
+}
+
+// IDEMPOTENCY: the reward write increments xp/crystals, which double-awards on any
+// client retry (network hiccup, double-tap, F5-and-resend). Each lesson-completion
+// carries a client-generated UUID; we record it here BEFORE awarding. The @unique
+// eventId means a replayed eventId hits P2002 on create, so the award is skipped.
+model RewardEvent {
+  eventId   String   @id
+  userId    String
+  stepId    Int
+  createdAt DateTime @default(now())
+}

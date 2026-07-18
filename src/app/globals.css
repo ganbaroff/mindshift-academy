@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+:root {
+  --background: #070b14;
+  --foreground: #f5f7ff;
+  --surface: rgba(13, 18, 31, 0.84);
+  --surface-strong: #11182a;
+  --border-color: rgba(255, 255, 255, 0.08);
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-primary-violet: #8b5cf6;
+  --color-primary: #8b5cf6;
+  --color-primary-soft: #a78bfa;
+  --color-secondary-cyan: #06b6d4;
+  --color-secondary: #22d3ee;
+  --color-accent-amber: #f59e0b;
+  --color-warning: #e9c400;
+  --color-success-emerald: #10b981;
+  --color-error: #d4b4ff;
+  --color-border: var(--border-color);
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(139, 92, 246, 0.18) 0%, transparent 34%),
+    radial-gradient(circle at 82% 16%, rgba(34, 211, 238, 0.14) 0%, transparent 28%),
+    radial-gradient(circle at 50% 110%, rgba(233, 196, 0, 0.1) 0%, transparent 26%),
+    linear-gradient(180deg, #070b14 0%, #0b1020 48%, #070b14 100%);
+  color: var(--foreground);
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+  color: #fff;
+}
+
+/* === Accessibility === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visible outlines for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* === Mobile/Tablet Optimizations === */
+@media (max-width: 1024px) {
+  .lg\:grid-cols-\[380px_1fr\] {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 15px;
+  }
+  
+  .sm\:grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* iPad-specific touch targets */
+@media (pointer: coarse) {
+  button, a, [role='button'] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Safe area for notched devices */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .min-h-screen {
+    min-height: calc(100vh - env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
