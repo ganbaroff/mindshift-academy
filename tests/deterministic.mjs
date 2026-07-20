@@ -292,6 +292,11 @@ check(
   })(),
   "access-code.ts must persist only HMAC digests, never a raw code"
 );
+check(
+  "access redeem + activate are declared public API paths",
+  isPublicApiPath("/api/access-code/redeem") && isPublicApiPath("/api/access-code/activate"),
+  "redeem/activate must bypass Clerk (they have no session yet) but stay rate-limited"
+);
 
 // ---- ACCESS: Clerk Backend isolation module (static guard, no live call) ----
 {

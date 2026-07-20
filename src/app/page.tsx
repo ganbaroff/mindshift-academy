@@ -47,6 +47,9 @@ const COPY = {
   ru: {
     parentDashboard: "Личный кабинет родителя",
     signIn: "Войти",
+    parentLogin: "Я родитель",
+    childCta: "У меня есть код — начать!",
+    childCtaHint: "Код тебе дал взрослый",
     badge: "Интерактивный курс",
     h1: "Ваш ребёнок научится управлять ИИ за 5 игровых уроков",
     subtitle:
@@ -74,6 +77,9 @@ const COPY = {
   az: {
     parentDashboard: "Valideyn kabineti",
     signIn: "Daxil ol",
+    parentLogin: "Mən valideynəm",
+    childCta: "Kodum var — başla!",
+    childCtaHint: "Kodu sənə böyük verib",
     badge: "İnteraktiv kurs",
     h1: "Övladınız 5 oyun dərsi ilə Süni İntellekti idarə etməyi öyrənəcək",
     subtitle:
@@ -137,18 +143,12 @@ export default function HomePage() {
             ))}
           </div>
 
-          <Link
-            href="/dashboard?demo=1"
-            className="hidden rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 sm:inline-flex"
-          >
-            {t.parentDashboard}
-          </Link>
+          {/* One quiet parent entry point. The child's primary action lives in the hero. */}
           <Link
             href="/sign-in"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-white/70 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
-            {t.signIn}
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            {t.parentLogin}
           </Link>
         </div>
       </header>
@@ -166,6 +166,18 @@ export default function HomePage() {
               {t.h1}
             </h1>
             <p className="max-w-2xl text-base leading-7 text-white/70 sm:text-lg">{t.subtitle}</p>
+
+            {/* Child-first primary action — the single obvious thing to do on landing. */}
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+              <Link
+                href="/enter-code"
+                className="inline-flex h-14 items-center gap-2 rounded-2xl bg-primary px-8 text-base font-semibold text-white shadow-[0_0_40px_rgba(139,92,246,0.35)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              >
+                {t.childCta}
+                <ArrowRight className="h-5 w-5" aria-hidden="true" />
+              </Link>
+              <span className="text-sm text-white/50">{t.childCtaHint}</span>
+            </div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
