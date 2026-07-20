@@ -293,6 +293,23 @@ check(
   "access-code.ts must persist only HMAC digests, never a raw code"
 );
 
+// ---- ACCESS: Clerk Backend isolation module (static guard, no live call) ----
+{
+  const src = readFileSync(join(root, "src/lib/clerk-backend.ts"), "utf8");
+  check(
+    "clerk-backend uses createClerkClient with CLERK_SECRET_KEY",
+    src.includes("createClerkClient(") && src.includes("CLERK_SECRET_KEY")
+  );
+  check(
+    "clerk-backend never console-logs the secret",
+    !/console\.\w+\([^)]*secretKey/.test(src)
+  );
+  check(
+    "clerk-backend exposes findOrCreateUserByEmail + mintSignInTicket",
+    src.includes("findOrCreateUserByEmail") && src.includes("mintSignInTicket")
+  );
+}
+
 // ---- totals ----
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail > 0) {
