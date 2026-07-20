@@ -119,3 +119,26 @@ model RewardEvent {
   stepId    Int
   createdAt DateTime @default(now())
 }
+
+// One-time child-access code (docs/superpowers/specs/2026-07-19-child-async-access-design.md).
+// Lifecycle: issued -> (parent activates: find/create Clerk user + record consent) active
+//   -> (child redeems: mint sign-in ticket) redeemed. Raw code & raw activation token are
+// NEVER stored — only HMAC-SHA256(value, salt + CONSENT_CODE_PEPPER) digests. Both digests are
+// @unique so a lookup is an indexed point-read and a duplicate can't silently coexist.
+model AccessCode {
+  id                  String    @id @default(cuid())
+  codeHash            String    @unique // HMAC of the kid-facing code
+  salt                String
+  issuedForEmail      String // allowlisted parent email this code authorizes
+  status              String    @default("issued") // issued | active | redeemed | revoked
+  clerkId             String? // set at activation (find-or-create Clerk user)
+  activationTokenHash String    @unique // HMAC of the parent activation-link token
+  activationSalt      String
+  serviceConsent      Boolean   @default(false) // captured at activation
+  externalAiConsent   Boolean   @default(false)
+  consentIp           String?
+  activatedAt         DateTime?
+  redeemedAt          DateTime?
+  expiresAt           DateTime
+  createdAt           DateTime  @default(now())
+}

@@ -2,6 +2,7 @@
   "name": "mindshift-academy",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -10,11 +11,22 @@
     "test": "node tests/deterministic.mjs",
     "test:regression": "node scripts/regression.mjs",
     "test:live": "node tests/safety.test.mjs",
+    "test:consent": "node scripts/test-consent.mjs",
+    "test:data-lifecycle": "node scripts/test-child-data-lifecycle.mjs",
+    "test:config": "node tests/production-env-contract.test.mjs",
+    "test:ui": "node tests/ui-accessibility.test.mjs",
+    "check:prod-env": "node scripts/check-production-env.mjs",
     "test:e2e": "node scripts/e2e/lesson-flow.mjs",
+    "test:e2e-wrong": "node tests/e2e-wrong-answer.test.mjs",
+    "test:e2e:firefox": "node tests/e2e-cross-browser.test.mjs firefox",
+    "test:e2e:webkit": "node tests/e2e-cross-browser.test.mjs webkit",
+    "test:e2e:matrix": "node tests/e2e-full-browser-matrix.test.mjs",
     "test:falsepos": "node scripts/measure-falsepos.mjs",
-    "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs"
+    "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs",
+    "verify:release": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test:config && npm run test:ui && npm test && npm run test:consent && npm run test:data-lifecycle && node tests/proxy-api-auth.test.mjs && node tests/live-safety-startup.test.mjs && npm run test:live && node tests/e2e-startup.test.mjs && npm run test:e2e-wrong && npm run test:e2e:firefox && npm run test:e2e:webkit && npm run test:falsepos && npm run test:regression && npm run test:e2e:matrix && npm run build"
   },
   "dependencies": {
+    "@clerk/backend": "3.8.2",
     "@clerk/nextjs": "^7.5.7",
     "@libsql/client": "^0.17.4",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
@@ -50,5 +62,13 @@
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.19"
+    },
+    "@prisma/dev": {
+      "@hono/node-server": "1.19.14"
+    }
   }
 }
