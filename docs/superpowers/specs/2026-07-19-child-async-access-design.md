@@ -1,187 +1,213 @@
-# Async parent-approval child access — technical design
+# Child solo journey — one-time parent code + fully-guided gamified path (v2)
 
-**Date:** 2026-07-19
+**Date:** 2026-07-19 (v2 — simplified & expanded per CEO direction 2026-07-20)
 **Status:** Draft — awaiting CEO review (brainstorming-skill gate, no implementation yet)
-**Related:** [docs/COPPA-CONSENT-SPEC.md](../../COPPA-CONSENT-SPEC.md) — unchanged. That file governs consent
-*content*/legality. This spec only changes *when and how* a Clerk session + consent request get created,
-so a child can start alone.
+**Supersedes:** v1 (async email-approval + polling + ticket). v1's parent-email round-trip was too
+heavy; CEO: *"родитель 1 раз дал код, ребёнок через этот код проходит и дальше действует… не надо
+усложнять… мы не в Европе, это тестовый продукт, он не должен мучать."*
+**Related:** [docs/COPPA-CONSENT-SPEC.md](../../COPPA-CONSENT-SPEC.md) — the safety architecture
+(`hasValidConsent()` fail-closed) is **kept**; this spec only changes how a session + consent get
+created, and adds the guided/gamified runtime the child walks through alone.
 
-## 1. Problem (grounded in current code, read 2026-07-19)
+---
 
-`src/app/page.tsx` header has exactly two entry points today: **"Личный кабинет родителя"**
-(`/dashboard?demo=1`) and **"Войти"** (`/sign-in`) — both parent-framed. Hero copy is 100%
-parent-addressed ("Ваш ребёнок научится..."). Nothing tells a first-time visitor, especially a
-child, what to do.
+## 0. The one decision that is the CEO's (legal posture)
 
-`src/app/onboarding/layout.tsx` + `src/lib/access.ts` require a signed-in, allowlisted Clerk
-session before a child can even name their pet. Nothing before that point ever prompts sign-in.
-A child who opens a shared link today silently hits a wall unless a parent manually signs
-up/in **on that same device** first — exactly the CEO's complaint: *"родитель не должен стоять
-с ребёнком чтобы он это сделал."*
+Everything below assumes **the one-time code IS the parental-consent artifact**: when an invited
+parent is handed a code, that hand-off is the parental authorization; redeeming it marks consent
+valid. This keeps the existing fail-closed safety gates intact while collapsing the *child-facing*
+friction to "type one code." The only open call is **how much consent ceremony to keep on the
+parent side** (test product, not-EU, per CEO):
 
-## 2. Confirmed decisions (CEO, this session, via AskUserQuestion)
+- **(A) Zero ceremony** — the code alone is consent. Child types code → in. We log issuance +
+  redemption (who, when, IP) as the consent record. Lightest; matches "родитель 1 раз дал код"
+  literally.
+- **(B) One parent screen at activation** — parent opens a short link once (out of the child's
+  way), ticks the two existing opt-ins, gets the code. Slightly more defensible, still zero
+  child friction.
 
-1. **Device model** — child gets their own link/session; parent is never required at the
-   child's device.
-2. **Initiator** — the child can start alone, no parent sign-in first.
-3. **Allowlist** — stays closed-list only (`ALLOWLIST_EMAILS`); no open self-serve registration
-   (closed-test legal posture unchanged).
-4. **Session mechanism** — Clerk sign-in ticket: server mints it, client silently consumes it.
-   No password, no form, on the child's tab.
+This is a legal-posture choice, not an engineering one — flagged for the CEO. The rest of the
+design is identical either way. Default assumption if unspecified: **(A)** for the closed test.
 
-## 3. End-to-end flow
+## 1. Confirmed decisions (CEO)
 
-| # | Actor | Screen | Action | System effect |
-|---|---|---|---|---|
-| 1 | Child | `/` | Opens shared link, does the silhouette (3 words) — unchanged, already public/deterministic | none (no account yet) |
-| 2 | Child | `/onboarding` (hatch+name) — reached without auth | Names pet, taps continue | none yet — no `/api/monster` call until parent email is known |
-| 3 | Child | new screen, in pet's voice | Types parent's email | `POST /api/access-request` |
-| 4 | System | — | Always, regardless of allowlist result | Identical `{ok:true}` response either way — child always lands on the waiting screen (§8: no allowlist-membership oracle). **If** allowlisted: creates/finds Clerk user by parent email, creates `AccessRequest` row, sets child-side httpOnly cookie, emails parent an approval link. **If not**: zero side effects — no row, no email, no cookie |
-| 5 | Child | waiting screen | Free-plays (name pet, no save) while polling | `GET /api/access-request/status` every few seconds using the httpOnly cookie (or none, for the not-allowlisted case — see §6/§8 for why both read as plain "pending" and share one client-side timeout) |
-| 6 | Parent | opens email on own device | Clicks approval link | `GET /consent?token=...` (existing `/consent` UI, extended to accept an approval token) |
-| 7 | Parent | `/consent` (existing form, unchanged UI) | Email/code/two checkboxes, submits | `POST /api/consent/verify` (existing) **+** marks `AccessRequest` approved **+** mints Clerk sign-in ticket |
-| 8 | Child | waiting screen (still open) | next poll returns `approved: true` + ticket | client calls Clerk `signIn.create({strategy:"ticket", ticket})` → real session → redirect `/onboarding` → `/lesson/1` |
+1. Child gets their own link; parent never sits at the child's device.
+2. Child starts and finishes **alone** — no "папа, помоги зайти" moments.
+3. Access = **one code the parent gives once** (not an email dance).
+4. Closed test, allowlist-backed; not EU-grade ceremony; must not "torture" the child.
+5. Guide the child every step: popups, arrows, hints, gamification.
+6. Ending = **certificate + the monster they raised**.
+7. Session tech = Clerk sign-in ticket (server mints, child's browser silently consumes).
 
-Parent never opens the app on the child's device. Child never sees a Clerk form.
+## 2. Access model — one-time parent code (replaces v1's email round-trip)
 
-## 4. New data model
+**Issuance.** The CEO/admin generates a batch of codes, each tied to an allowlisted parent email
+(from `ALLOWLIST_EMAILS` / a codes table). Parent receives the code out-of-band (WhatsApp, in
+person — however the closed test invites go out) and hands it to the child once.
 
-```prisma
-model AccessRequest {
-  id            String    @id @default(cuid())
-  clerkId       String    // the family's Clerk user, created at step 4 (find-or-create)
-  parentEmail   String
-  childTokenHash String   @unique // hash of the httpOnly cookie value (child device)
-  childSalt     String
-  approveTokenHash String @unique // hash of the value embedded in the parent email link
-  approveSalt   String
-  status        String    @default("pending") // pending | approved | expired
-  approvedAt    DateTime?
-  expiresAt     DateTime
-  createdAt     DateTime  @default(now())
+**Kid-friendly redemption** (patterns from Kahoot 6-digit PIN, ClassDojo class code, Prodigy
+"enter once"):
+- Segmented OTP-style input — one big box per character, auto-advance, paste-friendly.
+- **Codes exclude ambiguous chars** (no `0/O`, `1/I/L`) — ClassDojo's documented failure mode.
+- Numeric-first if we go all-digits (`inputmode="numeric"`); case-insensitive; whitespace trimmed.
+- **QR alternative** so a parent can scan on their phone and pre-fill — child types nothing.
+- **Entered at most once, then remembered** (cookie/session) — Prodigy's "don't re-ask" rule.
+- Wrong code → friendly retry line in the monster's voice, never a red "ERROR".
 
-  @@index([clerkId])
-}
-```
+**What redemption does (server):**
+1. Validate code (hash+salt compare, not-expired, not-already-redeemed).
+2. Find-or-create the family's Clerk user (via `@clerk/backend` `clerkClient.users`), keyed to the
+   issuance email.
+3. Mark the code redeemed; **record consent** for that `clerkId` (from issuance — posture A/B above).
+4. Mint a Clerk **sign-in ticket**; return it to the child's browser.
+5. Child client calls `signIn.create({strategy:"ticket", ticket})` → real session → straight into
+   the journey. No password, no form, no parent present.
 
-Mirrors the existing `ConsentVerification` shape (hash+salt, never raw tokens at rest, explicit
-expiry) rather than inventing a new pattern.
+**Safety architecture unchanged:** every gated route still calls fail-closed `hasValidConsent()`.
+Redemption simply becomes a new, lighter way to reach the "consent valid" state that the app
+already handles first-class.
 
-## 5. Clerk identity strategy — decision + why
+## 3. The guided journey — never a "what do I do now?" moment
 
-Hard constraint found in `prisma/schema.prisma`: **`ParentalConsent.clerkId` and
-`ConsentVerification.clerkId` are both non-nullable and unique** (lines 81–94, 100–110). Every
-consent-related row requires an already-existing Clerk user ID — there is no schema path for
-"pending consent" keyed purely by email or an anonymous token.
+Global rule (NN/g: kids abandon after a few failed tries; they skip long text): **every screen has
+(a) a visible mascot, (b) exactly one glowing/pulsing next target, (c) a spoken line + a one-line
+caption, (d) an idle safety-net that re-teaches.** No silent, text-heavy, or blank screens.
 
-**Decision:** create the family's Clerk user at step 4 (allowlisted email submitted), using the
-parent's email as that Clerk account's identifier, via `@clerk/backend`
-`clerkClient.users.getUserList({emailAddress:[email]})` → create if absent. Rationale:
+**Reusable guidance primitives to build once, use everywhere:**
+- **Mascot voice + caption** — short pre-recorded (or `SpeechSynthesis` fallback) line auto-played
+  on each step-enter, with a one-line caption + icon. Reading is optional, not required
+  (Khan Academy Kids, Duolingo ABC narrate everything).
+- **Pulsing "tap here" affordance** — an absolutely-positioned pulsing ring / bouncing hand over
+  the current target; CSS `@keyframes`, respects `prefers-reduced-motion`. Language-independent
+  (Mobile-game onboarding standard).
+- **Step-gating** — only the current step's control is enabled; the rest dimmed
+  (`pointer-events:none` + reduced opacity). Advance on a `stepComplete` state flag, not a
+  mis-pressable "Next" button. (Duolingo ABC: each game unlocks the next; open free-navigation
+  makes kids "get lost and leave.")
+- **Modeless coachmarks (≤3, one at a time)** — spotlight the *real* control the child then acts
+  on (playthrough, not passive tooltip). `driver.js`/`react-joyride`-style, or a custom masked
+  backdrop. Trigger on state ("has hatched?"), not session count. Stacked coachmarks = anti-pattern.
+- **Idle nudge (escalating)** — idle timer resets on `pointerdown`/`keydown`. ~6s → pulse the
+  target; ~15s → mascot replays the voice line; further → bigger hand / "let me show you" demo.
+  Ceiling ~3 nudges so it never feels "managed."
+- **Big forgiving targets** — ≥~64px hit areas, generous spacing, single-tap everything, no
+  hover/right-click/drag-precision required (NN/g touch-target sizing for kids).
 
-- Reuses 100% of existing consent logic (`hasValidConsent`, `recordConsent`,
-  `academyEntryRedirect`) with **zero changes** to those tables or that state machine.
-- An allowlisted account with no consent yet is already a first-class, fail-closed-handled state
-  today (redirects to `/consent`) — this flow just reaches that state a different way.
-- `User.clerkId` is already nullable (`prisma/schema.prisma` line ~11), so a Clerk identity can
-  exist before the app-level `User`/`Monster` rows are created — no schema change needed there
-  either.
-- The pre-approval Clerk user holds only an email, is unusable for anything (every gated route
-  stays fail-closed without verified consent), so its early creation carries no real exposure.
+**Annotated first-run, land → certificate:**
 
-**Rejected alternative:** a fully email-keyed pending table, decoupled from Clerk, converting to
-a real Clerk user only after approval. Rejected — it forks the "not consented yet" state into two
-parallel representations (pre-approval table vs. post-approval Prisma tables) for no real benefit,
-since the schema already tolerates the pre-consent state via the allowlist-gate path.
+| Beat | What the child sees | Guidance mechanic |
+|---|---|---|
+| **Land (0–5s)** | Animated mascot, one giant pulsing button. Voice: "Привет! Давай разбудим твоего монстра." No login wall. | mascot voice+caption, pulsing CTA, idle armed |
+| **Enter code** | Big segmented code boxes (or QR). Voice: "Впиши секретный код от родителя." Inline friendly validation. | kid code input, big targets, forgiving retry |
+| **Hatch (first win)** | Egg with a pulsing "tap!" ring; tap → hatch animation + sound + the monster's name prompt. | step-gating, pulse cue, micro-celebration |
+| **Name & color** | Child names the monster, picks a color/trait (big choice cards, no free-text walls). | autonomy = ownership; choice chips not fields |
+| **Micro-tour → Lesson 1** | ≤3 spotlights on the real prompt box / send button, child acts on each. | modeless coachmarks, one mechanic per step |
+| **Lessons 1–5** | One objective each; write a prompt → monster reacts & learns → reflection beat. | step-gating, idle nudge, per-correct sparkle |
+| **Each lesson end** | Confetti + monster **evolves one visible stage**, gains a trait tied to the skill. | milestone celebration (reserved), unlock |
+| **Course end** | Big celebration; monster's final form; **certificate + keepsake card**. | see §6 |
 
-**New explicit dependency:** `@clerk/backend` is currently only a *transitive* dependency of
-`@clerk/nextjs` (confirmed via `node_modules/@clerk/nextjs/package.json` and
-`package-lock.json`, not in our own `package.json`). Add it as a direct pinned dependency since
-we now call it directly (`clerkClient`, `signInTokens.createSignInToken`).
+The child is *dropped into doing*, account/consent already handled by the code — so the entire
+interior is play, guided at every step.
 
-## 6. New/changed API routes
+## 4. Gamification & progression (research-backed, SDT: autonomy / competence / relatedness)
 
-| Route | Method | Auth | Body | Response | Side effects |
-|---|---|---|---|---|---|
-| `/api/access-request` (new) | POST | none (public, rate-limited by IP) | `{parentEmail}` | always `{ok:true}` — identical shape regardless of allowlist result (no allowlist-membership oracle) | if allowlisted: find/create Clerk user, create `AccessRequest`, set httpOnly cookie, send email. If not: no side effects at all — response is indistinguishable |
-| `/api/access-request/status` (new) | GET | reads httpOnly child cookie if present | — | `{status:"pending"}` \| `{status:"approved", ticket}` \| `{status:"expired"}`. **No cookie at all** (the not-allowlisted case never got one) → also `{status:"pending"}`, same as a real pending request — never a distinct error, so the response alone never confirms whether an email was invited | ticket only ever returned once, request marked consumed |
-| `/consent` (existing page, extended) | — | — | accepts optional `?token=` (the approve token) in addition to today's signed-in-user path | on submit success: existing `verify` behavior **+** looks up `AccessRequest` by hashed approve-token, marks approved, mints sign-in ticket | reuses existing form/UI/copy as-is |
-| `/api/consent/verify` (existing) | POST | existing | existing **+** optional `approveToken` | existing **+** `ticket` field when `approveToken` present | existing behavior unchanged for the direct-parent path (no token) |
+- **Progress-as-competence, not a point counter.** A 5-node course map with the monster walking
+  it; the visible spine is skill, not XP. (SDT meta-analysis: gamification reliably lifts autonomy
+  & relatedness but usually *fails* to raise competence — so make skill-growth the visible thing.)
+- **Endowed head-start.** Lesson 1 opens with the progress bar already ~15–20% full ("твой монстр
+  уже вылупляется") — Nunes & Drèze goal-gradient: a pre-filled bar ⇒ far higher completion.
+- **Monster = the reward, and it's intrinsic.** The monster **evolves as a function of skills
+  learned** (Khan Kids collectibles-by-mastery model), not coins/logins. Because the lesson topic
+  *is* "train your AI," the monster getting smarter as prompts improve fuses narrative + mechanic.
+  This side-steps the overjustification trap (external bribes cut kids' intrinsic motivation).
+- **Autonomy hooks:** child names the monster and picks its color/trait at the start — ownership.
+- **Relatedness for a solo kid:** the monster is the companion (Tamagotchi "it needs me" circuit)
+  — the reason a child alone keeps going. **But no neglect/death/illness mechanic** (undue pressure
+  on an 8-year-old).
+- **Celebration cadence (reserved, so it stays meaningful):** small in-line sparkle + monster cheer
+  + soft sound per correct answer; **full `canvas-confetti` + sound sting only at lesson- and
+  course-complete.** (Juice-overload research: confetti-on-everything habituates to noise.) Sound
+  toggleable / off by default (school-friendly).
+- **Unlocks, not streaks.** Each lesson's reward is an unlock the child opens (autonomy). **No
+  daily streaks, no loss-aversion counters** — see §7.
 
-Since a not-allowlisted submission never receives a cookie, its poll requests can only ever see
-`{status:"pending"}` — server-side there is nothing to expire. The waiting screen therefore
-enforces its **own** client-side timeout (a plain local timer started at submission time, no
-server round-trip needed) and, past it, shows a generic "если долго нет ответа — попроси
-родителя проверить письмо (в т.ч. спам) или написать нам" — the same message a genuinely
-invited-but-non-responsive parent produces. The child can never tell the two cases apart.
+## 5. Wrong-answer UX — shame-free, teaching, unlimited
 
-## 7. Email
+- **No lives, no fail-out, unlimited retries.** (Duolingo is *removing* Hearts in 2025 because
+  losing a life per error made beginners 2× more likely to run out mid-lesson and discouraged the
+  trial-and-error that *is* learning.)
+- **Progressive elaborative hints (productive failure):** 1st miss → reframe + nudge ("почти! а
+  что, если сказать монстру, *какой именно* ответ ты хочешь?"); 2nd → worked hint; 3rd → reveal +
+  let the child re-enter it to feel the win. Feedback explains *why*, not just "correct answer is X"
+  (the exact gap critics flag in Prodigy).
+- **Praise the process, never the person** — "классная стратегия / ты сам это починил", **not**
+  "какой ты умный" (person-praise backfires at the next setback — growth-mindset research).
+- Reuses the AI tutor's existing gentle-refusal voice, now applied to pedagogy — same tone, and it
+  already fails safe on unsafe input.
 
-New template `src/emails/parent-approval.tsx`, following the `weekly-report.tsx` react-email
-pattern (JSX components, not the hand-built HTML strings in `consent-email.ts`) — this is the
-first transactional email that needs a clickable link/button, and react-email is the
-already-adopted safe way to render that (auto-escaping, previewable), vs. string concatenation.
-Sent via the same `RESEND_API_KEY`/`RESEND_FROM` config already required in production.
+## 6. Completion — certificate + monster keepsake
 
-## 8. Security
+- **Auto-offer the certificate the instant Lesson 5 is done** (Code.org's exact pattern — the
+  strongest real precedent for kid certificates at scale).
+- **Personalized:** child's name **+ their named monster co-starring**, a plain credential
+  ("Prompt Engineer — Level 1"), and a short "теперь я умею…" list.
+- **Printable + downloadable, no login, no paywall:** render an HTML/SVG template → `@vercel/og`
+  (satori) for a 300-DPI PNG; print-CSS / `jsPDF` for the PDF. (`canvas-confetti` is already a dep.)
+- **Monster keepsake:** at completion the monster **graduates to its final evolved form** and the
+  child downloads a **monster card** ("[Имя монстра], воспитан [Имя ребёнка]") — the evolution is
+  the visual proof of everything learned.
+- **Sharing is parent-gated**, off the downloaded file — never a child posting to a public feed
+  (privacy + COPPA).
+- **Reveal, don't dangle.** The certificate/monster are shown as recognition at the end — **never
+  advertised up front as "finish to earn it"** (the overjustification bribe, whose original 1973
+  form was literally a gold-seal certificate).
 
-- **Two independent opaque tokens**, both crypto-random (32 bytes), both stored **hashed +
-  salted at rest** (reuse the existing pepper pattern — `CONSENT_CODE_PEPPER`,
-  `ConsentVerification.codeHash`/`salt` convention):
-  - *child token* → httpOnly, Secure, SameSite=Lax cookie on the child's device only. Never
-    logged, never emailed, never rendered in any URL.
-  - *approve token* → embedded only in the parent's email link. Single-use; invalidated the
-    moment `/consent` consumes it.
-- **No allowlist-membership oracle**: `/api/access-request` and the status-poll both respond
-  identically whether or not the email is/was allowlisted (§6) — the child-facing UI has exactly
-  one waiting state and one timeout state, full stop, so there is no copy variant that could leak
-  invite-list membership.
-- **Rate limits** via the existing `@/lib/ratelimit` `rateLimit()` helper (already used by
-  `consent/request-code`): per-IP on `POST /api/access-request`, per-child-token on the status
-  poll.
-- **Expiry:** 48h per `AccessRequest` for the real (allowlisted) case — same order of magnitude
-  as the existing consent-code TTL; the row moves to `expired` server-side and the
-  child sees a "ссылка устарела, попробуй снова" state rather than polling forever.
-- **Ticket handoff:** the sign-in ticket is only ever placed in the authenticated
-  (cookie-gated) status-poll JSON response — never in a URL, never logged, single delivery.
-- **Allowlist check runs first**, before any Clerk user is created or any email is sent —
-  preserves the closed-test posture (decision 3): a non-invited email produces zero
-  side-effects, not just a hidden one.
+## 7. Anti-patterns we explicitly avoid (kids' product)
 
-## 9. Landing page changes (`src/app/page.tsx`)
+Streaks / loss-aversion counters · hearts / lives / fail-out · loot boxes / **random monster
+hatching** (deterministic, earned evolution only) · pay-to-win / paywalled progress (monster +
+certificate fully free) · guilt-trip notifications · public child sharing / leaderboards ·
+person-praise ("ты умный") · dangling the reward up front · juice-on-everything · walls of text ·
+stacked coachmarks · tap-through age gates · ambiguous/expiring codes.
 
-- Header's two parent-framed buttons collapse to one small secondary link — *"Я родитель — войти"*
-  (→ `/sign-in`, kept for parents who prefer to create their own account directly; behavior
-  unchanged).
-- The existing silhouette flow (`InteractiveShowcase`, already public/unauthenticated) becomes
-  the single obvious primary action, with its CTA copy switched to speak to whoever is reading —
-  since that's frequently the child themself, per decision 1–2.
-- Post-silhouette screen (new, §3 step 3) picks up the second-person-child voice already used
-  elsewhere in onboarding (e.g. `src/lib/silhouette.ts`'s *"Твой питомец почти проснулся…"*),
-  instead of dropping into a Clerk form.
+## 8. Technical impact — reuse vs. new
 
-## 10. Explicit non-goals (this iteration)
+**Reused as-is:** `hasValidConsent()` + all fail-closed gates; `ALLOWLIST_EMAILS`; Clerk
+sign-in-ticket approach (v1); Monster model + `MonsterAvatar` moods; `canvas-confetti` +
+`framer-motion` (already deps); lessons 1–5; rewards/progression seams.
 
-- Not removing `/sign-in`/`/sign-up` — kept as-is for parents who want to create the account
-  themselves first.
-- Not touching consent *content*/legal copy — `docs/COPPA-CONSENT-SPEC.md` still governs that.
-- Not building push notifications for approval — polling only (simplest thing that works; an
-  upgrade path, not a requirement now).
-- Not handling multiple children per parent email in this pass — one `AccessRequest` → one Clerk
-  user → one child profile, same 1:1 model as today.
+**New:**
+- `AccessCode` table (`codeHash`, `salt`, `issuedForEmail`, `status`, `redeemedByClerkId?`,
+  `consentCapturedAt`, `expiresAt?`) — replaces v1's `AccessRequest`.
+- `POST /api/access-code/redeem` (public, rate-limited) → validate → find/create Clerk user →
+  record consent → mint ticket. Admin code-generation script/route (CEO-only).
+- Guidance primitives (§3): mascot voice+caption, pulsing target, step-gating wrapper, coachmark
+  spotlight, idle-nudge hook — a small shared UI kit.
+- Monster **evolution stages** (derive form from `skillsCompleted`).
+- Wrong-answer **progressive-hint** escalation in the lesson chat UI.
+- Certificate generation (`@vercel/og` PNG + PDF) + monster keepsake card.
+- Landing (`src/app/page.tsx`) reframed: child-first primary action; parent sign-in demoted to a
+  small secondary link.
+- Add `@clerk/backend` as a direct pinned dependency (currently only transitive).
 
-## 11. Migration / rollout
+**Migration:** `AccessCode` via `prisma migrate diff --from-empty --to-schema … --script` →
+`scripts/turso-db-push.mjs` (the established libSQL-adapter workaround). No new required env
+beyond existing (`ALLOWLIST_EMAILS`, `CONSENT_CODE_PEPPER`, `RESEND_*`).
 
-- New `AccessRequest` Prisma model → `prisma migrate diff --from-empty --to-schema
-  prisma/schema.prisma --script` → apply via `scripts/turso-db-push.mjs` (the established
-  workaround for the libSQL driver-adapter, since `prisma migrate status` doesn't understand
-  `libsql://` directly — same approach used for every prior migration this project).
-- New required env: none beyond what's already documented (`RESEND_API_KEY`, `RESEND_FROM`,
-  `ALLOWLIST_EMAILS`, `CONSENT_CODE_PEPPER` all already present in `.env.example`).
-- New dependency: `@clerk/backend` promoted from transitive to a direct, pinned dependency.
+## 9. Non-goals (this iteration)
 
-## 12. Open item for CEO review
+- No open self-serve registration — stays code/allowlist-gated (closed test).
+- No push notifications, no streaks, no social feed, no paid tiers.
+- Not translating lessons to AZ in this pass (tracked separately; landing/consent already bilingual,
+  lesson interior currently RU-only).
+- One code → one child profile (1:1), same as today.
 
-§6's `/api/access-request` response-shape note (no allowlist oracle) and §8's soft-decline copy
-are my own security-driven call, not yet run past the CEO — flagging here rather than blocking
-the rest of the spec on it, since it's reversible (a copy/response-shape choice, not an
-irreversible action) and the rest of the design doesn't depend on which way it's decided.
+## 10. Research basis (real products, not invented)
+
+Access: Kahoot PIN, ClassDojo class code, Prodigy "enter once". Guidance: Duolingo/Duolingo ABC
+(play-first, audio-first, step-gating), Khan Academy Kids (mascot narration, collectibles-by-
+mastery), NN/g children's UX (targets, abandonment), coachmark/idle-nudge UX research. Motivation:
+Self-Determination Theory meta-analysis, overjustification effect (Deci/Koestner/Ryan; Lepper),
+goal-gradient/endowed-progress (Nunes & Drèze), Tamagotchi effect, Duolingo hearts→energy change,
+loot-box harm research. Completion: Code.org certificates. Full source URLs captured in the
+research pass (2026-07-20); to be appended as a references block when this spec is approved.
