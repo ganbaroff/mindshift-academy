@@ -6,7 +6,7 @@ import {
   hashAccessValue,
   hashesEqual,
   CODE_LEN,
-} from "./access-code-crypto";
+} from "@/lib/access-code-crypto";
 
 // DB lifecycle for one-time child-access codes (spec §2). Pure crypto lives in
 // ./access-code-crypto.ts (dependency-free + independently tested). This module owns the

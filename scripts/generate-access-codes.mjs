@@ -4,8 +4,22 @@
 // not recoverable later (only hashes are stored). Operator hands both to the invited parent.
 // Emails not in ALLOWLIST_EMAILS are skipped.
 import "dotenv/config";
-import { createAccessCode } from "../src/lib/access-code.ts";
-import { isEmailAllowed } from "../src/lib/access.ts";
+import { register } from "node:module";
+// Register the @/* alias resolver (same loader the other prisma-using scripts use) so the real
+// lib modules (which import "@/lib/prisma") resolve under a plain `node scripts/...`.
+register("./alias-loader.mjs", import.meta.url);
+
+const { createAccessCode } = await import("@/lib/access-code");
+
+// Inline allowlist check (same rule as src/lib/access.ts isEmailAllowed) — imported directly here
+// instead of from access.ts, because that module pulls in @clerk/nextjs/server which can't load
+// under a plain node script. Empty list = open in dev, closed in prod.
+const allow = (process.env.ALLOWLIST_EMAILS ?? "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean);
+const isEmailAllowed = (email) =>
+  allow.length === 0 ? process.env.NODE_ENV !== "production" : allow.includes(email.toLowerCase());
 
 const emails = process.argv
   .slice(2)
