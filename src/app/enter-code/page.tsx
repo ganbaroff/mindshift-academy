@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSignIn } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
+import { MascotCue } from "@/components/guide/MascotCue";
+import { TapHint } from "@/components/guide/TapHint";
 
 // Child code-entry screen (spec §2/§3). Kid-friendly segmented input: one big box per character,
 // auto-advance, paste-friendly, uppercase, ambiguous-char-free alphabet. On a valid code the
@@ -80,9 +82,10 @@ export default function EnterCodePage() {
   return (
     <main className="grid min-h-screen place-items-center px-6 py-12">
       <div className="w-full max-w-md space-y-8 text-center">
-        <div className="space-y-2">
+        <div className="space-y-3">
           <h1 className="text-2xl font-semibold text-white">Впиши секретный код</h1>
-          <p className="text-sm text-white/60">Его дал тебе взрослый. Просто набери или вставь.</p>
+          {/* Voiced instruction in the pet's voice + a caption — reading optional (spec §3). */}
+          <MascotCue beat="code" />
         </div>
 
         <div
@@ -119,15 +122,19 @@ export default function EnterCodePage() {
           </p>
         )}
 
-        <button
-          type="button"
-          onClick={submit}
-          disabled={busy || chars.join("").length !== LEN}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy ? "Заходим…" : "Продолжить"}
-          <ArrowRight className="h-4 w-4" />
-        </button>
+        {/* Once all 8 chars are in, pulse the button so the child knows to press it (spec §3). */}
+        <span className="relative inline-flex w-full">
+          <TapHint show={chars.join("").length === LEN && !busy} />
+          <button
+            type="button"
+            onClick={submit}
+            disabled={busy || chars.join("").length !== LEN}
+            className="relative z-10 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy ? "Заходим…" : "Продолжить"}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </span>
       </div>
     </main>
   );

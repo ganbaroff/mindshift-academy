@@ -315,6 +315,22 @@ check(
   );
 }
 
+// ---- GUIDE: escalating idle-nudge + mascot lines (pure) ----
+console.log("=== GUIDE: idle-nudge + mascot lines ===");
+{
+  const { idleNudgeLevel, DEFAULT_NUDGE, mascotLine, MASCOT_LINES } = await import("../src/lib/guide.ts");
+  check("no nudge before the first threshold", idleNudgeLevel(0) === 0 && idleNudgeLevel(5999) === 0);
+  check("pulse at 6s, voice at 15s, demo at 30s (monotonic escalation)",
+    idleNudgeLevel(6000) === 1 && idleNudgeLevel(15000) === 2 && idleNudgeLevel(30000) === 3);
+  check("nudge is capped at 3 (never spams past the demo)", idleNudgeLevel(999999) === 3);
+  check("custom thresholds are honoured",
+    idleNudgeLevel(2000, { pulseMs: 1000, voiceMs: 5000, demoMs: 9000 }) === 1);
+  check("thresholds are ordered (pulse < voice < demo)",
+    DEFAULT_NUDGE.pulseMs < DEFAULT_NUDGE.voiceMs && DEFAULT_NUDGE.voiceMs < DEFAULT_NUDGE.demoMs);
+  check("every mascot beat has a non-empty line", Object.values(MASCOT_LINES).every((l) => l.length > 4));
+  check("unknown beat falls back to a safe generic nudge, never empty", mascotLine("nope").length > 4);
+}
+
 // ---- totals ----
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail > 0) {
