@@ -11,23 +11,22 @@ created, and adds the guided/gamified runtime the child walks through alone.
 
 ---
 
-## 0. The one decision that is the CEO's (legal posture)
+## 0. Consent posture — DECIDED (CEO, 2026-07-20): **(B) one parent screen at activation**
 
-Everything below assumes **the one-time code IS the parental-consent artifact**: when an invited
-parent is handed a code, that hand-off is the parental authorization; redeeming it marks consent
-valid. This keeps the existing fail-closed safety gates intact while collapsing the *child-facing*
-friction to "type one code." The only open call is **how much consent ceremony to keep on the
-parent side** (test product, not-EU, per CEO):
+**The one-time code IS the parental-consent artifact**: an invited parent is handed a code; the
+child redeems it and is in. This keeps the existing fail-closed safety gates intact while
+collapsing the *child-facing* friction to "type one code." **CEO chose posture (B):**
 
-- **(A) Zero ceremony** — the code alone is consent. Child types code → in. We log issuance +
-  redemption (who, when, IP) as the consent record. Lightest; matches "родитель 1 раз дал код"
-  literally.
-- **(B) One parent screen at activation** — parent opens a short link once (out of the child's
-  way), ticks the two existing opt-ins, gets the code. Slightly more defensible, still zero
-  child friction.
+- Before/at code issuance, the parent opens a **short one-time link once** (on the parent's own
+  device, out of the child's way), sees the consent copy, ticks the **two existing opt-ins**
+  (`serviceConsent` + `externalAiConsent`), and that activates the code.
+- Redeeming the activated code marks `hasValidConsent()` true for that `clerkId`. The **child sees
+  only the code entry** — zero consent UI on the child's side.
+- Rejected (A) "code alone = consent, no parent screen": slightly lighter but less defensible;
+  CEO opted for the one parent screen since it reuses the existing two-opt-in consent copy at
+  ~zero child cost.
 
-This is a legal-posture choice, not an engineering one — flagged for the CEO. The rest of the
-design is identical either way. Default assumption if unspecified: **(A)** for the closed test.
+This is the only legal-posture call; the rest of the design is unchanged by it.
 
 ## 1. Confirmed decisions (CEO)
 
@@ -45,6 +44,11 @@ design is identical either way. Default assumption if unspecified: **(A)** for t
 (from `ALLOWLIST_EMAILS` / a codes table). Parent receives the code out-of-band (WhatsApp, in
 person — however the closed test invites go out) and hands it to the child once.
 
+**Activation (posture B, §0).** Before the code works, the parent opens a **one-time activation
+link once** (their own device), reads the consent copy, ticks the two opt-ins
+(`serviceConsent` + `externalAiConsent`). That records the `ParentalConsent` intent against the
+code's issuance and flips the code to "active". The child never sees this screen.
+
 **Kid-friendly redemption** (patterns from Kahoot 6-digit PIN, ClassDojo class code, Prodigy
 "enter once"):
 - Segmented OTP-style input — one big box per character, auto-advance, paste-friendly.
@@ -55,10 +59,12 @@ person — however the closed test invites go out) and hands it to the child onc
 - Wrong code → friendly retry line in the monster's voice, never a red "ERROR".
 
 **What redemption does (server):**
-1. Validate code (hash+salt compare, not-expired, not-already-redeemed).
+1. Validate code (hash+salt compare, **active** (parent-activated, posture B), not-expired,
+   not-already-redeemed).
 2. Find-or-create the family's Clerk user (via `@clerk/backend` `clerkClient.users`), keyed to the
    issuance email.
-3. Mark the code redeemed; **record consent** for that `clerkId` (from issuance — posture A/B above).
+3. Mark the code redeemed; **finalize consent** for that `clerkId` from the parent's activation
+   opt-ins (§0 posture B) via the existing `recordConsent()`.
 4. Mint a Clerk **sign-in ticket**; return it to the child's browser.
 5. Child client calls `signIn.create({strategy:"ticket", ticket})` → real session → straight into
    the journey. No password, no form, no parent present.
