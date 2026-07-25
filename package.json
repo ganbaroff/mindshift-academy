@@ -16,6 +16,7 @@
     "test:config": "node tests/production-env-contract.test.mjs",
     "test:ui": "node tests/ui-accessibility.test.mjs",
     "check:prod-env": "node scripts/check-production-env.mjs",
+    "test:atlas-learning": "npx tsx tests/atlas-learning-cycle.test.mjs",
     "test:e2e": "node scripts/e2e/lesson-flow.mjs",
     "test:e2e-wrong": "node tests/e2e-wrong-answer.test.mjs",
     "test:e2e:firefox": "node tests/e2e-cross-browser.test.mjs firefox",

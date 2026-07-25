@@ -21,6 +21,8 @@ model User {
   monster   Monster?
   progress  LessonProgress[]
   inventory Inventory[]
+  conceptMasteries   ConceptMastery[]
+  atlasLearningSessions AtlasLearningSession[]
 }
 
 model Monster {
@@ -118,6 +120,39 @@ model RewardEvent {
   userId    String
   stepId    Int
   createdAt DateTime @default(now())
+}
+
+// VOLAURA-owned concept mastery (Atlas receives snapshots only).
+model ConceptMastery {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept   String
+  mastery   Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, concept])
+}
+
+// Atlas NBA session audit — decision metadata stored in VOLAURA, not Atlas.
+model AtlasLearningSession {
+  id                 String    @id @default(cuid())
+  userId             String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept            String
+  idempotencyKey     String    @unique
+  requestId          String
+  decisionId         String?
+  goalId             String?
+  decisionScore      Float?
+  action             String?
+  lessonFormat       String?
+  masteryBefore      Float
+  masteryAfter       Float?
+  decideReceiptJson  String?
+  outcomeReceiptJson String?
+  createdAt          DateTime  @default(now())
+  completedAt        DateTime?
 }
 
 // One-time child-access code (docs/superpowers/specs/2026-07-19-child-async-access-design.md).
