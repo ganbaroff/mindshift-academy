@@ -65,5 +65,6 @@ jobs:
         env:
           ATLAS_LEARNING_API_URL: http://127.0.0.1:8089
           ATLAS_LEARNING_API_KEY: ci-test-key
+          TURSO_DATABASE_URL: "file:./ci-atlas-e2e.db"
           DATABASE_URL: "file:./ci-atlas-e2e.db"
         run: npm run test:atlas-learning
