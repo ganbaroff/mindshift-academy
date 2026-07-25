@@ -10,6 +10,7 @@
     "test": "node tests/deterministic.mjs",
     "test:regression": "node scripts/regression.mjs",
     "test:live": "node tests/safety.test.mjs",
+    "test:atlas-learning": "npx tsx tests/atlas-learning-cycle.test.mjs",
     "test:e2e": "node scripts/e2e/lesson-flow.mjs",
     "test:falsepos": "node scripts/measure-falsepos.mjs",
     "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs"
