@@ -1,0 +1,70 @@
+name: Atlas Learning CI
+
+on:
+  push:
+  pull_request:
+
+# Pinned Atlas commit for reproducible E2E — update when Atlas PR advances.
+env:
+  ATLAS_CLI_PIN_SHA: "6af69f379b294caa2bdace9f340a6c019ebfe976"
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+
+  atlas-learning-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout VOLAURA
+        uses: actions/checkout@v4
+
+      - name: Checkout Atlas
+        uses: actions/checkout@v4
+        with:
+          repository: ganbaroff/atlas-cli
+          path: atlas-cli
+          ref: ${{ env.ATLAS_CLI_PIN_SHA }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Atlas learning API
+        working-directory: atlas-cli
+        run: |
+          npm ci --legacy-peer-deps
+          npm run build
+
+      - name: Start Atlas learning API
+        working-directory: atlas-cli
+        env:
+          ATLAS_LEARNING_API_KEY: ci-test-key
+          ATLAS_LEARNING_STATE_DIR: /tmp/atlas-learning-volaura-ci
+          PORT: "8089"
+        run: |
+          node dist/learning-api.js &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8089/health && exit 0
+            sleep 0.5
+          done
+          echo "Atlas learning API failed to start" >&2
+          exit 1
+
+      - name: Install VOLAURA deps
+        run: npm ci
+
+      - name: Sigmoid E2E over HTTP
+        env:
+          ATLAS_LEARNING_API_URL: http://127.0.0.1:8089
+          ATLAS_LEARNING_API_KEY: ci-test-key
+          TURSO_DATABASE_URL: "file:./ci-atlas-e2e.db"
+          DATABASE_URL: "file:./ci-atlas-e2e.db"
+        run: npm run test:atlas-learning

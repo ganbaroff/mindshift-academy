@@ -1,8 +1,7 @@
 /**
- * Atlas learning adapter — file exchange + CLI drain (pilot transport).
- * VOLAURA writes requests; Atlas writes receipts; mastery stays here.
+ * Atlas learning adapter — HTTP (Sprint 3) or file exchange + CLI drain (pilot).
+ * VOLAURA owns mastery; Atlas owns decision + audit receipts.
  */
-
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import {
@@ -19,6 +18,11 @@ import {
 } from "./contracts";
 import { mapActionToSigmoidLesson, renderSigmoidLessonHtml } from "./sigmoid-lesson";
 import { masteryAfterOutcome } from "./mastery";
+import { atlasHttpDecide, atlasHttpOutcome } from "./http-client";
+
+export function useAtlasHttpTransport(): boolean {
+  return Boolean(process.env.ATLAS_LEARNING_API_URL);
+}
 
 export class AtlasAdapterError extends Error {
   code: string;
@@ -176,7 +180,6 @@ export interface DecideResult {
 }
 
 export async function atlasDecide(params: DecideParams): Promise<DecideResult> {
-  const exchangeDir = resolveAtlasExchangeDir();
   const payload: LearningDecideInput = {
     ...SIGMOID_DECIDE_FIXTURE,
     learnerId: params.learnerId,
@@ -210,9 +213,15 @@ export async function atlasDecide(params: DecideParams): Promise<DecideResult> {
     };
   }
 
-  writeDecideRequest(exchangeDir, idempotencyKey, requestId, payload);
-  drainAtlasLearning(exchangeDir);
-  const receipt = readReceipt(exchangeDir, idempotencyKey);
+  let receipt: AtlasLearningReceipt;
+  if (useAtlasHttpTransport()) {
+    receipt = await atlasHttpDecide(idempotencyKey, payload, requestId);
+  } else {
+    const exchangeDir = resolveAtlasExchangeDir();
+    writeDecideRequest(exchangeDir, idempotencyKey, requestId, payload);
+    drainAtlasLearning(exchangeDir);
+    receipt = readReceipt(exchangeDir, idempotencyKey);
+  }
 
   if (receipt.status !== "completed" || !receipt.decision) {
     throw new AtlasAdapterError(
@@ -280,7 +289,6 @@ export interface OutcomeResult {
 }
 
 export async function atlasOutcome(params: OutcomeParams): Promise<OutcomeResult> {
-  const exchangeDir = resolveAtlasExchangeDir();
   const session = await prisma.atlasLearningSession.findUnique({
     where: { idempotencyKey: params.idempotencyKey },
   });
@@ -314,9 +322,15 @@ export async function atlasOutcome(params: OutcomeParams): Promise<OutcomeResult
     selfReportedConfidence: params.selfReportedConfidence,
   };
 
-  writeOutcomeRequest(exchangeDir, outcomeKey, requestId, payload);
-  drainAtlasLearning(exchangeDir);
-  const receipt = readReceipt(exchangeDir, outcomeKey);
+  let receipt: AtlasLearningReceipt;
+  if (useAtlasHttpTransport()) {
+    receipt = await atlasHttpOutcome(outcomeKey, payload, requestId);
+  } else {
+    const exchangeDir = resolveAtlasExchangeDir();
+    writeOutcomeRequest(exchangeDir, outcomeKey, requestId, payload);
+    drainAtlasLearning(exchangeDir);
+    receipt = readReceipt(exchangeDir, outcomeKey);
+  }
 
   if (receipt.status !== "completed") {
     throw new AtlasAdapterError(
