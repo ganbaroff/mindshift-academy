@@ -133,7 +133,7 @@ content rather than the interface.
    explanation first.
 3. **Разбор** (~3 min) — a short explanation of the principle, anchored to the failure that
    just happened.
-4. **Практика** (~5–7 min) — two or three tasks in the same skill at rising difficulty, each
+4. **Практика** (~5–7 min) — eight to twelve short tasks in the same skill at rising difficulty, each
    checked deterministically.
 5. **Перенос** (~3–5 min) — the same skill in a visibly different context.
 6. **Итог** (~1 min) — the child states the rule in their own words. This is the one place

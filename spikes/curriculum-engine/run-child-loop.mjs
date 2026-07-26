@@ -106,9 +106,19 @@ async function run() {
   const results = [];
   const TIERS = (process.env.SPIKE_TIERS ?? "1,2,3").split(",").map(Number);
   for (const tier of TIERS) {
-    for (let i = 0; i < TARGETS_PER_TIER; i++) {
-      const seed = tier * 1000 + i + 1;
+    // Walk seeds until we have TARGETS_PER_TIER distinct shapes. A prior run treated 15 trials
+    // as independent while only 11 shapes existed — that inflated the "solved" claim.
+    const seen = new Set();
+    let seed = tier * 10_000;
+    let collected = 0;
+    while (collected < TARGETS_PER_TIER && seed < tier * 10_000 + 5_000) {
+      seed += 1;
       const target = makeTarget(tier, seed);
+      const shape = JSON.stringify(target);
+      if (seen.has(shape)) continue;
+      seen.add(shape);
+      collected += 1;
+
       const outcome = await playOne(conn, family, target);
       results.push({ tier, seed, cost: referabilityCost(target), ...outcome });
 
@@ -118,6 +128,9 @@ async function run() {
         console.log(`      -> ${line.outcome}`);
       }
       console.log("");
+    }
+    if (collected < TARGETS_PER_TIER) {
+      console.log(`WARNING: only ${collected}/${TARGETS_PER_TIER} unique tier-${tier} targets found`);
     }
   }
 

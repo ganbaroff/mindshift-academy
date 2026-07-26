@@ -96,7 +96,13 @@
 
 ## Часть 3: Модули 2-5 (roadmap после Module 1)
 
-Module 1 = "Пробуждение" (5 уроков, промпт-инжиниринг basics)
+> **SUPERSEDED 2026-07-27.** The prompt-engineering Modules 2–5 table below is historical.
+> Active curriculum authority is `docs/superpowers/specs/2026-07-27-thinking-curriculum-design.md`
+> (thinking/logic course, 5 weeks × 3 sessions, executable-task engine). Do not implement the
+> PvP / prompt-arena track from this section unless that design is explicitly revived.
+
+Module 1 = "Пробуждение" (5 уроков, промпт-инжиниринг basics) — still the live product until the
+thinking curriculum ships Week 1.
 
 | Module | Тема | Уроков | Новая механика | Цена |
 |--------|------|--------|----------------|------|

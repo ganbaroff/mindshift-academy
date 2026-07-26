@@ -70,16 +70,21 @@ is excluded from the interpreter role. It remains fine for the safety classifier
 
 ### 3.2 Does the feedback teach
 
-15 targets across three difficulty tiers, synthetic nine-year-old, six-attempt ceiling.
+**Correction after review (same day):** the first child-loop used a collapsed tier-3 generator
+(every "interior" digram on 4×4 was the same middle square) and non-unique seeds (15 trials,
+11 shapes). Those tier rankings were retracted. Generator now emits offset pairs / L-shapes;
+the loop walks seeds until shapes are unique; offline refuses a collapsed generator.
+
+**Re-run (unique shapes, 3 per tier):**
 
 | Tier | Solved | Mean attempts |
 |---|---|---|
-| 1 | 5/5 | 1.00 |
-| 2 | 5/5 | 2.00 |
-| 3 | 5/5 | 1.80 |
+| 1 | 3/3 | 1.33 |
+| 2 | 3/3 | 1.67 |
+| 3 | 3/3 | 2.67 |
 
-All 15 solved, worst case four attempts. The transcripts show the intended mechanism working
-rather than the child guessing:
+Ladder rises. Worst case four attempts. Transcripts still show the intended mechanism — a child
+converging under a machine that will not guess:
 
 ```
 1. «Закрась две клеточки внизу, посередине.»   -> не сказано, какие именно две клетки

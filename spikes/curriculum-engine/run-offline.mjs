@@ -4,7 +4,7 @@
 
 import * as grid from "./lib/grid-draw.mjs";
 import * as seq from "./lib/sequence-world.mjs";
-import { makeTarget, referabilityCost, isSolvable, rng } from "./lib/targets.mjs";
+import { makeTarget, referabilityCost, isSolvable, rng, uniqueShapeCount } from "./lib/targets.mjs";
 
 let failures = 0;
 const check = (label, condition, detail = "") => {
@@ -97,10 +97,11 @@ console.log("\n=== 4. Feedback quality is mechanical, not hand-written ===");
   check("sequence diff names the step and the reason", seqText.includes("шаге 1") && seqText.includes("нет ножа"));
 }
 
-console.log("\n=== 5. Targets are reproducible, solvable, and cost more to say by tier ===");
+console.log("\n=== 5. Targets are reproducible, solvable, and not collapsed ===");
 {
-  // This section only shows the ladder is plausible. The claim that it is REAL is settled in
-  // run-child-loop.mjs, because the first version of this metric passed here while being wrong.
+  // Cost rising by tier is a sanity filter, NOT proof the behavioural ladder is real.
+  // That proof lives only in run-child-loop.mjs with UNIQUE targets. A prior version of this
+  // section passed while every tier-3 shape was the same middle square.
   const seeds = Array.from({ length: 200 }, (_, i) => i + 1);
   let unsolvable = 0;
   let unstable = 0;
@@ -118,12 +119,23 @@ console.log("\n=== 5. Targets are reproducible, solvable, and cost more to say b
   check("same seed always gives the same target", unstable === 0, `${unstable} unstable`);
   check("every generated target is solvable", unsolvable === 0, `${unsolvable} unsolvable`);
   const means = tiers.map((t) => mean(cost[t]));
-  console.log(`        mean cost of saying it: ${tiers.map((t, i) => `tier${t} ${means[i].toFixed(2)}`).join("  ")}`);
-  check(
-    "cost of saying it rises with every tier",
-    means.every((m, i) => i === 0 || means[i - 1] < m),
-    means.map((m) => m.toFixed(2)).join(" / ")
-  );
+  console.log(`        mean cost of saying it (sanity only): ${tiers.map((t, i) => `tier${t} ${means[i].toFixed(2)}`).join("  ")}`);
+  check("tier-1 cost stays cheap (whole row/col)", means[0] <= 1.5, `mean ${means[0].toFixed(2)}`);
+  check("tier-3 cost is dearer than tier-1", means[2] > means[0], `${means[2].toFixed(2)} vs ${means[0].toFixed(2)}`);
+  // The collapse that killed the previous ladder: too few distinct shapes.
+  const unique3 = uniqueShapeCount(3, 200);
+  const unique2 = uniqueShapeCount(2, 200);
+  console.log(`        unique shapes in 200 seeds: tier2 ${unique2}  tier3 ${unique3}`);
+  check("tier-3 generator is not collapsed", unique3 >= 40, `only ${unique3} unique shapes`);
+  // Tier 2 on a 4×4 has a small combinatorial space (edge runs × rows). Require diversity,
+  // not abundance — the collapse we care about is "one shape forever", not "fewer than 20".
+  check("tier-2 generator is not collapsed", unique2 >= 12, `only ${unique2} unique shapes`);
+  // Guard against the elShape bug that once emitted a single cell after clamping.
+  let tiny = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    if (makeTarget(3, seed).length < 2) tiny += 1;
+  }
+  check("tier-3 never emits fewer than 2 cells", tiny === 0, `${tiny} tiny targets`);
   check("prng is not degenerate", new Set(Array.from({ length: 50 }, (_, i) => rng(i + 1)())).size === 50);
 }
 

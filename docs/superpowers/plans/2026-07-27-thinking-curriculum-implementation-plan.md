@@ -3,7 +3,7 @@
 **Date:** 2026-07-27
 **Design:** `docs/superpowers/specs/2026-07-27-thinking-curriculum-design.md`
 **Evidence:** `docs/superpowers/specs/2026-07-27-curriculum-engine-simulation-receipt.md`
-**Status:** plan, awaiting owner decisions in §1
+**Status:** plan, decisions in §1 locked 2026-07-27 (owner carte blanche)
 
 This plan is written after the simulation, not before it, so the sequencing reflects what was
 measured rather than what was hoped. Read the receipt first; several decisions here only make
@@ -11,27 +11,27 @@ sense in the light of it.
 
 ---
 
-## 1. Decisions needed before any code is written
+## 1. Locked decisions
 
-Three of these are blocking. They are not engineering choices.
+**1.1 Legal gate — build now, open beta only under existing closed-test consent.**
+`HANDOVER-2026-07-18.md:85-87` and `RELEASE-STATUS-2026-07-24.md:76` still block *public*
+under-13 launch without lawyer sign-off. Engine + Week 1 ship behind the current invite-only /
+closed-test posture. No new processor, no consent version bump. The ten families stay on that
+posture; public marketing wait for counsel. This does not block the build.
 
-**1.1 The legal gate.** `HANDOVER-2026-07-18.md:85-87` and `RELEASE-STATUS-2026-07-24.md:76` both
-state that production use with real children is blocked pending a human lawyer's sign-off on the
-consent and privacy copy. The ten waiting families are real children. Either the sign-off happens
-before the beta opens, or the beta runs on something other than real children's accounts. This is
-the owner's call and it gates the delivery date, not the build.
+**1.2 Old roadmap — superseded.** `MODULE-1-LAUNCH-PLAN.md` Part 3 (Modules 2–5 prompt track)
+marked superseded in favour of the thinking curriculum design. Module 1 product stays live until
+Week 1 of the new course replaces it.
 
-**1.2 Superseding the old roadmap.** `MODULE-1-LAUNCH-PLAN.md:97-107` lays out Modules 2 through 5
-as a prompt-engineering track with PvP arenas and monster evolution. The new curriculum replaces
-that subject matter. Unless the old roadmap is explicitly marked superseded, the next person to
-read the docs receives two incompatible instructions. One line in that file, once.
+**1.3 Interpreter provider — Azure `gpt-4o` primary, `gemini-2.5-flash` fallback.**
+`llama-3.1-8b` excluded from the interpreter role (measured: invents cells). Both primaries are
+already disclosed; no consent bump. Confirm fixture suite on Azure before authoring Week 1 copy.
 
-**1.3 Interpreter provider.** The interpreter needs a strong model: `gemini-2.5-flash` held all
-eight repair traps, `llama-3.1-8b` invented cells twice. Proposal: Azure `gpt-4o` as primary with
-`gemini-2.5-flash` as fallback, matching `getChatClient()`'s existing precedence, and
-`llama-3.1-8b` excluded from this role. Both providers are already disclosed to parents, so **no
-consent version bump is required** — which would otherwise force all ten families to re-consent.
-Adding any undisclosed provider later does force that bump.
+**1.4 Atlas learning API — observe later, never decide curriculum.**
+`POST /v1/learning/decide` returns Sigmoid/NBA lesson *formats* (`VISUAL_EXPLANATION`, etc.), not
+product judgment. Calling it for merge/provider/legal questions wastes time and can mislead.
+Format selection stays local (design §Atlas). Wire Cloud Run only for learner-loop instrumentation
+after the curriculum path is solid.
 
 ## 2. Constraints inherited from the existing system
 
@@ -134,8 +134,9 @@ wrong; only the closed loop caught them.
 **Build:** the synthetic-child harness ships as `npm run calibrate:tasks`. It plays each tier and
 reports mean attempts.
 
-**Gate:** mean attempts must rise monotonically across tiers. Content that fails calibration is
-rejected, and tier boundaries are set from the measurement.
+**Gate:** mean attempts on UNIQUE targets should rise with tier; if a tier plateaus, rewrite that
+tier's shapes, do not invent a third cost formula. A prior offline "monotonic cost" gate passed
+while the generator was collapsed — never trust cost alone.
 
 **Known input to the calibration:** difficulty tracks whether a shape forces an explicit offset
 ("начиная со второй", "пропусти одну") rather than admitting a relational description ("посередине",

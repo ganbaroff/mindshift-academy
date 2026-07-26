@@ -1,17 +1,17 @@
 // Seeded target generation for the grid family.
 //
-// The first version of this file counted how many contiguous runs a target contained and called
-// that difficulty. The offline test agreed and passed. The synthetic-child loop then showed the
-// opposite: tier 2 was *easier* than tier 1 (1.25 attempts against 1.75), because a target made
-// of two whole rows is one short sentence — "закрась второй и третий ряды" — while a two-cell
-// fragment floating inside a row forces the child to pin down exactly which cells.
+// Two earlier versions of this file claimed a difficulty ladder and both lied. The first counted
+// contiguous runs; the second counted "referability cost" while generating tier-3 shapes that
+// on a 4×4 grid all collapsed into the same middle digram — `interiorRun` had only one legal
+// start column. Offline checks agreed; the closed loop then showed tier 3 easier than tier 2
+// because every target was nameable as "посередине".
 //
-// So difficulty is not about how many pieces a shape has. It is about how hard the shape is to
-// REFER TO. That is what `referabilityCost` measures, and the tiers below are built from it:
-//   whole row or column      cheap  — one noun
-//   run touching an edge     medium — a noun plus a count
-//   run floating inside      dear   — every cell has to be located
-// The ladder is then confirmed behaviourally in run-child-loop.mjs, not by trusting this file.
+// Rules that survive those two failures:
+//   1. A tier that claims to need an offset must not admit a single cheap relational word.
+//      Tier 3 is therefore scattered cells / L-shapes, never a centred digram.
+//   2. Offline cost checks are a sanity filter only. The ladder is real only when
+//      run-child-loop.mjs shows mean attempts rising across UNIQUE targets.
+//   3. The offline suite refuses a collapsed generator (too few unique shapes per tier).
 
 import { GRID_SIZE } from "./grid-draw.mjs";
 
@@ -27,7 +27,8 @@ export function rng(seed) {
 }
 
 const pick = (rand, n) => Math.floor(rand() * n);
-const dedupe = (cells) => [...new Set(cells.map((c) => c.join(",")))].map((k) => k.split(",").map(Number));
+const keyOf = ([r, c]) => `${r},${c}`;
+const dedupe = (cells) => [...new Set(cells.map(keyOf))].map((k) => k.split(",").map(Number));
 
 const wholeRow = (row) => Array.from({ length: GRID_SIZE }, (_, col) => [row, col]);
 const wholeColumn = (col) => Array.from({ length: GRID_SIZE }, (_, row) => [row, col]);
@@ -40,11 +41,63 @@ function edgeRun(rand, row) {
     : Array.from({ length }, (_, i) => [row, GRID_SIZE - 1 - i]);
 }
 
-/** A run touching neither edge: the child has to locate its ends. */
-function interiorRun(rand, row) {
-  const length = 2;
-  const start = 1 + pick(rand, GRID_SIZE - length - 1);
-  return Array.from({ length }, (_, i) => [row, start + i]);
+/**
+ * Two cells that share no cheap relational word. Rejected: same cell, adjacency ("рядом"),
+ * same-row/col short runs ("две посередине"), and the centred 2×2 that killed the last ladder.
+ */
+function offsetPair(rand) {
+  for (let tries = 0; tries < 80; tries++) {
+    const a = [pick(rand, GRID_SIZE), pick(rand, GRID_SIZE)];
+    const b = [pick(rand, GRID_SIZE), pick(rand, GRID_SIZE)];
+    if (a[0] === b[0] && a[1] === b[1]) continue;
+    const manhattan = Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+    if (manhattan <= 1) continue; // adjacent or same
+    if (a[0] === b[0] && Math.abs(a[1] - b[1]) <= 2) continue; // short horizontal run
+    if (a[1] === b[1] && Math.abs(a[0] - b[0]) <= 2) continue; // short vertical run
+    // Reject pairs that sit in the centre 2×2 of a 4×4 — those read as "посередине".
+    const centre = new Set(["1,1", "1,2", "2,1", "2,2"]);
+    if (GRID_SIZE === 4 && centre.has(keyOf(a)) && centre.has(keyOf(b))) continue;
+    return [a, b];
+  }
+  // Deterministic fallback: knight-move corners, never "посередине".
+  return [
+    [0, 1],
+    [2, GRID_SIZE - 1],
+  ];
+}
+
+/** An L of three cells. Forces naming two directions; not a square and not a single run. */
+function elShape(rand) {
+  // Anchor in the top-left of a 2×2 window so the three arms always stay in bounds.
+  const row = pick(rand, GRID_SIZE - 1);
+  const col = pick(rand, GRID_SIZE - 1);
+  const variants = [
+    [
+      [row, col],
+      [row, col + 1],
+      [row + 1, col],
+    ],
+    [
+      [row, col + 1],
+      [row, col],
+      [row + 1, col + 1],
+    ],
+    [
+      [row + 1, col],
+      [row + 1, col + 1],
+      [row, col],
+    ],
+    [
+      [row + 1, col + 1],
+      [row + 1, col],
+      [row, col + 1],
+    ],
+  ];
+  const cells = variants[pick(rand, variants.length)];
+  if (dedupe(cells).length !== 3) {
+    throw new Error(`elShape collapsed: ${JSON.stringify(cells)}`);
+  }
+  return cells;
 }
 
 export function makeTarget(tier, seed) {
@@ -58,10 +111,7 @@ export function makeTarget(tier, seed) {
     return edgeRun(rand, row);
   }
   if (tier === 3) {
-    const rowA = pick(rand, GRID_SIZE);
-    let rowB = pick(rand, GRID_SIZE);
-    if (rowB === rowA) rowB = (rowA + 1) % GRID_SIZE;
-    return dedupe([...interiorRun(rand, rowA), ...interiorRun(rand, rowB)]);
+    return pick(rand, 2) === 0 ? offsetPair(rand) : elShape(rand);
   }
   // Tier 4 is rule-shaped: a checker pattern cannot be described by pointing at pieces at all,
   // only by stating a rule. That is the Week 4 skill and it does not belong in Week 1.
@@ -86,6 +136,7 @@ const rowsOf = (target) => {
 };
 
 const runsIn = (cols) => {
+  if (!cols.length) return [];
   const runs = [];
   let current = [cols[0]];
   for (let i = 1; i < cols.length; i++) {
@@ -100,14 +151,12 @@ const runsIn = (cols) => {
 };
 
 /**
- * How expensive the shape is to say out loud. Whole rows and columns are cheap because they
- * have names; interior fragments are dear because every end has to be located.
+ * How expensive the shape is to say out loud. Sanity filter only — see file header.
+ * Offline must never treat a rising cost as proof that the behavioural ladder is real.
  */
 export function referabilityCost(target) {
   const byRow = rowsOf(target);
 
-  // A set of whole columns reads as one phrase, so price it as columns rather than as a
-  // fragment in every row.
   const columnCounts = new Map();
   for (const [, col] of target) columnCounts.set(col, (columnCounts.get(col) ?? 0) + 1);
   const fullColumns = [...columnCounts.entries()].filter(([, n]) => n === GRID_SIZE);
@@ -120,9 +169,10 @@ export function referabilityCost(target) {
       const touchesRight = run[run.length - 1] === GRID_SIZE - 1;
       if (run.length === GRID_SIZE) cost += 1;
       else if (touchesLeft || touchesRight) cost += 2;
-      else cost += 3;
+      else cost += 4;
     }
   }
+  // Scattered cells (one cell per row) pay the offset premium once each via the else branch.
   return cost;
 }
 
@@ -133,4 +183,11 @@ export function isSolvable(target) {
     target.length < GRID_SIZE * GRID_SIZE &&
     target.every(([r, c]) => r >= 0 && r < GRID_SIZE && c >= 0 && c < GRID_SIZE)
   );
+}
+
+/** Distinct shapes among N seeds — used to refuse a collapsed generator. */
+export function uniqueShapeCount(tier, seedCount) {
+  const shapes = new Set();
+  for (let seed = 1; seed <= seedCount; seed++) shapes.add(JSON.stringify(makeTarget(tier, seed)));
+  return shapes.size;
 }
