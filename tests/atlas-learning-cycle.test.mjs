@@ -1,20 +1,21 @@
 #!/usr/bin/env node
 /**
- * Atlas ↔ VOLAURA Sprint 2 cycle test.
+ * Atlas ↔ VOLAURA Sprint 3 cycle test.
  *
  * Lanes:
  *   1. Pure (always): sigmoid fixture mapping + mastery math
- *   2. Live (when ATLAS_CLI_JS set): full decide → lesson → outcome via adapter + Atlas CLI
+ *   2. Live HTTP (when ATLAS_LEARNING_API_URL set): full decide → lesson → outcome
+ *   3. Live file (when ATLAS_CLI_JS set, no API URL): legacy file exchange
  *
- * Usage:
- *   ATLAS_LEARNING_EXCHANGE_DIR=/tmp/atlas-xchg \
- *   ATLAS_CLI_JS=/path/to/atlas-cli/dist/cli.js \
- *   node tests/atlas-learning-cycle.test.mjs
+ * Usage (HTTP — preferred):
+ *   ATLAS_LEARNING_API_URL=http://127.0.0.1:8080 \
+ *   ATLAS_LEARNING_API_KEY=test-key \
+ *   npm run test:atlas-learning
  */
 import { mkdtempSync, rmSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
 
@@ -31,6 +32,19 @@ function check(name, ok, detail = "") {
     fails.push(name);
     console.log(`  FAIL  ${name} ${detail}`);
   }
+}
+
+async function waitForHealth(url, attempts = 30) {
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const res = await fetch(`${url.replace(/\/$/, "")}/health`);
+      if (res.ok) return true;
+    } catch {
+      /* retry */
+    }
+    await new Promise((r) => setTimeout(r, 300));
+  }
+  return false;
 }
 
 console.log("=== Atlas learning — pure lane ===");
@@ -60,19 +74,57 @@ check("lesson html render marker", html.includes("data-lesson-format=sigmoid-vis
 check("mastery increases on correct", masteryAfterOutcome(0.35, true) === 0.5);
 check("mastery decreases on wrong", masteryAfterOutcome(0.35, false) === 0.3);
 
+const apiUrl = process.env.ATLAS_LEARNING_API_URL;
 const cliJs = process.env.ATLAS_CLI_JS;
-if (!cliJs) {
-  console.log("\n=== Atlas learning — live lane SKIPPED (set ATLAS_CLI_JS) ===");
-} else if (!existsSync(cliJs)) {
-  console.log(`\n=== Atlas learning — live lane SKIPPED (missing ${cliJs}) ===`);
-} else {
-  console.log("\n=== Atlas learning — live lane (Atlas CLI) ===");
+const useHttp = Boolean(apiUrl);
+const useFile = !useHttp && Boolean(cliJs) && existsSync(cliJs);
 
-  const exchangeDir = mkdtempSync(join(tmpdir(), "volaura-atlas-xchg-"));
-  process.env.ATLAS_LEARNING_EXCHANGE_DIR = exchangeDir;
+let atlasServerProc = null;
+let exchangeDir = null;
+
+if (!useHttp && !useFile) {
+  console.log("\n=== Atlas learning — live lane SKIPPED (set ATLAS_LEARNING_API_URL or ATLAS_CLI_JS) ===");
+} else {
+  const laneLabel = useHttp ? "HTTP" : "file exchange";
+  console.log(`\n=== Atlas learning — live lane (${laneLabel}) ===`);
+
+  if (useHttp) {
+    process.env.ATLAS_LEARNING_API_KEY =
+      process.env.ATLAS_LEARNING_API_KEY ?? "test-learning-key";
+  } else {
+    exchangeDir = mkdtempSync(join(tmpdir(), "volaura-atlas-xchg-"));
+    process.env.ATLAS_LEARNING_EXCHANGE_DIR = exchangeDir;
+  }
+
   process.env.DATABASE_URL = process.env.DATABASE_URL ?? `file:${join(root, "dev-atlas-e2e.db")}`;
 
   try {
+    if (useHttp && process.env.ATLAS_LEARNING_START_SERVER === "1") {
+      const atlasRoot = process.env.ATLAS_REPO_ROOT;
+      const learningApiJs = process.env.ATLAS_LEARNING_API_JS;
+      if (!atlasRoot || !learningApiJs) {
+        check("Atlas server bootstrap env", false, "set ATLAS_REPO_ROOT + ATLAS_LEARNING_API_JS");
+      } else {
+        atlasServerProc = spawn(process.execPath, [learningApiJs], {
+          cwd: atlasRoot,
+          env: {
+            ...process.env,
+            PORT: process.env.ATLAS_LEARNING_PORT ?? "8089",
+            ATLAS_LEARNING_API_KEY: process.env.ATLAS_LEARNING_API_KEY,
+            ATLAS_LEARNING_STATE_DIR: mkdtempSync(join(tmpdir(), "atlas-http-state-")),
+          },
+          stdio: "inherit",
+        });
+        const port = process.env.ATLAS_LEARNING_PORT ?? "8089";
+        process.env.ATLAS_LEARNING_API_URL = `http://127.0.0.1:${port}`;
+        const healthy = await waitForHealth(process.env.ATLAS_LEARNING_API_URL);
+        check("Atlas HTTP health", healthy);
+      }
+    } else if (useHttp) {
+      const healthy = await waitForHealth(apiUrl);
+      check("Atlas HTTP health", healthy);
+    }
+
     const gen = spawnSync("npx", ["prisma", "generate"], { cwd: root, encoding: "utf8", shell: true });
     check("prisma generate", gen.status === 0, gen.stderr?.slice(0, 200));
     const push = spawnSync("npx", ["prisma", "db", "push"], {
@@ -83,12 +135,22 @@ if (!cliJs) {
     check("prisma db push", push.status === 0, push.stderr?.slice(0, 200));
 
     const { atlasDecide, atlasOutcome } = await import("../src/lib/atlas-learning/adapter.server.ts");
+    const { prisma } = await import("../src/lib/prisma.ts");
 
-    const idempotencyKey = `idem_e2e_sigmoid_${Date.now()}`;
-    const user = await (await import("../src/lib/prisma.ts")).prisma.user.upsert({
-      where: { username: "atlas_e2e_user" },
-      update: {},
-      create: { username: "atlas_e2e_user", xp: 0, crystals: 0, streak: 0, activeStep: 1 },
+    const runId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const idempotencyKey = `idem_e2e_sigmoid_${runId}`;
+    const username = `atlas_e2e_${runId}`;
+
+    const user = await prisma.user.create({
+      data: { username, xp: 0, crystals: 0, streak: 0, activeStep: 1 },
+    });
+
+    await prisma.conceptMastery.create({
+      data: {
+        userId: user.id,
+        concept: SIGMOID_DECIDE_FIXTURE.concept,
+        mastery: SIGMOID_DECIDE_FIXTURE.mastery,
+      },
     });
 
     const decide = await atlasDecide({
@@ -105,10 +167,14 @@ if (!cliJs) {
     check("goalId stored", Boolean(decide.receipt.goalId));
     check("lesson rendered", decide.lessonHtml.includes("data-lesson-format=sigmoid-visual"));
 
-    const decideReceiptPath = join(exchangeDir, "receipts", `${idempotencyKey}.json`);
-    check("decide receipt file exists", existsSync(decideReceiptPath));
-    const decideReceiptJson = JSON.parse(readFileSync(decideReceiptPath, "utf8"));
-    check("decide receipt JSON parseable", decideReceiptJson.status === "completed");
+    if (useFile && exchangeDir) {
+      const decideReceiptPath = join(exchangeDir, "receipts", `${idempotencyKey}.json`);
+      check("decide receipt file exists", existsSync(decideReceiptPath));
+      const decideReceiptJson = JSON.parse(readFileSync(decideReceiptPath, "utf8"));
+      check("decide receipt JSON parseable", decideReceiptJson.status === "completed");
+    } else {
+      check("decide audit claim id", Boolean(decide.receipt.evidenceClaimId));
+    }
 
     const outcome = await atlasOutcome({
       userId: user.id,
@@ -119,10 +185,17 @@ if (!cliJs) {
 
     check("outcome receipt completed", outcome.receipt.status === "completed");
     check("mastery changed in VOLAURA", outcome.masteryAfter > outcome.masteryBefore);
-    check("mastery after correct answer", outcome.masteryAfter === 0.5);
+    check(
+      "mastery after matches formula",
+      outcome.masteryAfter === masteryAfterOutcome(outcome.masteryBefore, true),
+    );
 
-    const outcomeReceiptPath = join(exchangeDir, "receipts", `${idempotencyKey}_outcome.json`);
-    check("outcome receipt file exists", existsSync(outcomeReceiptPath));
+    if (useFile && exchangeDir) {
+      const outcomeReceiptPath = join(exchangeDir, "receipts", `${idempotencyKey}_outcome.json`);
+      check("outcome receipt file exists", existsSync(outcomeReceiptPath));
+    } else {
+      check("outcome audit claim id", Boolean(outcome.receipt.evidenceClaimId));
+    }
 
     const repeat = await atlasDecide({
       userId: user.id,
@@ -137,12 +210,17 @@ if (!cliJs) {
 
     if (decide.receipt.decisionId) {
       console.log("\n--- decide receipt JSON ---");
-      console.log(JSON.stringify(decideReceiptJson, null, 2));
+      console.log(JSON.stringify(decide.receipt, null, 2));
       console.log("\n--- outcome receipt JSON ---");
-      console.log(JSON.stringify(JSON.parse(readFileSync(outcomeReceiptPath, "utf8")), null, 2));
+      console.log(JSON.stringify(outcome.receipt, null, 2));
     }
   } finally {
-    rmSync(exchangeDir, { recursive: true, force: true });
+    if (atlasServerProc) {
+      atlasServerProc.kill("SIGTERM");
+    }
+    if (exchangeDir) {
+      rmSync(exchangeDir, { recursive: true, force: true });
+    }
   }
 }
 
