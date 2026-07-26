@@ -202,6 +202,10 @@ export function sanitizeForPrompt(raw: string, max = 40): string {
  * Offline keyword fallback for the LLM-as-judge: whether the child's message plausibly
  * performs the given lesson's skill. Used ONLY when no AI provider is available or the
  * judge LLM times out. Byte-identical to the former route.ts implementation.
+ *
+ * DEPRECATED for the thinking curriculum: progression there is gated only by the
+ * deterministic executor/checker (`src/lib/tasks/*`). Do not call this from new session
+ * code. Kept for the legacy 5-lesson Module 1 chat path until that UI is retired.
  */
 export function checkChallengeSuccess(prompt: string, stepId: number): boolean {
   const lowercase = prompt.toLowerCase();

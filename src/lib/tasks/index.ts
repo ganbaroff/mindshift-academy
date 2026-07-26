@@ -42,3 +42,6 @@ export {
 export { resolveGridAttempt, resolveSequenceAttempt, type AttemptOutcome } from "./attempt";
 export { GRID_FIXTURES } from "./fixtures/grid-draw";
 export { SEQUENCE_FIXTURES } from "./fixtures/sequence-world";
+export { masteryAfterTask, tierForMastery } from "./mastery";
+export { spacingAfterOutcome, pickReviewConcept, isDue } from "./spacing";
+export { sessionComplete, type SessionDef, type SessionTaskResult } from "./session";

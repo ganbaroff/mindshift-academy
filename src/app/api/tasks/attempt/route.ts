@@ -10,9 +10,11 @@ import { moderate } from "@/lib/moderation";
 import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
 import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
+import { prisma } from "@/lib/prisma";
 import { attemptRequestSchema } from "@/lib/tasks/schemas";
 import { interpretUtterance } from "@/lib/tasks/interpreter";
 import { resolveGridAttempt, resolveSequenceAttempt } from "@/lib/tasks/attempt";
+import { persistTaskAttempt } from "@/lib/tasks/persist";
 import type { Cell } from "@/lib/tasks/types";
 
 export async function POST(req: Request) {
@@ -55,9 +57,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const { family, utterance, target } = parsed.data;
+    const { family, utterance, target, concept, tier, eventId } = parsed.data;
     if (family === "grid-draw" && (!target || target.length === 0)) {
       return NextResponse.json({ error: "target required for grid-draw" }, { status: 400 });
+    }
+    if ((concept && !tier) || (!concept && tier)) {
+      return NextResponse.json({ error: "concept and tier must be sent together" }, { status: 400 });
     }
 
     const safety = getSafetyClient();
@@ -100,6 +105,33 @@ export async function POST(req: Request) {
         ? resolveGridAttempt(interpreted.program, target as Cell[])
         : resolveSequenceAttempt(interpreted.program);
 
+    let mastery: number | null = null;
+    let recorded: boolean | null = null;
+    if (concept && tier) {
+      const dbUser = await prisma.user.upsert({
+        where: { clerkId },
+        update: {},
+        create: {
+          clerkId,
+          username: clerkId,
+          xp: 0,
+          crystals: 0,
+          streak: 0,
+          activeStep: 1,
+        },
+      });
+      const persisted = await persistTaskAttempt({
+        userId: dbUser.id,
+        concept,
+        family,
+        tier,
+        pass: outcome.pass,
+        eventId,
+      });
+      mastery = persisted.mastery;
+      recorded = persisted.recorded;
+    }
+
     return NextResponse.json({
       pass: outcome.pass,
       feedback: outcome.feedback,
@@ -109,6 +141,8 @@ export async function POST(req: Request) {
       model: interpreted.model,
       interpretLatencyMs: interpreted.latencyMs,
       latencyMs: Date.now() - startedAt,
+      mastery,
+      recorded,
       // Never echo the child's utterance or the raw model payload.
     });
   } catch (err) {

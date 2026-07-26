@@ -51,6 +51,7 @@ try {
     "/api/tts",
     "/api/user",
     "/api/tasks/attempt",
+    "/api/tasks/session/w1-s1",
   ];
   const privateResponses = await Promise.all(
     privatePaths.map(async (path) => ({

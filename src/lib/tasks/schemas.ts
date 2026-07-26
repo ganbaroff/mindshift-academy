@@ -34,6 +34,13 @@ export const attemptRequestSchema = z.object({
   utterance: z.string().min(1).max(500),
   /** 0-based cells for grid-draw. Ignored for sequence-world. */
   target: z.array(cellSchema).optional(),
+  /** Thinking-curriculum concept id — when set, mastery/spacing are updated. */
+  concept: z.string().min(1).max(64).optional(),
+  tier: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+  /** Idempotency for TaskAttempt — never stores utterance. */
+  eventId: z.string().min(8).max(100).optional(),
+  sessionId: z.string().min(1).max(64).optional(),
+  taskId: z.string().min(1).max(64).optional(),
 });
 
 export type AttemptRequest = z.infer<typeof attemptRequestSchema>;
