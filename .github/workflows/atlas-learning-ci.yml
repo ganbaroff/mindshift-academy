@@ -6,7 +6,7 @@ on:
 
 # Pinned Atlas commit for reproducible E2E — update when Atlas PR advances.
 env:
-  ATLAS_CLI_PIN_SHA: "4ecad916bc7ee85978d834f7b9b2b8da931e9e34"
+  ATLAS_CLI_PIN_SHA: "6af69f379b294caa2bdace9f340a6c019ebfe976"
 
 jobs:
   unit:
