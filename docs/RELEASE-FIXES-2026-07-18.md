@@ -16,16 +16,20 @@ between here and a real-kid production launch; for a **closed test** it is now s
 | Gate | Command | Result |
 |---|---|---|
 | Production build + typecheck | `npm run build` | PASS (exit 0, Next 16.2.9) |
-| Lint | `npm run lint` | PASS — **0 errors** (was 64), 14 warnings |
-| Deterministic tests (CI gate) | `npm test` | PASS 14/14 |
+| Dependency audit | `npm audit --omit=dev --audit-level=high` | PASS — 0 vulnerabilities |
+| Lint | `npm run lint` | PASS — **0 errors / 0 warnings** (was 64 errors) |
+| Deterministic tests (CI gate) | `npm test` | PASS 26/26 |
+| Environment contract | `npm run test:config` | PASS 5/5 |
+| Consent DB integration | `npm run test:consent` | PASS 9/9 |
+| Child-data lifecycle | `npm run test:data-lifecycle` | PASS 4/4 |
+| UI accessibility contract | `npm run test:ui` | PASS 4/4 |
+| API boundary | `node tests/proxy-api-auth.test.mjs` | PASS — 11 private routes reject anonymous requests |
 | Live safety (provider lane) | `npm run test:live` | PASS 17/17 |
-| Regression seams | `npm run test:regression` | 21 pass / 0 fail / 1 blocked* |
-| Full 5-lesson browser E2E | `npm run test:e2e` | PASS 5/5 (chat+judge+reward, XP 100→1200) |
-| False-reject measurement | `npm run test:falsepos` | 10% (2/20), gibberish only |
-
-*The 1 "blocked" is the same gibberish input (`"asdf qwe 123 бла"`) llama-guard blocks — the
-known, documented false-positive under MSA-P1-SAFETY-005, not a failure. Real lesson answers
-all pass.
+| Regression seams | `npm run test:regression` | 22 pass / 0 fail / 0 blocked |
+| Full 5-lesson browser E2E | `npm run test:e2e:matrix` | PASS 5/5 in Chromium, Firefox and WebKit |
+| Safe wrong-answer E2E | `npm run test:e2e-wrong` | PASS — safety-pass alone cannot issue reward |
+| False-reject measurement | `npm run test:falsepos` | 0/20 safe false-rejects; 0/6 unsafe false-allows |
+| Unified release gate | `npm run verify:release` | PASS |
 
 ## Findings → fixes
 
@@ -50,8 +54,7 @@ route makes no external call, period. The fallback description no longer echoes 
   the "ready" state (was silently advancing into a broken lesson).
 - `src/app/consent/page.tsx` sends a freshly-consented parent onward to `/onboarding` (continue
   the child first-run) instead of the parent-only dashboard dead-end.
-- BONUS (found during verification, pre-existing, not the proxy rename): `src/middleware.ts`
-  now redirects unauthenticated users on protected routes to `/sign-in` (307) instead of the
+- `src/proxy.ts` now redirects unauthenticated users on protected routes to `/sign-in` (307) instead of the
   bare `404` Clerk's `auth.protect()` was returning — so a shared deep link no longer shows
   "Not Found". Authenticated path unchanged.
 
@@ -60,8 +63,7 @@ route makes no external call, period. The fallback description no longer echoes 
 `@ts-ignore`→`@ts-expect-error`, `getIntroductionText` hoisted to module scope (cleared the
 use-before-declaration + immutability errors), and the React 19 `set-state-in-effect` cases
 resolved with per-line justified suppressions (benign external-sync effects, not real bugs).
-14 warnings remain (intentional `exhaustive-deps`, an `<img>`, a few unused vars) — warnings
-do not fail the gate.
+Lint is now clean: 0 errors and 0 warnings.
 
 ### MSA-P1-TEST-004 — test runner not a reliable gate — FIXED
 - `npm test` now runs `tests/deterministic.mjs`: pure, no server / no provider / no DB, so it
@@ -72,39 +74,48 @@ do not fail the gate.
   aborts → exit 1, never hangs), self-starts the dev server if none is running, and treats
   blocked/timeout as FAIL — never a silent pass.
 
-### MSA-P1-SAFETY-005 — benign input false-blocked — MEASURED (not loosened)
+### MSA-P1-SAFETY-005 — benign input false-blocked — FIXED, fail-closed preserved
 `scripts/measure-falsepos.mjs` runs a labelled benign RU/AZ/EN dataset (gibberish + real
 lesson answers + normal chat) through `moderate()` and reports the false-reject rate, cleanly
 separating a safety-block from a pedagogical-wrong (only the safety-block is counted).
-Measured: **10% (2/20)** — both are pure gibberish (`"asdf qwe 123 бла"`, `"9999 8888 7777"`);
-**all 5 real lesson answers and all AZ/EN benign inputs pass.** Recommendation: do **not**
-loosen the child classifier to admit digit/keyboard-mashing — the safety-first "when in doubt,
-block" is correct, and a child mashing keys is redirected to the lesson either way.
+The current release detects the exact known Llama Guard `unsafe S7` false-positive only when a
+second independent kidNet classifier returns safe and the phrase is a short, allowlisted
+keyboard-gibberish sequence with no PII cue. All other categories, errors and non-matching text
+remain fail-closed. Measured after the change: **0/20** safe false-rejects and **0/6** unsafe
+false-allows. The wrong-answer E2E separately proves that a safety-pass does not grant a reward.
 
 ### MSA-P2-DEV-006 — unauthenticated reset of a shared row — FIXED
-`/api/reset` now requires auth and only ever resets the **caller's own** row (keyed by
-`clerkId`): fresh stats + delete their monster + delete their lesson progress. Works in all
-environments (the old dev-only 403 that disabled the graduation "start over" button is gone),
-and it doubles as the COPPA self-service "erase my child's data" path the audit noted was
-missing.
+`/api/reset` now requires auth and only ever resets the **caller's own** gameplay state (keyed
+by `clerkId`): fresh stats + delete their monster + delete their lesson progress while preserving
+valid consent. The separate authenticated `DELETE /api/child-data` is the COPPA self-service
+erase path: it transactionally removes Academy user data, progress, rewards, consent and
+verification. Both flows have real temporary-Prisma lifecycle coverage.
 
 ### MSA-P2-CONFIG-007 — incomplete `.env.example` — FIXED
 Added the 8 missing keys with comments: `GEMINI_API_KEY`, `DATABASE_URL`,
 `CONSENT_CODE_PEPPER`, `RESEND_FROM`, and the four `NEXT_PUBLIC_CLERK_SIGN_*` routing URLs. The
 template now matches every `process.env` reference in the code.
 
-### MSA-P2-NEXT-008 — deprecated middleware convention — DEFERRED (documented)
-The `middleware.ts` → `proxy.ts` rename is **not** done. Rationale: Clerk 7.5.7's support for
-the Next 16 proxy convention is unverified, and the authenticated path (`auth()` resolution for
-signed-in users) cannot be tested here without a real Clerk session — too risky for the auth
-boundary on a children's app, and the audit itself classifies it as deferrable migration debt.
-Build only emits the deprecation **warning**; the app works. Follow-up: rename the file to
-`src/proxy.ts` (keep the `export default` + `config`), then verify a signed-in user still
-resolves via `auth()`/`currentUser()` end-to-end before shipping.
+The deployment preflight also requires a `file:`-based `DATABASE_URL` for the Prisma CLI build
+configuration. Runtime Academy data still uses Turso through the libSQL adapter; this separate
+build datasource prevents a deployment from passing secret validation and failing later in Prisma.
+
+### Post-audit privacy hardening — weekly reports honour current consent
+The weekly-report cron previously sent to `User.username`, which is not a verified parent contact,
+and did not check the current consent row. It now selects recipients only from a verified,
+unrevoked, current two-opt-in `ParentalConsent.parentEmail`, uses the configured `RESEND_FROM`,
+and returns aggregate send errors without addresses or child aliases. Deterministic coverage proves
+that revoked, stale and incomplete-consent records receive nothing.
+
+### MSA-P2-NEXT-008 — deprecated middleware convention — FIXED
+The boundary is now `src/proxy.ts`; `src/middleware.ts` was removed. The explicit private API
+allow-list and anonymous API tests cover the migration locally. The only remaining human check is
+a genuine signed-in Clerk smoke in the target instance, which belongs with the production auth
+release checklist rather than as migration debt.
 
 ### MSA-P2-E2E-009 — no full-curriculum E2E — FIXED
-`scripts/e2e/lesson-flow.mjs` now drives **all 5 lessons** in a real headless Chromium
-(input → send → tutor reply → judge → reward), resetting the dev test user first so the run is
+`scripts/e2e/lesson-flow.mjs` now drives **all 5 lessons** in real headless Chromium, Firefox
+and WebKit (input → send → tutor reply → judge → reward), resetting the dev test user first so the run is
 repeatable. Fixing this surfaced a real dev-only seam gap: `/api/user` ignored `x-test-bypass`
 (while `/api/chat` honored it), so the harness wrote progress to `test_user_id` but read it from
 the shared demo user, and later lessons never unlocked. `/api/user` now honors the same
@@ -118,4 +129,3 @@ dev-only seam (inert in prod).
   code + build, but not driven live here (no test Clerk session). Recommend one manual pass.
 - **Production secrets + canary**: real Turso / Upstash / Resend / Cron secrets, and open the
   billing dashboard within 10 min of any deploy that touches LLM paths.
-- The **middleware→proxy** follow-up above.

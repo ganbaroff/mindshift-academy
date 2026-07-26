@@ -24,8 +24,8 @@ interface WeeklyReportProps {
 }
 
 export default function WeeklyReport({
-  parentName = "Hörmətli valideyn",
-  childName = "Uşaq",
+  parentName = "родитель",
+  childName = "ребёнок",
   monsterName = "Огняш",
   monsterEmoji = "🐉",
   lessonsCompleted = 3,
@@ -37,10 +37,10 @@ export default function WeeklyReport({
 }: WeeklyReportProps) {
   const moodLabel =
     monsterMood >= 70
-      ? "Счастлив 😊"
+      ? "высокое"
       : monsterMood >= 40
-        ? "Скучает 😐"
-        : "Грустит 😢";
+        ? "спокойное"
+        : "низкое";
 
   return (
     <Html>
@@ -55,7 +55,7 @@ export default function WeeklyReport({
           </Section>
 
           <Section style={contentStyle}>
-            <Text style={greetingStyle}>Salam, {parentName}!</Text>
+            <Text style={greetingStyle}>Здравствуйте, {parentName}!</Text>
 
             <Text style={textStyle}>
               Вот результаты обучения {childName} за эту неделю.
@@ -94,13 +94,9 @@ export default function WeeklyReport({
                   }}
                 />
               </Text>
-              {monsterMood < 40 && (
-                <Text style={moodWarningStyle}>
-                  {monsterName} скучает по {childName}. Регулярные занятия
-                  поднимут настроение питомца! Это не наказание — просто
-                  напоминание, что {monsterName} ждёт.
-                </Text>
-              )}
+              <Text style={moodWarningStyle}>
+                Это игровой показатель, который отражает ход занятий в приложении.
+              </Text>
             </Section>
 
             <Hr style={hrStyle} />

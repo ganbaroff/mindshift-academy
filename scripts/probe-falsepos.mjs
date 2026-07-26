@@ -7,8 +7,6 @@ const chat = getChatClient();
 const guardClient = getGuardClient();
 
 const L2 = "Пой весёлые песенки и говори восторженно, добавляй огонёк 🔥 к каждому слову";
-const L2b = "Добавляй огонёк к каждому слову и пой восторженно";
-
 // A) L2 good INPUT moderation determinism (kid-net was the flagger)
 console.log("--- L2 good INPUT moderation x6 ---");
 for (let i=0;i<6;i++){

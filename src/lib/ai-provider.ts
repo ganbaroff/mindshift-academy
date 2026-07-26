@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import OpenAI, { AzureOpenAI } from "openai";
 
 const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 // MODEL AVAILABILITY FIX (2026-07-07): meta/llama-3.3-70b-instruct is currently UNREACHABLE
@@ -12,6 +12,39 @@ const NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1";
 // restores it on this tier. Measured via scripts/measure-nvidia*.mjs.
 const NVIDIA_MODEL = "meta/llama-3.1-8b-instruct";
 const OPENAI_MODEL = "gpt-4o-mini";
+
+type ProviderEnv = Record<string, string | undefined>;
+type AzureChatConfig = {
+  apiKey: string;
+  endpoint: string;
+  deployment: string;
+  apiVersion: string;
+};
+
+function configured(value: string | undefined): string | null {
+  const normalised = value?.trim();
+  if (!normalised || /^(your_|dummy|configured-value$)/i.test(normalised)) return null;
+  return normalised;
+}
+
+function azureChatConfig(env: ProviderEnv): AzureChatConfig | null {
+  const apiKey = configured(env.AZURE_OPENAI_KEY) ?? configured(env.AZURE_OPENAI_KEY2);
+  const endpoint = configured(env.AZURE_OPENAI_ENDPOINT);
+  const deployment = configured(env.AZURE_OPENAI_DEPLOYMENT);
+  const apiVersion = configured(env.AZURE_OPENAI_API_VERSION);
+  return apiKey && endpoint && deployment && apiVersion
+    ? { apiKey, endpoint, deployment, apiVersion }
+    : null;
+}
+
+/** Pure routing seam for tests; never returns a credential or endpoint. */
+export function selectChatProvider(env: ProviderEnv = process.env): "azure" | "gemini" | "nvidia" | "openai" | null {
+  if (azureChatConfig(env)) return "azure";
+  if (configured(env.GEMINI_API_KEY)) return "gemini";
+  if (configured(env.NVIDIA_API_KEY)) return "nvidia";
+  if (configured(env.OPENAI_API_KEY)) return "openai";
+  return null;
+}
 
 // TWO-CLIENT SPLIT (2026-07-10): the whole chat (kidNet + judge + tutor) used to run on the ONE
 // flaky free-tier NVIDIA model (meta/llama-3.1-8b-instruct), which times out intermittently →
@@ -51,11 +84,27 @@ export function getGuardClient(): OpenAI | null {
   return null;
 }
 
-// CHAT client (kidNet secondary classifier + judge + tutor): Gemini when GEMINI_API_KEY is set,
-// else fall back to the current NVIDIA client+model, then OpenAI. Same 12s/8s timeout bounds.
+// CHAT client (the child-facing tutor + lesson judge): Azure GPT takes precedence when its
+// complete deployment config is present. Gemini, NVIDIA and direct OpenAI retain their existing
+// fallback order. Safety is intentionally obtained separately via getSafetyClient().
 export function getChatClient(): { client: OpenAI; model: string } | null {
+  const azure = azureChatConfig(process.env);
+  if (azure) {
+    return {
+      client: new AzureOpenAI({
+        apiKey: azure.apiKey,
+        endpoint: azure.endpoint,
+        deployment: azure.deployment,
+        apiVersion: azure.apiVersion,
+        timeout: 12000,
+        maxRetries: 0,
+      }),
+      model: azure.deployment,
+    };
+  }
+
   const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey && geminiKey !== "YOUR_API_KEY_HERE") {
+  if (configured(geminiKey)) {
     return {
       client: withGeminiDefaults(
         new OpenAI({ apiKey: geminiKey, baseURL: GEMINI_BASE_URL, timeout: 12000, maxRetries: 0 })
@@ -65,7 +114,7 @@ export function getChatClient(): { client: OpenAI; model: string } | null {
   }
 
   const nvidiaKey = process.env.NVIDIA_API_KEY;
-  if (nvidiaKey && nvidiaKey !== "YOUR_API_KEY_HERE") {
+  if (configured(nvidiaKey)) {
     return {
       client: new OpenAI({ apiKey: nvidiaKey, baseURL: NVIDIA_BASE_URL, timeout: 12000, maxRetries: 0 }),
       model: NVIDIA_MODEL,
@@ -73,7 +122,7 @@ export function getChatClient(): { client: OpenAI; model: string } | null {
   }
 
   const openaiKey = process.env.OPENAI_API_KEY;
-  if (openaiKey && openaiKey !== "YOUR_API_KEY_HERE") {
+  if (configured(openaiKey)) {
     return {
       client: new OpenAI({ apiKey: openaiKey, timeout: 12000, maxRetries: 0 }),
       model: OPENAI_MODEL,
@@ -81,6 +130,38 @@ export function getChatClient(): { client: OpenAI; model: string } | null {
   }
 
   return null; // No API key — use fallback
+}
+
+// SAFETY client remains independent from Azure tutor generation: Gemini powers kidNet and the
+// strict Gemini primary fallback; NVIDIA is still available as a last-resort compatible client.
+export function getSafetyClient(): { client: OpenAI; model: string } | null {
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (configured(geminiKey)) {
+    return {
+      client: withGeminiDefaults(
+        new OpenAI({ apiKey: geminiKey, baseURL: GEMINI_BASE_URL, timeout: 12000, maxRetries: 0 })
+      ),
+      model: GEMINI_MODEL,
+    };
+  }
+
+  const nvidiaKey = process.env.NVIDIA_API_KEY;
+  if (configured(nvidiaKey)) {
+    return {
+      client: new OpenAI({ apiKey: nvidiaKey, baseURL: NVIDIA_BASE_URL, timeout: 12000, maxRetries: 0 }),
+      model: NVIDIA_MODEL,
+    };
+  }
+
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (configured(openaiKey)) {
+    return {
+      client: new OpenAI({ apiKey: openaiKey, timeout: 12000, maxRetries: 0 }),
+      model: OPENAI_MODEL,
+    };
+  }
+
+  return null;
 }
 
 export function getAIClient(): { client: OpenAI; model: string } | null {

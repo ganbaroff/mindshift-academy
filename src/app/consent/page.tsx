@@ -5,17 +5,15 @@ import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Mail, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
 
-// Parental consent screen (docs/COPPA-CONSENT-SPEC.md §3 flow, §8 RU / §9 AZ copy).
+// Parental consent screen (docs/COPPA-CONSENT-SPEC.md §3 flow, RU-only release copy).
 // Flow: enter parent email (defaults to Clerk email) -> request 6-digit code -> enter code +
 // tick BOTH opt-ins -> submit. On success we route to /dashboard; the child gates unlock.
 // Design system: dark surfaces, primary=violet, secondary=cyan, warning=gold. NO red — errors
 // use the purple --color-error token.
 
-type Locale = "ru" | "az";
 type Step = "email" | "code";
 
-// Copy frozen from spec §8 (RU) / §9 (AZ).
-const COPY: Record<Locale, {
+const COPY: {
   title: string;
   intro: string;
   collect: string;
@@ -35,25 +33,24 @@ const COPY: Record<Locale, {
   changeEmail: string;
   emailSent: string;
   emailNoKey: string;
-}> = {
-  ru: {
+} = {
     title: "Согласие родителя",
     intro:
       "MindShift Academy — обучающее приложение для детей. Прежде чем ваш ребёнок начнёт, нам нужно ваше согласие как родителя.",
     collect:
       "Что мы собираем: сообщения, которые ребёнок пишет питомцу; имя и вид питомца; прогресс по урокам.",
     processing:
-      "Как обрабатываются сообщения: каждое сообщение проверяет автоматическая система безопасности и обрабатывает внешний ИИ-провайдер (NVIDIA, США), чтобы питомец мог ответить. Перед генерацией ответа из текста удаляются почты, телефоны и числа. Текст сообщений мы не храним.",
+      "Как обрабатываются данные: NVIDIA выполняет первичную проверку безопасности, а Google Gemini — дополнительную проверку. Microsoft Azure OpenAI помогает тьютору отвечать и проверяет задания. OpenAI может создавать изображение питомца. Данные используются только для функций курса.",
     never:
       "Чего мы не делаем: не продаём данные, не показываем рекламу, не используем данные ребёнка для маркетинга.",
     rights:
-      "Ваши права: в любой момент посмотреть, удалить данные ребёнка и отозвать согласие — тогда чат отключится.",
+      "Ваши права: в любой момент посмотреть прогресс, удалить данные Academy и отозвать согласие — тогда чат отключится.",
     optA:
       "Я родитель/опекун и даю согласие на сбор и использование данных моего ребёнка для обучения в MindShift Academy.",
     optB:
-      "Я согласен(на), что сообщения ребёнка обрабатываются автоматической системой безопасности и внешним ИИ-провайдером (NVIDIA, США) для работы тьютора.",
+      "Я согласен(на), что NVIDIA выполняет первичную проверку безопасности, Google Gemini — дополнительную проверку, Microsoft Azure OpenAI помогает тьютору и проверяет задания, а OpenAI может создавать изображение питомца. Данные используются только для функций курса.",
     emailLabel: "Email родителя",
-    emailHint: "Мы отправим 6-значный код на этот адрес.",
+    emailHint: "Код придёт на адрес вашего родительского аккаунта.",
     sendCode: "Отправить код",
     codeLabel: "Код из письма",
     codeHint: "Код действует 15 минут.",
@@ -64,43 +61,12 @@ const COPY: Record<Locale, {
     emailSent: "Код отправлен на",
     emailNoKey:
       "Отправка писем пока не настроена (нет ключа). Код сгенерирован — попросите администратора включить почту.",
-  },
-  az: {
-    title: "Valideyn razılığı",
-    intro:
-      "MindShift Academy — uşaqlar üçün təhsil tətbiqidir. Övladınız başlamazdan əvvəl valideyn kimi razılığınız lazımdır.",
-    collect:
-      "Nə toplayırıq: uşağın köməkçiyə yazdığı mesajlar; köməkçinin adı və görünüşü; dərslər üzrə irəliləyiş.",
-    processing:
-      "Mesajlar necə işlənir: hər mesajı avtomatik təhlükəsizlik sistemi yoxlayır və xarici Süni İntellekt provayderi (NVIDIA, ABŞ) emal edir ki, köməkçi cavab verə bilsin. Cavab yaradılmazdan əvvəl mətndən e-poçt, telefon və rəqəmlər silinir. Mesajların mətnini saxlamırıq.",
-    never:
-      "Nə etmirik: məlumatları satmırıq, reklam göstərmirik, uşağın məlumatını marketinq üçün işlətmirik.",
-    rights:
-      "Hüquqlarınız: istənilən vaxt övladınızın məlumatlarına baxa, silə və razılığı geri götürə bilərsiniz — onda söhbət dayandırılır.",
-    optA:
-      "Mən valideyn/qəyyumam və övladımın məlumatlarının MindShift Academy-də təhsil üçün toplanmasına və istifadəsinə razılıq verirəm.",
-    optB:
-      "Uşağın mesajlarının avtomatik təhlükəsizlik sistemi və xarici SI provayderi (NVIDIA, ABŞ) tərəfindən işlənməsinə razıyam.",
-    emailLabel: "Valideyn e-poçtu",
-    emailHint: "Bu ünvana 6 rəqəmli kod göndərəcəyik.",
-    sendCode: "Kod göndər",
-    codeLabel: "Məktubdakı kod",
-    codeHint: "Kod 15 dəqiqə etibarlıdır.",
-    confirm: "Təsdiqlə",
-    bothRequired: "Hər iki qutu lazımdır.",
-    resend: "Kodu yenidən göndər",
-    changeEmail: "E-poçtu dəyiş",
-    emailSent: "Kod göndərildi:",
-    emailNoKey:
-      "E-poçt göndərişi hələ konfiqurasiya edilməyib (açar yoxdur). Kod yaradıldı — administratordan poçtu aktivləşdirməyi xahiş edin.",
-  },
 };
 
 export default function ConsentPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
-  const [locale, setLocale] = useState<Locale>("ru");
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -110,7 +76,7 @@ export default function ConsentPage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const t = COPY[locale];
+  const t = COPY;
 
   // Default the email field to the Clerk account email once loaded.
   useEffect(() => {
@@ -144,7 +110,7 @@ export default function ConsentPage() {
       const res = await fetch("/api/consent/request-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, locale }),
+        body: JSON.stringify({ email, locale: "ru" }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -195,25 +161,10 @@ export default function ConsentPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.18),transparent_35%),radial-gradient(circle_at_80%_15%,rgba(34,211,238,0.14),transparent_30%)]" />
 
       <section className="relative z-10 w-full max-w-xl rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-8">
-        <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="mb-5 flex items-center gap-4">
           <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.04]">
             <ShieldCheck className="h-6 w-6 text-primary-soft" />
           </span>
-          <div className="flex rounded-full border border-white/10 bg-white/[0.04] p-1 text-xs" role="group" aria-label="Язык / Dil">
-            {(["ru", "az"] as Locale[]).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLocale(l)}
-                aria-pressed={locale === l}
-                className={`min-h-[36px] rounded-full px-3 font-semibold uppercase transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                  locale === l ? "bg-primary text-white" : "text-white/70 hover:text-white"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
         </div>
 
         <h1 className="text-2xl font-semibold text-white">{t.title}</h1>
@@ -236,7 +187,7 @@ export default function ConsentPage() {
           </p>
         )}
         {notice && (
-          <p className="mt-4 rounded-xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm text-secondary">
+          <p role="status" aria-live="polite" className="mt-4 rounded-xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm text-secondary">
             {notice}
           </p>
         )}
@@ -250,11 +201,12 @@ export default function ConsentPage() {
               </span>
               <input
                 type="email"
+                name="parentEmail"
                 inputMode="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="parent@email.com"
+                readOnly
+                aria-readonly="true"
                 className="w-full rounded-xl border border-white/12 bg-surface-strong/80 px-4 py-3 text-base text-white placeholder-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
               <span className="mt-2 block text-xs text-white/50">{t.emailHint}</span>
@@ -280,6 +232,7 @@ export default function ConsentPage() {
               </span>
               <input
                 type="text"
+                name="verificationCode"
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 maxLength={6}
@@ -292,6 +245,7 @@ export default function ConsentPage() {
             </label>
 
             <fieldset className="space-y-3">
+              <legend className="mb-3 text-sm font-medium text-white/80">Согласия на обработку данных</legend>
               <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
                 <input
                   type="checkbox"

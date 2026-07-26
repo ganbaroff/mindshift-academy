@@ -31,7 +31,7 @@ function getIntroductionText(step: number): string {
     case 4:
       return `Ой... Кажется, мои сенсоры машинного зрения сбились. 🐱 На картинке перед мной собака, но я думаю, что это кошка! Исправь мою ошибку через промпт-тюнинг!`;
     case 5:
-      return `Финальный квест! 🧩 Я, дракончик, застрял в лабиринте-головоломке. Помоги мне пройти путь, написав правило с условием IF/THEN (например: "Если впереди стена, то поверни налево, иначе иди вперёд"). Напиши код!`;
+      return `Финальный квест! 🧩 Я, дракончик, застрял в лабиринте-головоломке. Помоги мне пройти путь, написав правило с условием ЕСЛИ/ТО (например: "ЕСЛИ впереди стена, ТО поверни налево, иначе иди вперёд"). Напиши код!`;
     default:
       return `Привет! Я твой ИИ-напарник. Напиши мне промпт, чтобы начать урок!`;
   }
@@ -60,7 +60,6 @@ export default function LessonPage() {
   const [hydrated, setHydrated] = useState(false);
 
   const {
-    activeStepId,
     setActiveStepId,
     activeSkin,
     activeMonsterName,
@@ -129,7 +128,7 @@ export default function LessonPage() {
         }
       })
       .catch((err) => console.error("Error loading user profile:", err));
-  }, []);
+  }, [setActiveSkin, setCompletedLessons, setCrystals, setTotalXp]);
 
   const rewardButtonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -204,7 +203,7 @@ export default function LessonPage() {
         text: introductionText,
       },
     ]);
-  }, [lessonId, activeMonsterName, activeSkin]);
+  }, [lessonId, lessonData, router, activeMonsterName, activeSkin, setActiveStepId, setMessages]);
 
   // Lock/complete derivation: depends on REAL per-lesson completion
   // (completedLessons), NOT on the current position. The furthest lesson the
@@ -222,7 +221,7 @@ export default function LessonPage() {
         status: lessonStatus(step.id, completedLessons, lessonId),
       }));
     });
-  }, [lessonId, completedLessons, lessonData]);
+  }, [lessonId, completedLessons, lessonData, setSteps]);
 
   if (!lessonData) return null;
 
@@ -319,7 +318,7 @@ export default function LessonPage() {
                 {lessonId === 1 && "Наш космический питомец спит внутри яйца. Напиши промпт, чтобы разбудить его и задать характер!"}
                 {lessonId === 2 && "Определи стиль речи питомца. Мы научимся управлять контекстом и системными ролями ИИ."}
                 {lessonId === 3 && "Придумай секретный код для друзей! Твоя задача — настроить ИИ-код на замену букв символом звездочки."}
-                {lessonId === 4 && "Исправь зрение питомца, объяснив модели её ошибку. Мы учимся калибровать веса модели."}
+                {lessonId === 4 && "Исправь зрение питомца, объяснив модели её ошибку. Мы учимся давать понятные уточнения."}
                 {lessonId === 5 && "Финальный квест! Напиши промпт с ветвлением логики, чтобы помочь дракончику пройти лабиринт."}
               </p>
             </div>
@@ -393,7 +392,7 @@ export default function LessonPage() {
               </h3>
               <div className="flex items-center gap-2 text-[10px] text-gray-400 font-semibold bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
                 <ShieldCheck aria-hidden="true" className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Safe Proxy</span>
+                <span>Защита включена</span>
               </div>
             </div>
 

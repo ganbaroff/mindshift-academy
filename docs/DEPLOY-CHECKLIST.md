@@ -1,5 +1,30 @@
 # Deploy checklist (production)
 
+> **Current release:** the technical release record for the deployed production version is
+> [RELEASE-STATUS-2026-07-24.md](RELEASE-STATUS-2026-07-24.md). The remaining sections below are
+> reusable runbook guidance and historical prerequisites, not a statement of the current live status.
+
+## First command: secret/configuration preflight
+
+Run `npm run check:prod-env` in the exact deployment environment before releasing. It validates
+the full Academy contract (live Clerk keys, the exact custom-domain `NEXT_PUBLIC_CLERK_JS_URL`,
+Prisma's `DATABASE_URL`, Turso, both AI providers, Upstash, Resend sender, consent pepper, cron secret and parent access configuration) and prints only missing
+variable **names**, never their values. `DATABASE_URL` must be a SQLite `file:` URL for the Prisma
+build configuration; Academy runtime data uses Turso. A failing preflight is a launch blocker.
+
+For production at `https://academy.volaura.app`, set:
+
+```env
+NEXT_PUBLIC_CLERK_JS_URL=https://clerk.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js
+```
+
+This avoids the Vercel preview proxy and loads Clerk JS from the verified Clerk Frontend API domain.
+
+After the preflight succeeds, run `npm run verify:release` from the release candidate. It includes
+the dependency audit, type/build verification, child-data lifecycle checks, safety corpus and the
+three-browser lesson flow. A passing local release suite does not substitute for the live provider
+and legal requirements below.
+
 ## 🔴 HARD dependency — Upstash Redis (rate limiting)
 
 Rate limiting (`src/lib/ratelimit.ts`) requires a **real** distributed store in production.
@@ -51,7 +76,28 @@ verified on a real Vercel deploy — it is NOT testable in dev, where `ipAddress
   under-13 users: **legal sign-off** on the consent/privacy copy (HANDOVER-2026-07-18.md §6.A).
 - **Reward modal freeze (P0-5):** ✅ FIXED — the reward gem is static; the infinite y-bob that
   caused a ~45s GPU-recomposite freeze on the iPad target was removed.
-- Clerk keys are dev keys (`Clerk has been loaded with development keys`) — swap for prod.
+- Clerk keys are dev keys (`Clerk has been loaded with development keys`) — swap for prod **only
+  after** the live Clerk custom domain is DNS/SSL-ready. Switching before then can make the
+  deployed app point at an unavailable production instance.
+
+## Production configuration status — 2026-07-18
+
+The production Vercel project was inspected without printing secret values. `DATABASE_URL` was
+corrected to Prisma's required `file:./dev.db` build URL; Academy runtime data continues to use
+the configured Turso variables. The remaining configuration blockers are external:
+
+- **Clerk domain `volaura.app`:** add and verify the five CNAME records shown by
+  `clerk deploy status`. Until DNS, SSL and mail DNS are ready, do not replace Vercel's dev Clerk
+  keys with the existing live keys.
+- **Google OAuth:** disabled in the live Clerk instance because its client ID and secret were
+  empty. Email-code sign-up/sign-in remains enabled. Re-enable Google only after supplying and
+  validating real Google credentials.
+- **Resend:** `volaura.app` remains `not_started`; add its DKIM and SPF DNS records, wait for a
+  verified domain, then set `RESEND_FROM` to an address on that verified domain. Do not configure
+  a guessed sender address.
+- **Cloudflare access:** the Vercel-held API token can authenticate but has no access to the
+  `volaura.app` zone, so it cannot create those records. Use the Cloudflare account that owns the
+  zone, or issue a least-privilege zone-DNS token for `volaura.app`.
 
 > Current open items for launch are tracked in **HANDOVER-2026-07-18.md** §6–§7. This checklist's
 > hard Upstash dependency (above) still stands.

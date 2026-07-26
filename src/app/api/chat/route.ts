@@ -10,6 +10,8 @@ import { hasValidConsent } from "@/lib/consent";
 // Pedagogy/escaping/pre-filter helpers extracted to an importable module (seam for the
 // offline regression suite). Byte-identical to the former local defs — NO behavior change.
 import { isSafePrompt, sanitizeForPrompt, checkChallengeSuccess } from "@/lib/progression";
+import { safeLessonFallback } from "@/lib/safe-lesson-fallback";
+import { isLessonRelevantTutorReply } from "@/lib/lesson-output";
 // Reward logic (getOrCreateLesson + updateUserRewards, incl. the anti-double-award guards)
 // lives in @/lib/rewards. The reward GATE stays here at the call site (serverStepId === activeStepId).
 import { updateUserRewards } from "@/lib/rewards";
@@ -193,18 +195,25 @@ export async function POST(req: Request) {
       },
     });
 
-    // TWO-CLIENT SPLIT: llama-guard (PRIMARY harm classifier) runs on the NVIDIA guardClient
-    // (reliable); kidNet (secondary) + judge + tutor run on the Gemini chat client (reliable,
-    // stronger than the flaky free-tier llama-3.1-8b). guardClient ?? chat.client keeps moderation
-    // fail-closed if NVIDIA is absent (guard model missing on Gemini → llamaGuard errors → blocks).
+    // THREE-CLIENT SPLIT: Llama Guard runs on NVIDIA; Gemini remains the independent kidNet and
+    // fallback safety client; Azure GPT may run tutor + judge. Azure is never the sole safety
+    // decision maker. Any missing safety client blocks the AI path before child data is sent.
     const provider = await import("@/lib/ai-provider");
     const guardClient = provider.getGuardClient();
     const chat = provider.getChatClient();
+    const safety = provider.getSafetyClient();
+
+    if (chat && !safety) {
+      return NextResponse.json(
+        { error: "Service temporarily unavailable" },
+        { status: 503 }
+      );
+    }
 
     // P0-2 SAFETY: real classifier moderation on the child's INPUT — multilingual
     // (RU/AZ/EN/translit), deterministic, NOT a word list. The tutor is not the guard.
-    if (chat) {
-      const inMod = await moderate(guardClient ?? chat.client, chat.client, chat.model, userPrompt);
+    if (chat && safety) {
+      const inMod = await moderate(guardClient, safety.client, safety.model, userPrompt);
       if (!inMod.safe) {
         console.warn(`[MODERATION] input blocked (${inMod.source}: ${inMod.category})`);
         // COPY SPLIT (P1-G): distinguish a CLASSIFIER OUTAGE (fail-closed on
@@ -312,7 +321,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // AI Provider Integration (NVIDIA or OpenAI)
+    // AI Provider Integration (Azure GPT tutor, with non-Azure safety classification)
     // SOUL: the lesson persona (curriculum.ts) drives the tutor's in-lesson BEHAVIOR
     // (lesson2 IF/THEN rule, lesson3 cipher, lesson5 boss, etc). It is COMBINED with —
     // never replaces — the monster persona (skin/name) and the child-safety framing.
@@ -381,10 +390,19 @@ export async function POST(req: Request) {
 
     // P0-2 SAFETY: real classifier moderation on the AI OUTPUT before it reaches the child —
     // catches the model emitting/translating insults or unsafe content, in any language.
-    const outMod = await moderate(guardClient ?? chat.client, chat.client, chat.model, aiMessageText);
-    if (!outMod.safe) {
-      console.warn(`[MODERATION] output blocked (${outMod.source}: ${outMod.category})`);
-      aiMessageText = "Ой, давай поговорим о чём-нибудь добром и по теме урока! 🐲";
+    const outMod = await moderate(guardClient, safety!.client, safety!.model, aiMessageText);
+    const outputDemonstratesLesson = isLessonRelevantTutorReply(viewedStepId, aiMessageText);
+    if (!outMod.safe || !outputDemonstratesLesson) {
+      if (!outMod.safe) {
+        console.warn(`[MODERATION] output blocked (${outMod.source}: ${outMod.category})`);
+      } else {
+        console.warn(`[PEDAGOGY] generated output did not demonstrate lesson ${viewedStepId}`);
+      }
+      // Preserve the output block, but keep the child in the active lesson with a
+      // pre-written safe reply. The same fallback also prevents a malformed lesson-3
+      // generation (for example a long growl with no cipher) from appearing as a
+      // successful demonstration after the judge has granted the reward.
+      aiMessageText = safeLessonFallback(viewedStepId);
     }
 
     const costEstimate = (

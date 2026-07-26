@@ -152,8 +152,8 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               Панель родителей, где видно реальное обучение.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-white/68 sm:text-lg">
-              Вы видите, чему ребёнок научился на этой неделе, как менялся монстр
-              и как растут его серия дней и кристаллы.
+              Вы видите прогресс ребёнка за эту неделю, как менялся монстр
+              и как растут его серия дней и кристаллы. Данные Academy можно удалить в настройках согласия.
             </p>
           </div>
 
@@ -205,7 +205,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                       <p className="mt-1 text-sm leading-6 text-white/62">{lesson.outcome}</p>
                     </div>
                     <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/62">
-                      Лог промптов
+                      Прогресс урока
                     </span>
                   </div>
                   <p className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-white/76">

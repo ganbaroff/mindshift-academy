@@ -10,12 +10,12 @@ export default function SignInPage() {
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
               MindShift
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Sign In</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-white">Вход</h1>
             <p className="mt-2 text-sm leading-6 text-white/62">
-              Войдите, чтобы открыть родительскую панель и weekly proof.
+              Войдите, чтобы открыть родительскую панель и управлять доступом к Академии.
             </p>
           </div>
-          <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" />
+          <SignIn routing="path" path="/sign-in" signUpUrl="/sign-up" forceRedirectUrl="/consent" />
         </div>
       </div>
     </main>

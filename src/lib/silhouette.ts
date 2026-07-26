@@ -43,6 +43,6 @@ export function deterministicSilhouette(words: string[]): Silhouette {
   const name = fallbackNames[seed % fallbackNames.length];
   // Do NOT reflect the raw child words back: no server-side moderation runs on this
   // pre-consent path, so unmoderated input must never be echoed into the response.
-  const description = "Твой питомец почти проснулся… продолжи, чтобы познакомиться с ним поближе!";
+  const description = "Вот предварительный силуэт будущего персонажа.";
   return { name, emoji, color, description };
 }

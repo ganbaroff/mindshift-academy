@@ -188,14 +188,19 @@ async function main() {
     });
     const sanity = await hasValidConsent(clerkId);
     const original = prisma.parentalConsent.findUnique;
+    const originalConsoleError = console.error;
     prisma.parentalConsent.findUnique = () => {
       throw new Error("simulated DB/adapter failure");
     };
+    // The product deliberately logs this fail-closed error; suppress it only in
+    // this intentional fault-injection assertion so a green test lane is quiet.
+    console.error = () => {};
     let ok;
     try {
       ok = await hasValidConsent(clerkId);
     } finally {
       prisma.parentalConsent.findUnique = original; // restore for cleanup
+      console.error = originalConsoleError;
     }
     assert(
       "(d) resolver throws -> hasValidConsent=false (FAIL-CLOSED, valid row present)",

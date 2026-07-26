@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ShieldCheck, ShieldOff, Loader2 } from "lucide-react";
+import { ShieldCheck, ShieldOff, Loader2, Trash2 } from "lucide-react";
 
 // Parental consent management (docs/COPPA-CONSENT-SPEC.md §7). Shows the current consent state
 // and lets the parent REVOKE — which sets revokedAt and immediately blocks the child chat.
@@ -21,6 +21,10 @@ export function ManageConsent() {
   const [status, setStatus] = useState<ConsentStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [deleteConfirming, setDeleteConfirming] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleted, setDeleted] = useState(false);
 
   async function load() {
     try {
@@ -49,7 +53,38 @@ export function ManageConsent() {
     }
   }
 
+  async function deleteAcademyData() {
+    setDeleteBusy(true);
+    setDeleteError("");
+    try {
+      const response = await fetch("/api/child-data", { method: "DELETE" });
+      if (!response.ok) throw new Error("delete failed");
+      setDeleted(true);
+    } catch {
+      setDeleteError("Не удалось удалить данные. Попробуйте ещё раз или напишите в поддержку.");
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
   const valid = status?.valid === true;
+
+  if (deleted) {
+    return (
+      <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+        <h2 className="text-2xl font-semibold text-white">Данные Academy удалены</h2>
+        <p role="status" className="mt-3 text-sm leading-6 text-white/64">
+          Прогресс, питомец, инвентарь и записи согласия удалены. Ваш родительский аккаунт Clerk не удалён.
+        </p>
+        <Link
+          href="/"
+          className="mt-6 inline-flex min-h-[44px] items-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+          На главную
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
@@ -116,6 +151,46 @@ export function ManageConsent() {
             Подтвердить согласие
           </Link>
         )}
+      </div>
+
+      <div className="mt-6 border-t border-white/10 pt-6">
+        <p className="text-sm font-semibold text-white">Удалить данные ребёнка</p>
+        <p className="mt-2 text-sm leading-6 text-white/58">
+          Удалятся прогресс, питомец, инвентарь и записи согласия в Academy. Родительский аккаунт останется, но это действие нельзя отменить.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          {deleteConfirming ? (
+            <>
+              <button
+                type="button"
+                disabled={deleteBusy}
+                onClick={deleteAcademyData}
+                className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-error/40 bg-error/10 px-5 py-3 text-sm font-semibold text-error transition-colors hover:bg-error/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/60 disabled:opacity-50"
+              >
+                {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Trash2 className="h-4 w-4" />}
+                Да, удалить навсегда
+              </button>
+              <button
+                type="button"
+                disabled={deleteBusy}
+                onClick={() => setDeleteConfirming(false)}
+                className="inline-flex min-h-[44px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08]"
+              >
+                Отмена
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setDeleteConfirming(true)}
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-error/30 bg-transparent px-5 py-3 text-sm font-semibold text-error transition-colors hover:bg-error/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error/60"
+            >
+              <Trash2 className="h-4 w-4" />
+              Удалить данные ребёнка
+            </button>
+          )}
+        </div>
+        {deleteError && <p role="alert" className="mt-3 text-sm text-error">{deleteError}</p>}
       </div>
     </section>
   );

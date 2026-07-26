@@ -125,8 +125,7 @@ function OnboardingContent() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
-            onClick={!isHatched ? skipHatch : undefined}
-            className={`space-y-8 ${!isHatched ? "cursor-pointer" : ""}`}
+            className="space-y-8"
           >
             <motion.div
               animate={{
@@ -214,11 +213,13 @@ function OnboardingContent() {
 
             <input
               id="pet-name"
+              name="petName"
               value={petName}
               onChange={(e) => setPetName(sanitizePetName(e.target.value))}
               maxLength={PET_NAME_MAX}
+              autoComplete="off"
               aria-describedby="pet-name-hint"
-              className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
+              className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
             />
 
             <button

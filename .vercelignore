@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+.clerk/
+*.db
+dev.db
+prisma/dev.db

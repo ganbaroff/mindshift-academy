@@ -12,7 +12,6 @@ const env = Object.fromEntries(
 const prod = createClient({ url: env.TURSO_DATABASE_URL, authToken: env.TURSO_AUTH_TOKEN });
 const dev = createClient({ url: "file:./dev.db" });
 
-const TARGET = ["ParentalConsent", "ConsentVerification"];
 const existing = (await prod.execute("SELECT name FROM sqlite_master WHERE type='table'")).rows.map((r) => r.name);
 console.log("prod existing tables (untouched):", existing.join(", "));
 

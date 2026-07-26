@@ -189,7 +189,6 @@ export function isSafePrompt(prompt: string): boolean {
 export function sanitizeForPrompt(raw: string, max = 40): string {
   const cleaned = (raw ?? "")
     // strip ALL C0/C1 control chars (incl. CR/LF/TAB) -> cannot inject a new instruction line
-    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x1F\x7F-\x9F]+/g, " ")
     // strip quotes/backticks/braces/angle-brackets -> cannot close the "..." slot or open a code block
     .replace(/["'`{}<>]/g, "")

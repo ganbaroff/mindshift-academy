@@ -90,7 +90,7 @@ Fail-closed: any error resolving consent → treat as NOT consented (block).
 ## 7. Parental rights (build a minimal surface)
 
 - A "manage / revoke consent" action in the parent dashboard that sets `revokedAt` (immediately blocks chat).
-- A delete request path (can be manual/email for the closed test).
+- An authenticated parent can permanently delete Academy-held child data from the dashboard. This removes gameplay data plus consent and verification records; the parent Clerk account itself is retained. For a closed test, support may additionally handle requests received by email.
 
 ---
 

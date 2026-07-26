@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Resend } from "resend";
 import WeeklyReport from "@/emails/weekly-report";
+import { selectWeeklyReportRecipients } from "@/lib/weekly-report-recipients";
+import { isCurrentValidConsent } from "@/lib/consent-policy";
 
 // Vercel Cron: runs every Friday at 18:00 UTC (22:00 Baku)
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/weekly-report", "schedule": "0 18 * * 5" }] }
@@ -19,49 +21,56 @@ export async function GET(req: Request) {
   }
 
   const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) {
+  const resendFrom = process.env.RESEND_FROM?.trim();
+  if (!resendKey || !resendFrom) {
     return NextResponse.json({
       ok: false,
-      error: "RESEND_API_KEY not configured",
-      hint: "Set RESEND_API_KEY in .env to enable email sending",
+      error: "Weekly-report email configuration is incomplete",
+      hint: "Set RESEND_API_KEY and RESEND_FROM to enable email sending",
     }, { status: 503 });
   }
 
   const resend = new Resend(resendKey);
 
   try {
-    const users = await prisma.user.findMany({
-      include: {
-        monster: true,
-        progress: {
-          where: { completed: true },
+    const [users, consents] = await Promise.all([
+      prisma.user.findMany({
+        include: {
+          monster: true,
+          progress: {
+            where: { completed: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.parentalConsent.findMany({
+        select: {
+          clerkId: true,
+          parentEmail: true,
+          verifiedAt: true,
+          revokedAt: true,
+          serviceConsent: true,
+          externalAiConsent: true,
+          consentVersion: true,
+        },
+      }),
+    ]);
+    const recipients = selectWeeklyReportRecipients(users, consents, isCurrentValidConsent);
 
     let sent = 0;
-    let skipped = 0;
+    const skipped = users.length - recipients.length;
     const errors: string[] = [];
 
-    for (const user of users) {
-      // Skip users without monsters (not fully onboarded)
-      if (!user.monster) {
-        skipped++;
-        continue;
-      }
-
-      // Skip users with no email-like username
-      if (!user.username.includes("@")) {
-        skipped++;
-        continue;
-      }
+    for (const { user, parentEmail } of recipients) {
+      // selectWeeklyReportRecipients guarantees these fields. Keep the guard for
+      // TypeScript narrowing should the database schema evolve independently.
+      if (!user.monster) continue;
 
       const lessonsCompleted = user.progress.length;
 
       try {
         await resend.emails.send({
-          from: "MindShift Academy <noreply@mindshift.academy>",
-          to: user.username,
+          from: resendFrom,
+          to: parentEmail,
           subject: `${user.monster.name} ждёт — отчёт за неделю`,
           react: WeeklyReport({
             parentName: "Hörmətli valideyn",
@@ -77,8 +86,10 @@ export async function GET(req: Request) {
           }),
         });
         sent++;
-      } catch (emailError) {
-        errors.push(`${user.username}: ${emailError}`);
+      } catch {
+        // Do not return a child's alias, parent address, or provider detail in
+        // an endpoint response. The cron caller only needs an aggregate error.
+        errors.push("email_send_failed");
       }
     }
 

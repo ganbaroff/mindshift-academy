@@ -24,19 +24,6 @@ function hashWords(words: string[]) {
   return hash;
 }
 
-// Payment removed 2026-06-26 — the silhouette is no longer a paywall.
-// After the preview the child continues straight into onboarding, free.
-function buildContinueUrl(words: string[], monster?: { name: string; emoji: string; color: string } | null) {
-  const query = new URLSearchParams({
-    monster: words.join("-"),
-    name: monster?.name ?? "",
-    emoji: monster?.emoji ?? "",
-    color: monster?.color ?? "",
-  });
-
-  return `/onboarding?${query.toString()}`;
-}
-
 export function InteractiveShowcase() {
   const prefersReducedMotion = useReducedMotion();
   const [input, setInput] = useState("");
@@ -60,15 +47,15 @@ export function InteractiveShowcase() {
   const hue = 255 + (seed % 36);
   const accent = monsterData?.color || `hsl(${hue} 92% 68%)`;
   const silhouetteScale = phase === "locked" ? 1 : 0.92;
-  const title = phase === "locked" ? "Силуэт создан! Продолжаем" : "Силуэт появляется первым";
+  const title = phase === "locked" ? "Силуэт готов. Дальше — код" : "Силуэт появляется первым";
   const ctaLabel =
     phase === "draft"
       ? isSubmitting
         ? "Генерируем силуэт…"
         : "Создать силуэт"
       : isSubmitting
-        ? "Открываем…"
-        : "Продолжить бесплатно";
+        ? "Переходим к коду…"
+        : "У меня есть код";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -103,7 +90,7 @@ export function InteractiveShowcase() {
         const data = await response.json();
         setMonsterData(data);
         setPhase("locked");
-        setStatus(`Силуэт монстра "${data.name}" успешно создан!`);
+        setStatus("Силуэт готов. Для курса понадобится код от родителя.");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Ошибка генерации силуэта.");
         // Local fallback so user experience isn't fully broken if API fails
@@ -116,8 +103,8 @@ export function InteractiveShowcase() {
     }
 
     setIsSubmitting(true);
-    setStatus("Открываем твоего питомца…");
-    window.location.assign(buildContinueUrl(words, monsterData));
+    setStatus("Переходим к вводу кода…");
+    window.location.assign("/enter-code");
   };
 
   return (
@@ -163,7 +150,7 @@ export function InteractiveShowcase() {
             placeholder="храбрый быстрый весёлый"
             autoComplete="off"
             spellCheck={false}
-            className="h-14 w-full rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-base text-white outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/30"
+            className="h-14 w-full rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-base text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
           />
           {inputError ? (
             <span id="monster-words-error" role="alert" className="block text-sm font-medium text-warning">
@@ -176,13 +163,13 @@ export function InteractiveShowcase() {
           <div className="text-sm text-white/58">
             <span className={isReady ? "text-warning" : "text-white/45"}>{wordCount}/3 слов</span>
             <span className="mx-2 text-white/25">•</span>
-            <span>{phase === "draft" ? "Сначала силуэт" : "Готово к продолжению"}</span>
+            <span>{phase === "draft" ? "Сначала силуэт" : "Теперь нужен код"}</span>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -250,7 +237,7 @@ export function InteractiveShowcase() {
             />
             {/* Blurred silhouette — a hint of a creature lives in the egg even before input */}
             <div
-              className="absolute inset-0 flex items-center justify-center text-7xl select-none transition-all duration-500"
+              className="absolute inset-0 flex select-none items-center justify-center text-7xl transition-[filter] duration-500"
               style={{
                 filter: phase === "locked"
                   ? "brightness(0) contrast(100%) blur(4px) opacity(0.85)"
@@ -298,7 +285,7 @@ export function InteractiveShowcase() {
                 setMonsterData(null);
                 setStatus("Вернулись к словам. Можно уточнить силуэт.");
               }}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm text-white/72 transition-colors hover:bg-white/[0.08]"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm text-white/72 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               <RotateCcw className="h-4 w-4" />
               Изменить слова

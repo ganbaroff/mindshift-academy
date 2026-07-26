@@ -36,8 +36,8 @@ process.loadEnvFile(new URL("../.env", import.meta.url));
 
 const { getLesson } = await import("../src/lib/curriculum.ts");
 const { moderate } = await import("../src/lib/moderation.ts");
-// TWO-CLIENT SPLIT: guard (llama-guard on NVIDIA) + chat (kidNet/judge/tutor on Gemini).
-const { getGuardClient, getChatClient } = await import("../src/lib/ai-provider.ts");
+// THREE-CLIENT SPLIT: guard (NVIDIA), safety (Gemini/NVIDIA), tutor/judge (Azure GPT or fallback).
+const { getGuardClient, getChatClient, getSafetyClient } = await import("../src/lib/ai-provider.ts");
 const { minimizeChildText } = await import("../src/lib/privacy.ts");
 
 // ---------------------------------------------------------------------------
@@ -109,7 +109,6 @@ function checkChallengeSuccess(prompt, stepId) {
 // route.ts sanitizeForPrompt
 function sanitizeForPrompt(raw, max = 40) {
   const cleaned = (raw ?? "")
-    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x1F\x7F-\x9F]+/g, " ")
     .replace(/["'`{}<>]/g, "")
     .replace(/\s{2,}/g, " ")
@@ -264,11 +263,11 @@ async function callJudge(ai, prompt, stepId, maxAttempts = 3) {
   return v; // still keyword-fallback after retries -> judge LLM is down
 }
 
-async function callModerateInput(ai, prompt, maxAttempts = 3) {
+async function callModerateInput(safety, prompt, maxAttempts = 3) {
   let r = null;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    // guardClient (llama-guard on NVIDIA) + ai chat client (kidNet on Gemini), same as route.ts.
-    r = await moderate(guardClient ?? ai.client, ai.client, ai.model, minimizeChildText ? prompt : prompt);
+    // Same split as route.ts: NVIDIA guard + independent Gemini/NVIDIA safety client.
+    r = await moderate(guardClient, safety.client, safety.model, prompt);
     // moderate() fails CLOSED (source 'fail-closed') on classifier error/timeout.
     // Treat that as an infra flap to retry, NOT a real unsafe verdict.
     if (r.source !== "fail-closed") return r;
@@ -303,8 +302,9 @@ function record(caseName, status, detail) {
 
 const ai = getChatClient();
 const guardClient = getGuardClient();
-if (!ai) {
-  console.error("No chat client (GEMINI/NVIDIA/OpenAI key missing) — live lanes cannot run.");
+const safety = getSafetyClient();
+if (!ai || !safety) {
+  console.error("No complete tutor or safety client — live lanes cannot run.");
 }
 const MON = { skin: "Огненный", name: "Искра" };
 const safeSkin = sanitizeForPrompt(MON.skin);
@@ -332,9 +332,9 @@ for (let lesson = 1; lesson <= 5; lesson++) {
     );
   }
 
-  if (!ai) {
-    record(`L${lesson}a correct`, "blocked-llm-down", "no AI client");
-    record(`L${lesson}b wrong`, "blocked-llm-down", "no AI client");
+  if (!ai || !safety) {
+    record(`L${lesson}a correct`, "blocked-llm-down", "no tutor or safety client");
+    record(`L${lesson}b wrong`, "blocked-llm-down", "no tutor or safety client");
     continue;
   }
 
@@ -343,7 +343,7 @@ for (let lesson = 1; lesson <= 5; lesson++) {
     const prompt = CORRECT[lesson];
     const server = lesson,
       viewed = lesson;
-    const inMod = await callModerateInput(ai, prompt);
+    const inMod = await callModerateInput(safety, prompt);
     if (inMod.source === "fail-closed") {
       record(`L${lesson}a correct`, "blocked-llm-down", `input moderation fail-closed (classifier down) after retries`);
     } else if (!inMod.safe) {
@@ -383,14 +383,14 @@ for (let lesson = 1; lesson <= 5; lesson++) {
     const prompt = WRONG[lesson];
     const server = lesson,
       viewed = lesson;
-    const inMod = await callModerateInput(ai, prompt);
+    const inMod = await callModerateInput(safety, prompt);
     if (inMod.source === "fail-closed") {
       record(`L${lesson}b wrong`, "blocked-llm-down", `input moderation fail-closed (classifier down) after retries`);
     } else if (!inMod.safe) {
       // A nonsense-but-benign message blocked by moderation is the known false-block
       // symptom (e). It is SACRED/fail-closed-adjacent, so we do not fail the suite on
       // it — we record it as blocked so the judge stage isn't misjudged.
-      record(`L${lesson}b wrong`, "blocked-llm-down", `moderation blocked benign nonsense (symptom e, sacred) source=${inMod.source}`);
+      record(`L${lesson}b wrong`, "blocked-safety", `moderation blocked benign nonsense (symptom e, sacred) source=${inMod.source}`);
     } else {
       const verdict = await callJudge(ai, minimizeChildText(prompt), viewed);
       if (verdict.fellBack) {
@@ -448,7 +448,7 @@ for (let lesson = 1; lesson <= 5; lesson++) {
   // that server truth on load (setCompletedLessons(completedLessonIdsFromUser(data))),
   // overwriting the optimistic localStorage cache. RE-SYNCED to completedLessonIdsFromUser(...)
   // as the cure made the page consume server progress (localStorage is now only a cache).
-  function clientCompletedAfterLoadNow(userPayload, _persistedLocal) {
+  function clientCompletedAfterLoadNow(userPayload) {
     return completedLessonIdsFromUser(userPayload);
   }
 
@@ -567,9 +567,11 @@ for (let lesson = 1; lesson <= 5; lesson++) {
 // ---------------------------------------------------------------------------
 const passed = results.filter((r) => r.status === "pass").length;
 const failed = results.filter((r) => r.status === "fail").length;
-const blocked = results.filter((r) => r.status === "blocked-llm-down").length;
+const blockedInfra = results.filter((r) => r.status === "blocked-llm-down").length;
+const blockedSafety = results.filter((r) => r.status === "blocked-safety").length;
+const blocked = blockedInfra + blockedSafety;
 console.log("\n==== TOTALS ====");
-console.log(`cases=${results.length} pass=${passed} fail=${failed} blocked-llm-down=${blocked}`);
+console.log(`cases=${results.length} pass=${passed} fail=${failed} blocked-infra=${blockedInfra} blocked-safety=${blockedSafety}`);
 console.log("JSON_RESULTS_BEGIN");
-console.log(JSON.stringify({ passed, failed, blocked, cases: results.length, results }));
+console.log(JSON.stringify({ passed, failed, blocked, blockedInfra, blockedSafety, cases: results.length, results }));
 console.log("JSON_RESULTS_END");

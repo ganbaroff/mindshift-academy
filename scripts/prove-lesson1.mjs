@@ -59,7 +59,6 @@ async function tutor(messages, stepId, skin, name) {
 }
 
 async function runPipeline(label, userPrompt, { activeStepId = 1, serverStep = 1 } = {}) {
-  const t0 = Date.now();
   console.log(`\n===== ${label} =====`);
   console.log("child message:", JSON.stringify(userPrompt));
 

@@ -1,0 +1,74 @@
+﻿{
+  "name": "mindshift-academy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "node tests/deterministic.mjs",
+    "test:regression": "node scripts/regression.mjs",
+    "test:live": "node tests/safety.test.mjs",
+    "test:consent": "node scripts/test-consent.mjs",
+    "test:data-lifecycle": "node scripts/test-child-data-lifecycle.mjs",
+    "test:config": "node tests/production-env-contract.test.mjs",
+    "test:ui": "node tests/ui-accessibility.test.mjs",
+    "check:prod-env": "node scripts/check-production-env.mjs",
+    "test:e2e": "node scripts/e2e/lesson-flow.mjs",
+    "test:e2e-wrong": "node tests/e2e-wrong-answer.test.mjs",
+    "test:e2e:firefox": "node tests/e2e-cross-browser.test.mjs firefox",
+    "test:e2e:webkit": "node tests/e2e-cross-browser.test.mjs webkit",
+    "test:e2e:matrix": "node tests/e2e-full-browser-matrix.test.mjs",
+    "test:falsepos": "node scripts/measure-falsepos.mjs",
+    "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs",
+    "verify:release": "npm audit --omit=dev --audit-level=high && npm run lint && npm run test:config && npm run test:ui && npm test && npm run test:consent && npm run test:data-lifecycle && node tests/proxy-api-auth.test.mjs && node tests/live-safety-startup.test.mjs && npm run test:live && node tests/e2e-startup.test.mjs && npm run test:e2e-wrong && npm run test:e2e:firefox && npm run test:e2e:webkit && npm run test:falsepos && npm run test:regression && npm run test:e2e:matrix && npm run build"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.8.2",
+    "@clerk/nextjs": "^7.5.7",
+    "@libsql/client": "^0.17.4",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/adapter-libsql": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@react-email/components": "^1.0.12",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.38.0",
+    "@vercel/functions": "^3.7.4",
+    "better-sqlite3": "^12.11.1",
+    "canvas-confetti": "^1.9.4",
+    "framer-motion": "^12.41.0",
+    "lottie-react": "^2.4.1",
+    "lucide-react": "^1.21.0",
+    "next": "16.2.9",
+    "openai": "^6.44.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "resend": "^6.14.0",
+    "zod": "^4.4.3",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "playwright": "^1.61.1",
+    "prisma": "^7.8.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.19"
+    },
+    "@prisma/dev": {
+      "@hono/node-server": "1.19.14"
+    }
+  }
+}

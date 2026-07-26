@@ -12,8 +12,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { ClerkProvider } from '@clerk/nextjs'
-import { MotionProvider } from '@/components/providers/MotionProvider'
+import { ClerkProvider } from "@clerk/nextjs";
+import { ruRU } from "@clerk/localizations";
+import { ClerkRussianUi } from "@/components/auth/ClerkRussianUi";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -37,12 +39,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      localization={{
+        ...ruRU,
+        formFieldInputPlaceholder__signUpPassword: "Придумайте пароль",
+      }}
+    >
       <html
         lang="ru"
         className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       >
         <body className="min-h-full flex flex-col">
+          <ClerkRussianUi />
           <MotionProvider>{children}</MotionProvider>
         </body>
       </html>

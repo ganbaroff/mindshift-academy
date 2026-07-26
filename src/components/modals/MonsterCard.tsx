@@ -90,6 +90,8 @@ export const MonsterCard = () => {
           
           {/* Monster Image */}
           <div className="aspect-square w-full rounded-xl overflow-hidden bg-black/40 border border-white/5 relative">
+            {/* Generated cards are data URIs, so Next's remote image optimizer cannot safely process them. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={generatedMonster.imageUrl}
               alt={generatedMonster.name}

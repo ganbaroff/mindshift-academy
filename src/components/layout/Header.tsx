@@ -39,7 +39,7 @@ export const Header = () => {
             className="h-1.5 bg-white/10 rounded-full overflow-hidden"
           >
             <div
-              className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-all duration-500"
+              className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-[width] duration-500"
               style={{ width: `${(totalXp / 1000) * 100}%` }}
             />
           </div>

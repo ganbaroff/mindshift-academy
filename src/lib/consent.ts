@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { CONSENT_VERSION, isCurrentValidConsent } from "@/lib/consent-policy";
 
 // COPPA parental-consent layer (docs/COPPA-CONSENT-SPEC.md).
 // This module owns: (1) the fail-closed consent resolver used by every child-data gate,
@@ -9,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 // Current consent policy version (spec §4). Bump this string when the disclosure copy or the
 // data flow materially changes — an old row whose consentVersion !== this is treated as
 // NOT consented, so parents are re-prompted. Keep in sync with the /consent screen + emails.
-export const CONSENT_VERSION = "2026-06-28";
+export { CONSENT_VERSION };
 
 // Verification code parameters (spec §3 step 3).
 const CODE_TTL_MS = 15 * 60 * 1000; // 15 minutes
@@ -32,13 +33,7 @@ export async function hasValidConsent(
   try {
     const row = await prisma.parentalConsent.findUnique({ where: { clerkId } });
     if (!row) return false;
-    return (
-      row.verifiedAt !== null &&
-      row.revokedAt === null &&
-      row.serviceConsent === true &&
-      row.externalAiConsent === true &&
-      row.consentVersion === CONSENT_VERSION
-    );
+    return isCurrentValidConsent(row);
   } catch (err) {
     // Fail-closed: never let a DB/adapter error open the gate. Log type only (no child data).
     console.error(

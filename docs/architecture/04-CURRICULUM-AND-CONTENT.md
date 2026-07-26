@@ -5,27 +5,33 @@ The curriculum is designed around Prompt Engineering, gamified as "casting spell
 ## The 5-Lesson Core Loop
 Implemented in `src/lib/curriculum.ts`.
 
-### Lesson 1: Birth (Give it a voice)
-- **Concept:** Basic prompting / System Instructions.
-- **Task:** The child must write a prompt commanding the monster to speak in a specific tone (e.g., "Speak like a pirate").
-- **Verification:** AI checks if the response matches the requested persona.
+### Lesson 1: Awakening (Пробуждение)
+- **Concept:** Describe a character with precise qualities.
+- **Task:** Give the egg-bound monster three meaningful qualities, such as «храбрый, быстрый, весёлый».
+- **Verification:** The lesson judge accepts three real qualities; random words and numbers do not earn a reward.
 
-### Lesson 2: Secret Language (Encryption)
-- **Concept:** Transformations and formatting.
-- **Task:** Child must prompt the AI to reverse a string or translate it into emojis.
-- **Verification:** Strict output parsing to ensure the AI obeyed the constraint.
+### Lesson 2: Emotional Spectrum (Эмоциональный спектр)
+- **Concept:** Give an AI a clear instruction about speaking style.
+- **Task:** Ask the dragon to sing, speak enthusiastically, rhyme, or add a fire emoji.
+- **Verification:** The judge checks that the child instructed the dragon's style, not merely used a keyword.
 
-### Lesson 3: Give it Eyes (Vision)
-- **Concept:** Image Generation prompting.
-- **Task:** Describe a habitat for the monster using at least 3 adjectives.
-- **Verification:** Calls `gpt-image-2` and returns the generated habitat.
+### Lesson 3: Secret Code (Секретный код)
+- **Concept:** Define a text-transformation rule.
+- **Task:** Tell the pet how to encode text, for example by replacing vowels with `*`.
+- **Verification:** The reply must visibly demonstrate the requested cipher; a generic reply falls back to a safe lesson-specific example.
 
-### Lesson 4: Teach it to Think (Logic)
-- **Concept:** Few-shot prompting / IF-ELSE logic.
-- **Task:** Give the monster a rule: "If I say FIRE, you say WATER."
-- **Verification:** The system tests the rule with a simulated input.
+### Lesson 4: Machine Vision (Машинное зрение)
+- **Concept:** Correct an AI recognition error with a clearer prompt.
+- **Task:** Tell the model that it mistook a dog for a cat and ask it to correct itself.
+- **Verification:** The judge requires an actual correction, not a single object word.
 
-### Lesson 5: The Master Card (Final Boss)
-- **Concept:** Comprehensive synthesis.
-- **Task:** Combine persona, logic, and vision to finalize the Monster's ultimate form.
-- **Reward:** Unlocks the "Master Badge" and full sandbox mode.
+### Lesson 5: Final Quest (Финальный квест)
+- **Concept:** Express an executable condition with ЕСЛИ/ТО/ИНАЧЕ.
+- **Task:** Guide the dragon through a maze using a meaningful conditional rule.
+- **Verification:** The judge checks for real condition-and-action logic before awarding the final reward.
+
+## Provider and Safety Boundaries
+
+Azure GPT provides the tutor and lesson judge. NVIDIA Llama Guard and Gemini independently
+classify both child input and tutor output. A classifier error blocks the message (fail-closed);
+the tutor model is never the sole safety decision-maker.

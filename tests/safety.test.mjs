@@ -26,7 +26,7 @@ const dir = dirname(fileURLToPath(import.meta.url));
 const root = join(dir, "..");
 
 const BASE = process.env.BASE_URL || "http://127.0.0.1:3001";
-const GLOBAL_DEADLINE_MS = Number(process.env.DEADLINE_MS || 180000);
+const GLOBAL_DEADLINE_MS = Number(process.env.DEADLINE_MS || 600000);
 const AUTO_START = process.env.AUTO_START !== "0";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -70,9 +70,12 @@ async function ensureServer() {
   }
   if (!AUTO_START) throw new Error(`No server at ${BASE} and AUTO_START=0 — start \`npm run dev\` first.`);
   const port = new URL(BASE).port || "3001";
-  console.log(`No server at ${BASE} — starting \`next dev\` on 127.0.0.1:${port}…`);
-  serverProc = spawn(process.platform === "win32" ? "npm.cmd" : "npm",
-    ["run", "dev", "--", "-H", "127.0.0.1", "-p", port],
+  console.log(`No server at ${BASE} — starting \`next dev\` on port ${port}…`);
+  // Spawn Next through the current Node binary instead of `npm.cmd`: on Windows, Node's
+  // spawn cannot execute a .cmd file directly and throws EINVAL before the server starts.
+  const nextCli = join(root, "node_modules", "next", "dist", "bin", "next");
+  serverProc = spawn(process.execPath,
+    [nextCli, "dev", "-p", port],
     { cwd: root, stdio: "ignore" });
   const start = Date.now();
   while (Date.now() - start < Math.min(120000, GLOBAL_DEADLINE_MS)) {

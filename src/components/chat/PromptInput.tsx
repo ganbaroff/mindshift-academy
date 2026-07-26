@@ -185,8 +185,7 @@ export const PromptInput = () => {
           console.warn("API TTS failed, falling back to browser SpeechSynthesis:", ttsErr);
           if ("speechSynthesis" in window) {
             const utterance = new SpeechSynthesisUtterance(cleanText);
-            const isAzerbaijani = /[əıöğüşçƏIÖĞÜŞÇ]/.test(cleanText);
-            utterance.lang = isAzerbaijani ? "az-AZ" : "ru-RU";
+            utterance.lang = "ru-RU";
             window.speechSynthesis.speak(utterance);
           }
         }
@@ -281,7 +280,7 @@ export const PromptInput = () => {
         </p>
         <button 
           onClick={handleGenerateMonster}
-          className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold py-3.5 px-6 rounded-full shadow-lg hover:shadow-amber-500/20 hover:scale-[1.02] transform transition-all text-sm uppercase tracking-wider cursor-pointer"
+          className="w-full transform rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-black shadow-lg transition-[transform,box-shadow,background-color] hover:scale-[1.02] hover:from-amber-600 hover:to-amber-700 hover:shadow-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           ✨ Оживить и получить карточку монстра! ✨
         </button>
@@ -293,14 +292,16 @@ export const PromptInput = () => {
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2 text-cyan-400 bg-cyan-500/5 border border-cyan-500/10 rounded-lg px-3 py-2 text-[11px] font-semibold">
         <ShieldCheck className="w-3.5 h-3.5" />
-        <span>Safe API Proxy: Активен (Взрослый контент фильтруется автоматически)</span>
+        <span>Защита включена: взрослый контент фильтруется автоматически</span>
       </div>
       
       <textarea
+        name="lessonPrompt"
         value={promptInput}
         onChange={(e) => setPromptInput(e.target.value)}
         onKeyDown={handleKeyDown}
         disabled={inputLocked}
+        autoComplete="off"
         aria-disabled={inputLocked}
         aria-label="Напиши промпт для питомца"
         placeholder={
@@ -314,7 +315,7 @@ export const PromptInput = () => {
             ? "Исправь зрение монстра… (например: 'Это не кошка, это собака!')"
             : "Помоги дракончику пройти лабиринт! Напиши промпт с условием… (например: 'Если впереди стена, то поверни налево')"
         }
-        className="w-full h-20 bg-white/5 border border-white/10 rounded-xl p-3 text-white text-sm placeholder-gray-500 resize-none focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="h-20 w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-500 transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
       />
 
       <div className="flex justify-between items-center">
@@ -324,7 +325,7 @@ export const PromptInput = () => {
             type="button"
             aria-pressed={isVoiceActive}
             aria-label={isVoiceActive ? "Выключить озвучку ответов" : "Включить озвучку ответов"}
-            className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all ${
+            className={`flex h-8 w-8 items-center justify-center rounded-full border transition-[colors,border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
               isVoiceActive
                 ? "bg-cyan-500/20 border-cyan-500 text-cyan-400"
                 : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
@@ -341,7 +342,7 @@ export const PromptInput = () => {
           type="button"
           disabled={inputLocked || isSending}
           aria-busy={isSending}
-          className="bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-600 hover:to-cyan-600 text-white font-bold px-6 py-2.5 rounded-full flex items-center gap-2 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 transform hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:from-violet-600 hover:to-cyan-600 hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <span>{isSending ? "Отправка…" : "Отправить промпт"}</span>
           {isSending ? (

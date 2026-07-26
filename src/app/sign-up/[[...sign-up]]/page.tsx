@@ -10,12 +10,12 @@ export default function SignUpPage() {
             <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
               MindShift
             </p>
-            <h1 className="mt-2 text-3xl font-semibold text-white">Create Account</h1>
+            <h1 className="mt-2 text-3xl font-semibold text-white">Создание аккаунта</h1>
             <p className="mt-2 text-sm leading-6 text-white/62">
-              Создайте доступ, чтобы продолжить funnel и открыть dashboard.
+              Создайте родительский аккаунт, чтобы выдать ребёнку доступ к Академии и просматривать его прогресс.
             </p>
           </div>
-          <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" />
+          <SignUp routing="path" path="/sign-up" signInUrl="/sign-in" forceRedirectUrl="/consent" />
         </div>
       </div>
     </main>

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
+import { restartChildData } from "@/lib/child-data";
 
 // "Start over" for the CURRENT signed-in child: resets THEIR OWN progress to a fresh state
-// (0/0/0, lesson 1) and clears THEIR monster + per-lesson progress. Requires auth and only
-// ever touches the caller's own row (keyed by clerkId), so it is safe in every environment
-// and doubles as the COPPA self-service "erase my child's data" path.
+// (0/0/0, lesson 1) and clears Academy gameplay state. Requires auth and only ever touches
+// the caller's own row (keyed by clerkId), so it is safe in every environment. It is NOT a
+// privacy erase path: consent is deliberately retained; DELETE /api/child-data is permanent.
 //
 // Previously this was dev-only (403 in prod, which disabled the graduation "start over"
 // button) AND, when reachable, reset a hardcoded SHARED demo row ("Uchenik") with NO auth —
@@ -18,16 +18,7 @@ export async function POST() {
   }
 
   try {
-    const user = await prisma.user.upsert({
-      where: { clerkId },
-      update: { xp: 0, crystals: 0, streak: 0, activeStep: 1 },
-      create: { clerkId, username: clerkId, xp: 0, crystals: 0, streak: 0, activeStep: 1 },
-    });
-
-    // Clear this user's saved monster + lesson progress so the restart is genuinely "from the
-    // very beginning". Both cascade off userId; deleteMany is idempotent (safe to replay).
-    await prisma.monster.deleteMany({ where: { userId: user.id } });
-    await prisma.lessonProgress.deleteMany({ where: { userId: user.id } });
+    await restartChildData(clerkId);
 
     return NextResponse.json({ ok: true, xp: 0, crystals: 0, streak: 0, activeStep: 1 });
   } catch (error) {

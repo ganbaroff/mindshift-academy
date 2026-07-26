@@ -14,7 +14,7 @@ import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 const OPT_A =
   "Я родитель/опекун и даю согласие на сбор и использование данных моего ребёнка для обучения в MindShift Academy.";
 const OPT_B =
-  "Я согласен(на), что сообщения ребёнка обрабатываются автоматической системой безопасности и внешним ИИ-провайдером (NVIDIA, США) для работы тьютора.";
+  "Я согласен(на), что NVIDIA выполняет первичную проверку безопасности, Google Gemini — дополнительную проверку, Microsoft Azure OpenAI помогает тьютору и проверяет задания, а OpenAI может создавать изображение питомца. Данные используются только для функций курса.";
 
 function ActivateInner() {
   const token = useSearchParams().get("t") ?? "";
@@ -108,6 +108,7 @@ function ActivateInner() {
         </div>
 
         <fieldset className="space-y-3">
+          <legend className="mb-3 text-sm font-medium text-white/80">Согласия на обработку данных</legend>
           <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
             <input
               type="checkbox"

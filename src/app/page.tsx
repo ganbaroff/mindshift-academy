@@ -1,182 +1,152 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Star, Heart, Award } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  CheckCircle2,
+  Heart,
+  KeyRound,
+  ShieldCheck,
+  Star,
+  UserRound,
+} from "lucide-react";
 import { InteractiveShowcase } from "@/components/showcase/InteractiveShowcase";
 
 const benefitsRu = [
   {
     title: "Безопасная среда",
-    copy: "Интеллектуальный фильтр автоматически очищает любые некорректные запросы.",
+    copy: "Сначала согласие родителя, затем обучение и проверка безопасности каждого сообщения.",
     icon: ShieldCheck,
   },
   {
-    title: "Забота и тепло",
-    copy: "Питомец искренне скучает по урокам, вдохновляя продолжать без чувства вины.",
+    title: "Пять коротких уроков",
+    copy: "Ребёнок учится давать ИИ понятные команды через игру с цифровым питомцем.",
     icon: Heart,
   },
   {
-    title: "Конфиденциальность",
-    copy: "Сообщения проверяет система безопасности; из текста для ответов вырезаются почты, телефоны и числа; сообщения и голос не храним.",
+    title: "Прогресс для родителя",
+    copy: "В кабинете видно, что ребёнок освоил, а данные Academy можно удалить в любой момент.",
     icon: Award,
   },
 ] as const;
 
-const benefitsAz = [
+const journey = [
   {
-    title: "Təhlükəsiz mühit",
-    copy: "Ağıllı filtr uşağın daxil etdiyi qeyri-etik və ya uyğunsuz sorğuları avtomatik təmizləyir.",
+    title: "Откройте доступ",
+    copy: "Войдите с email, который заранее добавлен в закрытый тест.",
+    icon: UserRound,
+  },
+  {
+    title: "Подтвердите согласие",
+    copy: "Код придёт на email родительского аккаунта.",
     icon: ShieldCheck,
   },
   {
-    title: "Şəfqətli yanaşma",
-    copy: "Virtual köməkçi dərslər üçün darıxır və övladınızı heç bir təzyiq olmadan öyrənməyə həvəsləndirir.",
-    icon: Heart,
-  },
-  {
-    title: "Məxfilik qorunması",
-    copy: "Mesajları təhlükəsizlik sistemi yoxlayır; cavablar üçün mətndən e-poçt, telefon və rəqəmlər silinir; mesajları və səsi saxlamırıq.",
-    icon: Award,
+    title: "Передайте ребёнку код",
+    copy: "Ребёнок вводит код и проходит уроки в игровом темпе.",
+    icon: KeyRound,
   },
 ] as const;
-
-type Lang = "ru" | "az";
 
 const COPY = {
-  ru: {
-    parentDashboard: "Личный кабинет родителя",
-    signIn: "Войти",
-    parentLogin: "Я родитель",
-    childCta: "У меня есть код — начать!",
-    childCtaHint: "Код тебе дал взрослый",
-    badge: "Интерактивный курс",
-    h1: "Ваш ребёнок научится управлять ИИ за 5 игровых уроков",
-    subtitle:
-      "Мы превратили программирование искусственного интеллекта в увлекательную сказку. Ребёнок создаёт цифрового питомца, обучает его командам и придумывает с ним секретный код, осваивая базовые принципы инженерии запросов без скучных лекций.",
-    benefits: benefitsRu,
-    howTitle: "Как это работает?",
-    steps: [
-      {
-        tag: "01. Запуск волшебства",
-        title: "Ребёнок создаёт питомца",
-        copy: "Вводя 3 стартовых слова, ребёнок задаёт характер своего напарника и видит его рождение на экране.",
-      },
-      {
-        tag: "02. Доступ по приглашению",
-        title: "Бесплатно по реферальной ссылке",
-        copy: "Все 5 уроков открыты без оплаты. Доступ выдаётся по приглашению — только для аккаунта, который вы укажете.",
-      },
-      {
-        tag: "03. Отчёт родителям",
-        title: "Доказательство прогресса",
-        copy: "Вы получаете еженедельные отчёты с настоящими командами, которые ребёнок сам научился писать на уроках.",
-      },
-    ],
-  },
-  az: {
-    parentDashboard: "Valideyn kabineti",
-    signIn: "Daxil ol",
-    parentLogin: "Mən valideynəm",
-    childCta: "Kodum var — başla!",
-    childCtaHint: "Kodu sənə böyük verib",
-    badge: "İnteraktiv kurs",
-    h1: "Övladınız 5 oyun dərsi ilə Süni İntellekti idarə etməyi öyrənəcək",
-    subtitle:
-      "Biz süni intellekt proqramlaşdırmasını maraqlı nağıla çevirdik. Övladınız rəqəmsal köməkçi yaradacaq, ona əmrlər öyrədəcək və onunla birlikdə gizli kod düşünəcək. Bu prosesdə heç bir sıxıcı mühazirə olmadan mühüm rəqəmsal bacarıqlara yiyələnəcək.",
-    benefits: benefitsAz,
-    howTitle: "Bu necə işləyir?",
-    steps: [
-      {
-        tag: "01. Sehrin başlanğıcı",
-        title: "Uşaq köməkçisini yaradır",
-        copy: "3 söz daxil edərək uşaq köməkçisinin xarakterini təyin edir və onun ekranda doğulduğunu görür.",
-      },
-      {
-        tag: "02. Dəvətlə giriş",
-        title: "Dəvət linki ilə pulsuz",
-        copy: "Bütün 5 dərs ödənişsizdir. Giriş yalnız sizin göstərdiyiniz hesab üçün dəvət linki ilə verilir.",
-      },
-      {
-        tag: "03. Valideynə hesabat",
-        title: "İrəliləyişin sübutu",
-        copy: "Hər həftə övladınızın dərslərdə özünün yazmağı öyrəndiyi əsl əmrlərlə hesabat alırsınız.",
-      },
-    ],
-  },
-} as const satisfies Record<Lang, unknown>;
+  parentCta: "Я родитель — открыть доступ",
+  parentCtaHint: "Для заранее добавленного email",
+  signIn: "Войти",
+  childCta: "У ребёнка есть код",
+  childCtaHint: "Перейти к вводу кода",
+  badge: "Закрытый интерактивный курс",
+  h1: "Пять игровых уроков об ИИ — с понятным стартом для родителя",
+  subtitle:
+    "Вы открываете доступ один раз и подтверждаете согласие. Затем ребёнок учится объяснять задачи ИИ через короткие приключения с цифровым питомцем.",
+  benefits: benefitsRu,
+  journeyTitle: "Как семья начнёт",
+  journey,
+  tryTitle: "Сначала посмотрите, как это ощущается",
+  tryCopy:
+    "Это ознакомительная проба: она не создаёт аккаунт и не отправляет слова ребёнка во внешний ИИ. Для курса нужен родительский доступ или код.",
+  howTitle: "Что будет дальше",
+  steps: [
+    {
+      tag: "01. Родитель",
+      title: "Открывает безопасный старт",
+      copy: "Аккаунт и согласие подтверждают, что ребёнок может начать обучение.",
+    },
+    {
+      tag: "02. Ребёнок",
+      title: "Вводит свой код",
+      copy: "Питомец появляется в игре, а пять уроков открываются по порядку.",
+    },
+    {
+      tag: "03. Семья",
+      title: "Видит настоящий прогресс",
+      copy: "Родительский кабинет показывает освоенные навыки без оценок и давления.",
+    },
+  ],
+} as const;
 
 export default function HomePage() {
-  const [lang, setLang] = useState<Lang>("ru");
-  const t = COPY[lang];
+  const t = COPY;
 
   return (
-    <main className="relative isolate overflow-hidden bg-background text-foreground min-h-screen">
-      {/* Premium background radial glow */}
+    <main className="relative isolate min-h-screen overflow-hidden bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.18),transparent_35%),radial-gradient(circle_at_80%_15%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_50%_110%,rgba(233,196,0,0.1),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" />
 
-      {/* Header */}
       <header className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-[0.24em] text-white/80 uppercase">
+        <Link
+          href="/"
+          className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.24em] text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
           <span className="grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-white/5 text-base text-white shadow-[0_0_0_1px_rgba(255,255,255,0.03)]">
             M
           </span>
           MindShift
         </Link>
 
-        <div className="flex items-center gap-2 text-sm text-white/70">
-          {/* RU / AZ language toggle */}
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="group" aria-label="Язык / Dil">
-            {(["ru", "az"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLang(l)}
-                aria-pressed={lang === l}
-                className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${
-                  lang === l ? "bg-primary text-white" : "text-white/55 hover:text-white/85"
-                }`}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
-
-          {/* One quiet parent entry point. The child's primary action lives in the hero. */}
-          <Link
-            href="/sign-in"
-            className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-white/70 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-          >
-            {t.parentLogin}
-          </Link>
-        </div>
+        <Link
+          href="/sign-in"
+          className="inline-flex min-h-11 items-center rounded-full border border-white/12 bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/78 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+          {t.signIn}
+        </Link>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-14 pt-6 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:px-8 lg:pb-20 lg:pt-10">
-        <div className="space-y-8 flex flex-col justify-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-warning">
+      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-12 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12 lg:px-8 lg:pb-16 lg:pt-10">
+        <div className="flex flex-col justify-center space-y-7">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-warning">
             <Star className="h-4 w-4 fill-warning/20 text-warning" aria-hidden="true" />
             {t.badge}
           </div>
 
           <div className="space-y-5">
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.04] text-white sm:text-5xl lg:text-6xl">
               {t.h1}
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-white/70 sm:text-lg">{t.subtitle}</p>
+            <p className="max-w-2xl text-base leading-7 text-white/72 sm:text-lg">{t.subtitle}</p>
+          </div>
 
-            {/* Child-first primary action — the single obvious thing to do on landing. */}
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <div className="flex flex-col gap-1.5">
               <Link
-                href="/enter-code"
-                className="inline-flex h-14 items-center gap-2 rounded-2xl bg-primary px-8 text-base font-semibold text-white shadow-[0_0_40px_rgba(139,92,246,0.35)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+                href="/sign-up"
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-base font-semibold text-white shadow-[0_0_40px_rgba(139,92,246,0.35)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                {t.childCta}
+                {t.parentCta}
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />
               </Link>
-              <span className="text-sm text-white/50">{t.childCtaHint}</span>
+              <span className="text-center text-xs text-white/52">{t.parentCtaHint}</span>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <Link
+                href="/enter-code"
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl border border-white/16 bg-white/[0.04] px-6 text-base font-semibold text-white/88 transition-colors hover:bg-white/[0.09] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <KeyRound className="h-5 w-5 text-warning" aria-hidden="true" />
+                {t.childCta}
+              </Link>
+              <span className="text-center text-xs text-white/52">{t.childCtaHint}</span>
             </div>
           </div>
 
@@ -184,37 +154,75 @@ export default function HomePage() {
             {t.benefits.map((pillar) => {
               const Icon = pillar.icon;
               return (
-                <div
+                <article
                   key={pillar.title}
-                  className="rounded-[18px] border border-white/10 bg-surface/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.16)] flex flex-col justify-between"
+                  className="rounded-[18px] border border-white/10 bg-surface/90 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.16)]"
                 >
-                  <div>
-                    <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] mb-3">
-                      <Icon className="h-5 w-5 text-violet-400" aria-hidden="true" />
-                    </span>
-                    <p className="text-sm font-semibold text-white">{pillar.title}</p>
-                    <p className="mt-1.5 text-xs leading-5 text-white/60">{pillar.copy}</p>
-                  </div>
-                </div>
+                  <span className="mb-3 grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-white/[0.04]">
+                    <Icon className="h-5 w-5 text-violet-400" aria-hidden="true" />
+                  </span>
+                  <h2 className="text-sm font-semibold text-white">{pillar.title}</h2>
+                  <p className="mt-1.5 text-xs leading-5 text-white/62">{pillar.copy}</p>
+                </article>
               );
             })}
           </div>
         </div>
 
-        {/* Interactive App Showcase */}
+        <aside
+          aria-labelledby="family-start-title"
+          className="self-center rounded-[32px] border border-white/10 bg-surface/90 p-6 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-7"
+        >
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-warning">Старт без путаницы</p>
+          <h2 id="family-start-title" className="mt-3 text-3xl font-semibold tracking-tight text-white">
+            {t.journeyTitle}
+          </h2>
+          <ol className="mt-6 space-y-4">
+            {t.journey.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <li key={step.title} className="flex gap-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/15 text-sm font-semibold text-primary-soft">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4 text-warning" aria-hidden="true" />
+                      <h3 className="text-sm font-semibold text-white">{step.title}</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm leading-6 text-white/62">{step.copy}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/[0.08] p-4 text-sm leading-6 text-white/76">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary-soft" aria-hidden="true" />
+            <p>Основной следующий шаг всегда виден сверху: родитель открывает доступ или ребёнок вводит уже полученный код.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section aria-labelledby="try-title" className="relative z-10 mx-auto w-full max-w-5xl px-6 py-12 lg:px-8 lg:py-16">
+        <div className="mx-auto mb-7 max-w-2xl text-center">
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-warning">Ознакомительная проба</p>
+          <h2 id="try-title" className="mt-3 text-balance text-3xl font-semibold text-white sm:text-4xl">
+            {t.tryTitle}
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-white/64 sm:text-base">{t.tryCopy}</p>
+        </div>
         <InteractiveShowcase />
       </section>
 
-      {/* Course workflow section */}
       <section className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8 lg:pb-24">
-        <h2 className="text-2xl font-semibold text-white text-center mb-8">{t.howTitle}</h2>
+        <h2 className="mb-8 text-center text-2xl font-semibold text-white">{t.howTitle}</h2>
         <div className="grid gap-4 md:grid-cols-3">
           {t.steps.map((step) => (
-            <div key={step.tag} className="rounded-[20px] border border-white/10 bg-surface/70 p-6">
+            <article key={step.tag} className="rounded-[20px] border border-white/10 bg-surface/70 p-6">
               <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/45">{step.tag}</p>
-              <p className="mt-3 text-lg font-semibold text-white">{step.title}</p>
-              <p className="mt-2 text-sm leading-6 text-white/60">{step.copy}</p>
-            </div>
+              <h3 className="mt-3 text-lg font-semibold text-white">{step.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-white/62">{step.copy}</p>
+            </article>
           ))}
         </div>
       </section>

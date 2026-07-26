@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Message, Step, Achievement, Skin, Monster } from '@/types';
+import { Message, Step, Achievement, Monster } from '@/types';
 
 interface GameState {
   // Monster settings
@@ -79,7 +79,7 @@ interface GameState {
 
 export const useGameStore = create<GameState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
   activeSkin: "🐲",
   activeMonsterName: "Огненный Дракончик",
   monsterColor: "#8b5cf6",
