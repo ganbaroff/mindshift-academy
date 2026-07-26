@@ -20,6 +20,22 @@ jobs:
       - run: npm ci
       - run: npm run test
 
+  # Builds from a clean checkout with no env vars, so anything that only works
+  # because it is installed or present on a developer machine fails here rather
+  # than on a production deploy.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - run: npm run build
+
   atlas-learning-e2e:
     runs-on: ubuntu-latest
     steps:
