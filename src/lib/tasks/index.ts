@@ -28,3 +28,17 @@ export {
   type SequenceExecuteResult,
   type SequenceVerdict,
 } from "./sequence-world";
+
+export { unclearMessage, UNCLEAR_REASON_CODES } from "./unclear-copy";
+export { attemptRequestSchema, gridProgramSchema, sequenceProgramSchema } from "./schemas";
+export {
+  coerceRawProgram,
+  interpretUtterance,
+  parseGridProgram,
+  parseSequenceProgram,
+  type ChatConn,
+  type InterpretResult,
+} from "./interpreter";
+export { resolveGridAttempt, resolveSequenceAttempt, type AttemptOutcome } from "./attempt";
+export { GRID_FIXTURES } from "./fixtures/grid-draw";
+export { SEQUENCE_FIXTURES } from "./fixtures/sequence-world";

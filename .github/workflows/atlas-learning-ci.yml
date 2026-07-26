@@ -23,6 +23,18 @@ jobs:
       - run: npm run lint
       - run: npm run test
       - run: npm run test:tasks
+      - run: npm run test:interpreter-contract
+      # Live literalness (0 repairs) when a chat key is present in repo secrets.
+      # Without keys the suite SKIPs; set INTERPRETER_LIVE_REQUIRED=1 once secrets exist.
+      - name: Interpreter literalness
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          AZURE_OPENAI_KEY: ${{ secrets.AZURE_OPENAI_KEY }}
+          AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+          AZURE_OPENAI_DEPLOYMENT: ${{ secrets.AZURE_OPENAI_DEPLOYMENT }}
+          AZURE_OPENAI_API_VERSION: ${{ secrets.AZURE_OPENAI_API_VERSION }}
+          INTERPRETER_REPEATS: "3"
+        run: npm run test:interpreter
 
   # Builds from a clean checkout with no env vars, so anything that only works
   # because it is installed or present on a developer machine fails here rather
