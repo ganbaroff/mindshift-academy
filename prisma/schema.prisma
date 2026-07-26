@@ -23,6 +23,7 @@ model User {
   inventory Inventory[]
   conceptMasteries   ConceptMastery[]
   atlasLearningSessions AtlasLearningSession[]
+  taskAttempts       TaskAttempt[]
 }
 
 model Monster {
@@ -124,14 +125,33 @@ model RewardEvent {
 
 // VOLAURA-owned concept mastery (Atlas receives snapshots only).
 model ConceptMastery {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept      String
+  mastery      Float     @default(0)
+  /// Leitner-style step: 0 = due now / shortest interval.
+  intervalStep Int       @default(0)
+  nextReviewAt DateTime?
+  updatedAt    DateTime  @updatedAt
+
+  @@unique([userId, concept])
+}
+
+/// One deterministic task attempt. Never stores the child's utterance (COPPA).
+model TaskAttempt {
   id        String   @id @default(cuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   concept   String
-  mastery   Float    @default(0)
-  updatedAt DateTime @updatedAt
+  family    String
+  tier      Int
+  pass      Boolean
+  /// Client idempotency key — replay awards nothing twice.
+  eventId   String?  @unique
+  createdAt DateTime @default(now())
 
-  @@unique([userId, concept])
+  @@index([userId, concept])
 }
 
 // Atlas NBA session audit — decision metadata stored in VOLAURA, not Atlas.
