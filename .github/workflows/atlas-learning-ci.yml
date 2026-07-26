@@ -18,6 +18,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      # The release gate requires zero lint errors, but nothing enforced it here, so two
+      # errors sat on the product line unnoticed. Running it in CI is what keeps that gate real.
+      - run: npm run lint
       - run: npm run test
 
   # Builds from a clean checkout with no env vars, so anything that only works

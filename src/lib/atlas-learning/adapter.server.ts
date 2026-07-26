@@ -20,7 +20,7 @@ import { mapActionToSigmoidLesson, renderSigmoidLessonHtml } from "./sigmoid-les
 import { masteryAfterOutcome } from "./mastery";
 import { atlasHttpDecide, atlasHttpOutcome } from "./http-client";
 
-export function useAtlasHttpTransport(): boolean {
+export function atlasHttpTransportEnabled(): boolean {
   return Boolean(process.env.ATLAS_LEARNING_API_URL);
 }
 
@@ -214,7 +214,7 @@ export async function atlasDecide(params: DecideParams): Promise<DecideResult> {
   }
 
   let receipt: AtlasLearningReceipt;
-  if (useAtlasHttpTransport()) {
+  if (atlasHttpTransportEnabled()) {
     receipt = await atlasHttpDecide(idempotencyKey, payload, requestId);
   } else {
     const exchangeDir = resolveAtlasExchangeDir();
@@ -323,7 +323,7 @@ export async function atlasOutcome(params: OutcomeParams): Promise<OutcomeResult
   };
 
   let receipt: AtlasLearningReceipt;
-  if (useAtlasHttpTransport()) {
+  if (atlasHttpTransportEnabled()) {
     receipt = await atlasHttpOutcome(outcomeKey, payload, requestId);
   } else {
     const exchangeDir = resolveAtlasExchangeDir();
