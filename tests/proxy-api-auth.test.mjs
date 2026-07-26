@@ -50,6 +50,7 @@ try {
     "/api/reset",
     "/api/tts",
     "/api/user",
+    "/api/tasks/attempt",
   ];
   const privateResponses = await Promise.all(
     privatePaths.map(async (path) => ({
