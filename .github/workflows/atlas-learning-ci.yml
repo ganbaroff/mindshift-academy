@@ -22,6 +22,7 @@ jobs:
       # errors sat on the product line unnoticed. Running it in CI is what keeps that gate real.
       - run: npm run lint
       - run: npm run test
+      - run: npm run test:tasks
 
   # Builds from a clean checkout with no env vars, so anything that only works
   # because it is installed or present on a developer machine fails here rather
