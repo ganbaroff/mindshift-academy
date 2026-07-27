@@ -79,6 +79,19 @@ try {
       expiresAt: new Date(Date.now() + 60_000),
     },
   });
+  await prisma.conceptMastery.create({
+    data: { userId: user.id, concept: "precision", mastery: 0.6, intervalStep: 2 },
+  });
+  await prisma.taskAttempt.create({
+    data: {
+      userId: user.id,
+      concept: "precision",
+      family: "grid-draw",
+      tier: 1,
+      pass: true,
+      eventId: `task_${suffix}`,
+    },
+  });
 
   const restart = await restartChildData(clerkId);
   const restarted = await prisma.user.findUnique({
@@ -86,6 +99,8 @@ try {
     include: { monster: true, inventory: true, progress: true },
   });
   const restartEvents = await prisma.rewardEvent.count({ where: { userId: user.id } });
+  const restartMastery = await prisma.conceptMastery.count({ where: { userId: user.id } });
+  const restartAttempts = await prisma.taskAttempt.count({ where: { userId: user.id } });
   const retainedConsent = await prisma.parentalConsent.count({ where: { clerkId } });
   const retainedVerification = await prisma.consentVerification.count({ where: { clerkId } });
 
@@ -100,6 +115,8 @@ try {
       restarted?.inventory.length === 0 &&
       restarted?.progress.length === 0 &&
       restartEvents === 0 &&
+      restartMastery === 0 &&
+      restartAttempts === 0 &&
       retainedConsent === 1 &&
       retainedVerification === 1,
     `state=${JSON.stringify({ restarted, restartEvents, retainedConsent, retainedVerification })}`
@@ -109,6 +126,8 @@ try {
   const deletedUser = await prisma.user.findUnique({ where: { clerkId } });
   const leftovers = await Promise.all([
     prisma.rewardEvent.count({ where: { userId: user.id } }),
+    prisma.conceptMastery.count({ where: { userId: user.id } }),
+    prisma.taskAttempt.count({ where: { userId: user.id } }),
     prisma.parentalConsent.count({ where: { clerkId } }),
     prisma.consentVerification.count({ where: { clerkId } }),
   ]);
@@ -123,7 +142,11 @@ try {
   console.error("HARNESS ERROR", error);
 } finally {
   try {
-    if (userId) await prisma.rewardEvent.deleteMany({ where: { userId } });
+    if (userId) {
+      await prisma.taskAttempt.deleteMany({ where: { userId } });
+      await prisma.conceptMastery.deleteMany({ where: { userId } });
+      await prisma.rewardEvent.deleteMany({ where: { userId } });
+    }
     await prisma.parentalConsent.deleteMany({ where: { clerkId } });
     await prisma.consentVerification.deleteMany({ where: { clerkId } });
     await prisma.user.deleteMany({ where: { clerkId } });

@@ -10,7 +10,7 @@ import { MonsterCard } from "@/components/modals/MonsterCard";
 import { GeneratingOverlay } from "@/components/modals/GeneratingOverlay";
 import { GachaCalendar } from "@/components/gamification/GachaCalendar";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
-import { BookOpen, Trophy, ShieldCheck, ChevronRight } from "lucide-react";
+import { CheckCircle2, BookOpen, Trophy, ShieldCheck, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -256,11 +256,19 @@ export default function LessonPage() {
         {/* Left column: Curriculum & Lesson description */}
         <div className="flex flex-col gap-6">
           
+          <div className="rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4 text-sm text-amber-100/90">
+            Архив Module 1. Основной курс —{" "}
+            <Link href="/session/w1-s1" className="underline font-semibold text-amber-200">
+              неделя 1, сессия 1
+            </Link>
+            .
+          </div>
+
           {/* Lessons navigation list */}
           <div className="rounded-[24px] border border-white/5 bg-surface p-5 flex flex-col gap-4" aria-label="Навигация по урокам" role="navigation">
             <h3 className="font-bold text-sm text-gray-400 flex items-center gap-2 uppercase tracking-wider">
               <BookOpen aria-hidden="true" className="w-4 h-4 text-violet-400" />
-              Твоя программа обучения
+              Архив: старые уроки
             </h3>
             
             <div className="flex flex-col gap-2">
@@ -274,30 +282,44 @@ export default function LessonPage() {
                     key={step.id}
                     href={isLocked ? "#" : `/lesson/${step.id}`}
                     onClick={(e) => isLocked && e.preventDefault()}
-                    aria-label={`Урок ${step.id}: ${step.name}`}
+                    aria-label={`Урок ${step.id}: ${step.name}${isCompleted ? ", пройден" : ""}`}
                     aria-current={isActive ? 'page' : undefined}
                     aria-disabled={isLocked}
                     className={`flex items-center justify-between p-3.5 rounded-xl border text-left transition-[transform,opacity] ${
-                      isActive
+                      isActive && isCompleted
+                        ? "bg-emerald-500/15 border-emerald-400/40 text-white"
+                        : isActive
                         ? "bg-violet-500/10 border-violet-500/30 text-white shadow-[0_0_15px_rgba(139,92,246,0.15)]"
                         : isCompleted
-                        ? "bg-cyan-500/5 border-cyan-500/15 text-cyan-300 hover:bg-cyan-500/10"
+                        ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-200 hover:bg-emerald-500/15"
                         : "bg-white/[0.02] border-white/5 text-gray-500 cursor-not-allowed"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span className={`w-6 h-6 rounded-full flex items-center justify-center font-extrabold text-xs ${
-                        isActive
+                        isCompleted
+                          ? "bg-emerald-500 text-white"
+                          : isActive
                           ? "bg-violet-500 text-white"
-                          : isCompleted
-                          ? "bg-cyan-500 text-white"
                           : "bg-white/10 text-gray-500"
                       }`}>
-                        {step.id}
+                        {isCompleted ? <CheckCircle2 className="w-4 h-4" aria-hidden="true" /> : isLocked ? <Lock className="w-3 h-3" aria-hidden="true" /> : step.id}
                       </span>
-                      <span className="text-xs font-semibold max-w-[200px] truncate">{step.name}</span>
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className={`text-xs font-semibold max-w-[200px] truncate ${isCompleted && !isActive ? "line-through opacity-80" : ""}`}>
+                          {step.name}
+                        </span>
+                        {isCompleted ? (
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                            Пройден
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                    {!isLocked && <ChevronRight aria-hidden="true" className="w-4 h-4 text-gray-500" />}
+                    {!isLocked && !isCompleted && <ChevronRight aria-hidden="true" className="w-4 h-4 text-gray-500" />}
+                    {isCompleted && isActive ? (
+                      <span className="text-[10px] font-bold text-emerald-300/80">повтор</span>
+                    ) : null}
                   </Link>
                 );
               })}
@@ -308,10 +330,26 @@ export default function LessonPage() {
           <div className="rounded-[28px] border border-white/5 bg-surface p-6 shadow-xl flex flex-col gap-5">
             <div>
               <span className="bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest">
-                Урок {lessonId} из 5
+                Архив · урок {lessonId} из 5
               </span>
               <h2 className="mt-3 text-2xl font-black text-white">{lessonData.title}</h2>
             </div>
+
+            {completedLessons.includes(lessonId) ? (
+              <div
+                role="status"
+                className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100"
+              >
+                <p className="font-semibold">Урок уже пройден ✓</p>
+                <p className="mt-1 text-emerald-100/80">
+                  Повтор не даёт новые XP и кристаллы. Основной курс —{" "}
+                  <Link href="/session/w1-s1" className="underline font-semibold">
+                    сессия мышления
+                  </Link>
+                  .
+                </p>
+              </div>
+            ) : null}
 
             <div className="text-sm text-gray-300 leading-relaxed space-y-3">
               <p>

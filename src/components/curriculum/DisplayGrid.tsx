@@ -1,0 +1,59 @@
+"use client";
+
+import { GRID_SIZE } from "@/lib/tasks/grid-draw";
+import type { Cell } from "@/lib/tasks/types";
+
+type Props = {
+  /** 0-based filled cells from the monster's last attempt. */
+  filled?: Cell[];
+  /** 0-based target cells — highlighted when pass is false. */
+  target?: Cell[];
+  /** Cells where monster and target disagree. */
+  mismatch?: Cell[];
+  label?: string;
+};
+
+const key = ([r, c]: Cell) => `${r},${c}`;
+
+export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: Props) {
+  const filledSet = new Set(filled.map(key));
+  const targetSet = new Set(target.map(key));
+  const mismatchSet = new Set(mismatch.map(key));
+
+  return (
+    <div className="flex flex-col gap-2" aria-label={label ?? "Поле для рисунка монстра"}>
+      {label ? (
+        <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">{label}</p>
+      ) : null}
+      <div
+        className="inline-grid gap-1 p-3 rounded-2xl bg-white/5 border border-white/10 w-fit"
+        style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
+        role="img"
+        aria-hidden="true"
+      >
+        {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => {
+          const row = Math.floor(i / GRID_SIZE);
+          const col = i % GRID_SIZE;
+          const k = `${row},${col}`;
+          const isFilled = filledSet.has(k);
+          const isTarget = targetSet.has(k);
+          const isMismatch = mismatchSet.has(k);
+
+          let cellClass =
+            "w-11 h-11 sm:w-12 sm:h-12 rounded-lg border transition-colors duration-300 ";
+          if (isMismatch) {
+            cellClass += "border-amber-400/70 bg-amber-500/25";
+          } else if (isFilled) {
+            cellClass += "border-violet-400/60 bg-violet-500/40";
+          } else if (isTarget) {
+            cellClass += "border-cyan-400/40 bg-cyan-500/10";
+          } else {
+            cellClass += "border-white/10 bg-white/[0.03]";
+          }
+
+          return <div key={k} className={cellClass} />;
+        })}
+      </div>
+    </div>
+  );
+}

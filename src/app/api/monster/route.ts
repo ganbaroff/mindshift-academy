@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     // prompt is child-authored — no child-data work without valid parental consent. Fail-closed.
     if (!(await hasValidConsent(clerkId))) {
       return NextResponse.json(
-        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { code: "CONSENT_REQUIRED", message: "Нужно согласие родителя." },
         { status: 403 }
       );
     }

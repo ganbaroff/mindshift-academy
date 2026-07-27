@@ -78,15 +78,54 @@ function renderGrid(cellKeys: ReadonlySet<string>, markKeys: ReadonlySet<string>
   return lines;
 }
 
+export type RenderGridDiffOptions = {
+  /**
+   * Collision / first-blind tasks: do not print the target ASCII or missing-cell list
+   * (that would defeat a hidden goal). UI reveals the picture after the attempt.
+   */
+  hideTargetPanel?: boolean;
+};
+
 /**
  * Teaching material in the monster's voice. VOLAURA UX law: no blame language
  * (docs/architecture/02-PRODUCT-AND-UX.md).
  */
-export function renderGridDiff(result: GridExecuteResult, target: Cell[], verdict: GridVerdict): string {
+export function renderGridDiff(
+  result: GridExecuteResult,
+  target: Cell[],
+  verdict: GridVerdict,
+  opts: RenderGridDiffOptions = {}
+): string {
   const targetKeys = new Set(target.map(key));
   const disagreement = new Set([...verdict.missing, ...verdict.extra].map(key));
-
   const mine = renderGrid(result.filled, disagreement);
+
+  if (opts.hideTargetPanel) {
+    const lines = ["  Я закрасил так:"];
+    for (let i = 0; i < GRID_SIZE; i++) {
+      lines.push(`  ${mine[i]}`);
+    }
+    lines.push("");
+    if (verdict.pass) {
+      lines.push("  Совпало клетка в клетку. Ты сказал ровно то, что хотел.");
+    } else {
+      lines.push(
+        "  Не совпало с целью. Посмотри картинку рядом — там видно, что просили. Скажи ещё раз своими словами."
+      );
+      if (verdict.extra.length) {
+        lines.push(
+          `  Лишнее (я понял так): ${verdict.extra.map((c) => `(${c[0] + 1},${c[1] + 1})`).join(" ")}`
+        );
+      }
+      if (verdict.outOfBounds.length) {
+        lines.push(
+          `  За полем: ${verdict.outOfBounds.map((c) => `(${c[0] + 1},${c[1] + 1})`).join(" ")}`
+        );
+      }
+    }
+    return lines.join("\n");
+  }
+
   const asked = renderGrid(targetKeys, disagreement);
 
   const lines = ["  Я закрасил так:        А просили так:"];

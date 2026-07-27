@@ -2,7 +2,7 @@ import type { SessionContent } from "../types";
 
 /**
  * Week 1 Session 1 — Точность: the monster does exactly what it is told.
- * Authoring target ~8–12 tasks; this ships a first playable spine.
+ * Free prompt = challenge only. Paid hintRu = speech scaffold, never the cell list.
  */
 export const week1Session1: SessionContent = {
   id: "w1-s1",
@@ -23,7 +23,9 @@ export const week1Session1: SessionContent = {
       role: "collision",
       family: "grid-draw",
       tier: 1,
-      promptRu: "Скажи монстру, как закрасить верхний ряд. Попробуй своими словами.",
+      promptRu: "Скажи монстру, что закрасить на поле. Попробуй своими словами.",
+      hintRu:
+        "Можно назвать целый ряд: верхний, нижний — или целый столбец: левый, правый. Монстр не угадывает «домик».",
       target: [
         [0, 0],
         [0, 1],
@@ -36,7 +38,8 @@ export const week1Session1: SessionContent = {
       role: "practice",
       family: "grid-draw",
       tier: 1,
-      promptRu: "Закрась весь левый столбец.",
+      promptRu: "Сделай так, чтобы совпало с картинкой. Опиши, что закрасить.",
+      hintRu: "Посмотри на картинку: иногда нужен весь столбец сверху вниз. Назови его сторону — левый или правый.",
       target: [
         [0, 0],
         [1, 0],
@@ -49,7 +52,8 @@ export const week1Session1: SessionContent = {
       role: "practice",
       family: "grid-draw",
       tier: 1,
-      promptRu: "Закрась нижний ряд целиком.",
+      promptRu: "Сделай так, чтобы совпало с картинкой. Опиши, что закрасить.",
+      hintRu: "Посмотри, где лежат нужные клетки: иногда это целый ряд слева направо. Назови — верхний или нижний.",
       target: [
         [3, 0],
         [3, 1],
@@ -62,7 +66,9 @@ export const week1Session1: SessionContent = {
       role: "practice",
       family: "grid-draw",
       tier: 1,
-      promptRu: "Закрась две клетки: строка 2 столбец 1 и строка 2 столбец 2.",
+      promptRu: "Сделай так, чтобы совпало с картинкой. Опиши две клетки.",
+      hintRu:
+        "Можно сказать номер строки и столбца для каждой клетки. Строки сверху вниз: 1…4. Столбцы слева направо: 1…4.",
       target: [
         [1, 0],
         [1, 1],
@@ -73,7 +79,8 @@ export const week1Session1: SessionContent = {
       role: "practice",
       family: "grid-draw",
       tier: 2,
-      promptRu: "В верхнем ряду закрась первые три клетки слева.",
+      promptRu: "Сделай так, чтобы совпало. Часть ряда — не весь ряд.",
+      hintRu: "Назови ряд, потом сколько клеток и с какой стороны: «слева три» или «справа две».",
       target: [
         [0, 0],
         [0, 1],
@@ -85,7 +92,8 @@ export const week1Session1: SessionContent = {
       role: "practice",
       family: "grid-draw",
       tier: 2,
-      promptRu: "Во втором ряду закрась две клетки справа.",
+      promptRu: "Сделай так, чтобы совпало. Опиши фигуру своими словами.",
+      hintRu: "Укажи номер ряда, потом сторону: «справа» или «слева», и сколько клеток подряд.",
       target: [
         [1, 2],
         [1, 3],
@@ -96,8 +104,8 @@ export const week1Session1: SessionContent = {
       role: "transfer",
       family: "grid-draw",
       tier: 1,
-      promptRu:
-        "Новая картинка: закрась весь правый столбец. Скажи так, чтобы совпало клетка в клетку.",
+      promptRu: "Новая картинка. Опиши монстру так, чтобы совпало клетка в клетку.",
+      hintRu: "Если линия идёт сверху вниз у края поля — это столбец. Назови сторону: левый или правый.",
       target: [
         [0, 3],
         [1, 3],

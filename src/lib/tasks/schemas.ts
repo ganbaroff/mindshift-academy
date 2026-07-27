@@ -29,18 +29,22 @@ export const sequenceProgramSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
+/**
+ * Thinking-curriculum attempt. sessionId+taskId required — server loads target/family/tier.
+ * Client `target` / `family` / `concept` / `tier` are ignored if present (compat).
+ */
 export const attemptRequestSchema = z.object({
-  family: z.enum(["grid-draw", "sequence-world"]),
-  utterance: z.string().min(1).max(500),
-  /** 0-based cells for grid-draw. Ignored for sequence-world. */
+  utterance: z.string().trim().min(1).max(500),
+  sessionId: z.string().min(1).max(64),
+  taskId: z.string().min(1).max(64),
+  /** Idempotency for TaskAttempt — never stores utterance. */
+  eventId: z.string().min(8).max(100),
+  // Legacy fields — stripped; kept optional so old clients don't 400 on unknown... 
+  // actually zod strips unknown by default. Explicit ignore:
+  family: z.enum(["grid-draw", "sequence-world"]).optional(),
   target: z.array(cellSchema).optional(),
-  /** Thinking-curriculum concept id — when set, mastery/spacing are updated. */
   concept: z.string().min(1).max(64).optional(),
   tier: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
-  /** Idempotency for TaskAttempt — never stores utterance. */
-  eventId: z.string().min(8).max(100).optional(),
-  sessionId: z.string().min(1).max(64).optional(),
-  taskId: z.string().min(1).max(64).optional(),
 });
 
 export type AttemptRequest = z.infer<typeof attemptRequestSchema>;
