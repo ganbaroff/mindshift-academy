@@ -29,6 +29,8 @@ jobs:
       - name: Crystal economy
         env:
           DATABASE_URL: "file:./ci-crystals.db"
+          # Runtime prisma adapter reads TURSO_DATABASE_URL (falls back to file:./dev.db).
+          TURSO_DATABASE_URL: "file:./ci-crystals.db"
         run: |
           npx prisma generate
           npx prisma db push --url "$DATABASE_URL"
