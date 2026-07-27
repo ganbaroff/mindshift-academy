@@ -282,13 +282,8 @@ if (!hasGemini && !hasAzure) {
 
 // Content intent vs target spot-checks (authoring bugs, no LLM)
 const contentBugs = [];
-function expectCells(taskId, target, note) {
-  // just record for receipt — targets are ground truth; flag if prompt/hint contradict role
-  void target;
-  void note;
-}
-// Known soft content smell: w1s3-p4 hint names "L-фигура" (paid scaffold OK);
-// w1s2-transfer hint names "Диагональ" (paid OK). Free prompt naming would be a bug.
+// Known soft content smell: free prompts must not name the figure.
+// Paid hints may name shapes (квадрат / диагональ / L) — crystal-gated.
 for (const session of sessions) {
   for (const t of session.tasks) {
     if (t.role === "practice" && /L-фигур|диагонал|квадрат 2/i.test(t.promptRu)) {
@@ -480,7 +475,7 @@ for (const t of taskResults) {
   const fails = t.attempts.filter((a) => !a.pass);
   if (!fails.length) continue;
   lines.push(`### ${t.taskId}`);
-  fails.forEach((a, i) => {
+  fails.forEach((a) => {
     lines.push(
       `- attempt: pass=false reason=${a.reason} latency=${a.latencyMs ?? "n/a"} model=${a.model || "?"} feedback=«${a.feedback}» cells=${a.cells ? JSON.stringify(a.cells) : "n/a"}`
     );
