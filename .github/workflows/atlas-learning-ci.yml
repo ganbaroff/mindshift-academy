@@ -25,6 +25,14 @@ jobs:
       - run: npm run test:tasks
       - run: npm run test:interpreter-contract
       - run: npm run test:session
+      - run: npm run test:attempt-trust
+      - name: Crystal economy
+        env:
+          DATABASE_URL: "file:./ci-crystals.db"
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate
+          npm run test:crystals
       # Live literalness (0 repairs) when a chat key is present in repo secrets.
       # Without keys the suite SKIPs; set INTERPRETER_LIVE_REQUIRED=1 once secrets exist.
       - name: Interpreter literalness
