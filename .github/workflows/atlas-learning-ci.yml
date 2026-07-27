@@ -31,7 +31,7 @@ jobs:
           DATABASE_URL: "file:./ci-crystals.db"
         run: |
           npx prisma generate
-          npx prisma db push --skip-generate
+          npx prisma db push --url "$DATABASE_URL"
           npm run test:crystals
       # Live literalness (0 repairs) when a chat key is present in repo secrets.
       # Without keys the suite SKIPs; set INTERPRETER_LIVE_REQUIRED=1 once secrets exist.
