@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     // parental consent before any (external) synthesis. Fail-closed.
     if (!(await hasValidConsent(clerkId))) {
       return NextResponse.json(
-        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { code: "CONSENT_REQUIRED", message: "Нужно согласие родителя." },
         { status: 403 }
       );
     }

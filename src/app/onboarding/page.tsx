@@ -113,7 +113,8 @@ function OnboardingContent() {
   };
 
   const goToFirstLesson = () => {
-    router.push("/lesson/1");
+    // Thinking curriculum entry — Module 1 /lesson/1 is legacy archive.
+    router.push("/session/w1-s1");
   };
 
   return (

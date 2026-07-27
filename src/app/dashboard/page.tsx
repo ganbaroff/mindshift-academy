@@ -87,7 +87,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
             prompt: item.lesson.description,
           }))
           .slice(0, 3)
-      : demoLessons;
+      : isDemo
+        ? demoLessons
+        : [];
 
   const displayName =
     clerkUser?.firstName ||
@@ -181,6 +183,39 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
             ))}
           </div>
 
+          <section className="rounded-[28px] border border-violet-400/20 bg-violet-500/10 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-200/70">
+                  Основной курс · закрытая beta
+                </p>
+                <h2 className="mt-2 text-xl font-semibold text-white">Неделя 1: точность мышления</h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-white/68">
+                  Три сессии с исполняемыми заданиями. Ребёнок описывает — монстр рисует буквально.
+                  Сессии 2–3 открываются после завершения предыдущей. Старые 5 уроков Module 1 — архив.
+                </p>
+              </div>
+              <Link
+                href="/session/w1-s1"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+              >
+                <Sparkles className="h-4 w-4" />
+                Открыть сессию 1
+              </Link>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
+              <Link href="/session/w1-s1" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+                Сессия 1 · Точность
+              </Link>
+              <Link href="/session/w1-s2" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+                Сессия 2 · Фигура
+              </Link>
+              <Link href="/session/w1-s3" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+                Сессия 3 · Клетка в клетку
+              </Link>
+            </div>
+          </section>
+
           <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -188,12 +223,22 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                   Недельный отчёт
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold text-white">Что ребёнок сделал на этой неделе</h2>
+                <p className="mt-2 text-sm text-white/55">
+                  Основной прогресс — в сессиях недели 1 выше. Ниже Module 1 только если ребёнок
+                  успел пройти старые уроки (архив).
+                </p>
               </div>
 
               <CopyReportButton text={reportText} />
             </div>
 
             <div className="mt-6 space-y-4">
+              {!dbUser?.progress.length && !isDemo ? (
+                <p className="rounded-[20px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-sm text-white/55">
+                  Пока нет архивных уроков Module 1 — это нормально. Смотри блок «Неделя 1: точность
+                  мышления».
+                </p>
+              ) : null}
               {lessonRows.map((lesson) => (
                 <div
                   key={lesson.title}

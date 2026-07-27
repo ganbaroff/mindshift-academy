@@ -7,6 +7,7 @@ const isProtectedPage = createRouteMatcher([
   "/onboarding(.*)",
   "/lesson(.*)",
   "/consent(.*)",
+  "/session(.*)",
 ]);
 
 const isDemoPageBypass = (req: Request) =>
@@ -20,6 +21,13 @@ const isDemoPageBypass = (req: Request) =>
  */
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
+
+  // Thinking curriculum is default; legacy Module 1 URLs bounce before auth gates.
+  const allowLegacy =
+    process.env.LEGACY_MODULE1_ENABLED === "1" || process.env.E2E_LEGACY_LESSONS === "1";
+  if (!allowLegacy && (pathname === "/lesson" || pathname.startsWith("/lesson/"))) {
+    return NextResponse.redirect(new URL("/session/w1-s1", req.url));
+  }
 
   if (pathname.startsWith("/api/") || pathname.startsWith("/trpc/")) {
     if (isPublicApiPath(pathname) || hasDevTestBypass(req.headers)) {

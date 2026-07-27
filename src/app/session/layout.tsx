@@ -4,18 +4,7 @@ import { getViewerAccess } from "@/lib/access";
 import { hasValidConsent } from "@/lib/consent";
 import { academyEntryRedirect } from "@/lib/academy-access";
 
-/**
- * Thinking curriculum is the default child path.
- * Legacy Module 1 (`/lesson/*`) stays only when LEGACY_MODULE1_ENABLED=1
- * (or E2E_LEGACY_LESSONS=1 for the Chromium lesson-flow suite).
- */
-export default async function LessonLayout({ children }: { children: ReactNode }) {
-  const allowLegacy =
-    process.env.LEGACY_MODULE1_ENABLED === "1" || process.env.E2E_LEGACY_LESSONS === "1";
-  if (!allowLegacy) {
-    redirect("/session/w1-s1");
-  }
-
+export default async function SessionLayout({ children }: { children: ReactNode }) {
   const { user, allowed } = await getViewerAccess();
   const destination = academyEntryRedirect({
     signedIn: Boolean(user),

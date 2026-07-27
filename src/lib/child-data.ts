@@ -13,6 +13,9 @@ export async function restartChildData(clerkId: string): Promise<ChildDataMutati
     if (!user) return { found: false };
 
     await tx.rewardEvent.deleteMany({ where: { userId: user.id } });
+    await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
+    await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
+    await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
     await tx.inventory.deleteMany({ where: { userId: user.id } });
     await tx.monster.deleteMany({ where: { userId: user.id } });
     await tx.lessonProgress.deleteMany({ where: { userId: user.id } });
@@ -42,6 +45,9 @@ export async function deleteChildData(clerkId: string): Promise<ChildDataMutatio
       // RewardEvent intentionally has no FK in the legacy schema, so delete it
       // explicitly before User deletion cascades monster, inventory, and progress.
       await tx.rewardEvent.deleteMany({ where: { userId: user.id } });
+      await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
+      await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
+      await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
       await tx.user.delete({ where: { id: user.id } });
     }
 

@@ -2,6 +2,7 @@
  * Executable-task attempt: consent → rate limit → input moderation → interpret → execute → check.
  * Child free-text never reaches the interpreter before moderation. Interpreter never sees the target.
  * Model free-text never reaches the child (closed reason codes + whitelist actions).
+ * Target/family/tier come from server curriculum — never from the client body.
  */
 
 import { NextResponse } from "next/server";
@@ -15,7 +16,9 @@ import { attemptRequestSchema } from "@/lib/tasks/schemas";
 import { interpretUtterance } from "@/lib/tasks/interpreter";
 import { resolveGridAttempt, resolveSequenceAttempt } from "@/lib/tasks/attempt";
 import { persistTaskAttempt } from "@/lib/tasks/persist";
-import type { Cell } from "@/lib/tasks/types";
+import { awardTaskPassCrystals, ensureStarterCrystals } from "@/lib/tasks/crystals";
+import { resolveCurriculumTask } from "@/lib/tasks/resolve-task";
+import type { Cell, GridProgram, SequenceProgram } from "@/lib/tasks/types";
 
 export async function POST(req: Request) {
   const startedAt = Date.now();
@@ -39,13 +42,13 @@ export async function POST(req: Request) {
 
     if (!(isDev && testBypass) && !(await hasValidConsent(clerkId))) {
       return NextResponse.json(
-        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { code: "CONSENT_REQUIRED", message: "Нужно согласие родителя." },
         { status: 403 }
       );
     }
 
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "Сервис временно недоступен." }, { status: 503 });
     }
     const rl = await rateLimit("tasks", clerkId, 20, 10);
     if (!rl.success) {
@@ -54,20 +57,31 @@ export async function POST(req: Request) {
 
     const parsed = attemptRequestSchema.safeParse(await req.json());
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json({ error: "Неверный запрос." }, { status: 400 });
     }
 
-    const { family, utterance, target, concept, tier, eventId } = parsed.data;
-    if (family === "grid-draw" && (!target || target.length === 0)) {
-      return NextResponse.json({ error: "target required for grid-draw" }, { status: 400 });
+    const { utterance, eventId, sessionId, taskId } = parsed.data;
+    const resolved = resolveCurriculumTask(sessionId, taskId);
+    if (!resolved) {
+      return NextResponse.json(
+        { error: "Задание не найдено.", code: "TASK_NOT_FOUND" },
+        { status: 404 }
+      );
     }
-    if ((concept && !tier) || (!concept && tier)) {
-      return NextResponse.json({ error: "concept and tier must be sent together" }, { status: 400 });
+
+    const { session, task } = resolved;
+    const family = task.family;
+    const concept = session.concept;
+    const tier = task.tier;
+    const target = task.target as Cell[] | undefined;
+
+    if (family === "grid-draw" && (!target || target.length === 0)) {
+      return NextResponse.json({ error: "У задания нет цели на сервере." }, { status: 500 });
     }
 
     const safety = getSafetyClient();
     if (!safety) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "Сервис временно недоступен." }, { status: 503 });
     }
 
     const inMod = await moderate(getGuardClient(), safety.client, safety.model, utterance);
@@ -80,7 +94,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Sanitize for the model prompt; safety already saw the full utterance.
     const forModel = minimizeChildText(utterance);
 
     let interpreted;
@@ -89,7 +102,7 @@ export async function POST(req: Request) {
     } catch (err) {
       const code = err instanceof Error ? err.message : "INTERPRET_FAILED";
       if (code === "NO_CHAT_PROVIDER") {
-        return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+        return NextResponse.json({ error: "Сервис временно недоступен." }, { status: 503 });
       }
       console.error("interpretUtterance failed:", err);
       return NextResponse.json({
@@ -100,36 +113,57 @@ export async function POST(req: Request) {
       });
     }
 
-    const outcome =
-      interpreted.family === "grid-draw"
-        ? resolveGridAttempt(interpreted.program, target as Cell[])
-        : resolveSequenceAttempt(interpreted.program);
+    if (interpreted.family !== family) {
+      return NextResponse.json({ error: "Неверный тип задания." }, { status: 400 });
+    }
 
-    let mastery: number | null = null;
-    let recorded: boolean | null = null;
-    if (concept && tier) {
-      const dbUser = await prisma.user.upsert({
-        where: { clerkId },
-        update: {},
-        create: {
-          clerkId,
-          username: clerkId,
-          xp: 0,
-          crystals: 0,
-          streak: 0,
-          activeStep: 1,
-        },
-      });
-      const persisted = await persistTaskAttempt({
+    const outcome =
+      family === "grid-draw"
+        ? resolveGridAttempt(interpreted.program as GridProgram, target as Cell[], {
+            hideTargetPanel: task.role === "collision",
+          })
+        : resolveSequenceAttempt(interpreted.program as SequenceProgram);
+
+    const dbUser = await prisma.user.upsert({
+      where: { clerkId },
+      update: {},
+      create: {
+        clerkId,
+        username: clerkId,
+        xp: 0,
+        crystals: 0,
+        streak: 0,
+        activeStep: 1,
+      },
+    });
+
+    const persisted = await persistTaskAttempt({
+      userId: dbUser.id,
+      concept,
+      family,
+      tier,
+      pass: outcome.pass,
+      eventId,
+    });
+
+    await ensureStarterCrystals(dbUser.id);
+
+    let crystals: number;
+    let crystalsAwarded = false;
+    if (outcome.pass) {
+      const award = await awardTaskPassCrystals({
         userId: dbUser.id,
-        concept,
-        family,
-        tier,
-        pass: outcome.pass,
-        eventId,
+        sessionId,
+        taskId,
       });
-      mastery = persisted.mastery;
-      recorded = persisted.recorded;
+      crystals = award.crystals;
+      crystalsAwarded = award.awarded;
+    } else {
+      const cur = await prisma.user.findUnique({
+        where: { id: dbUser.id },
+        select: { crystals: true },
+      });
+      crystals = cur?.crystals ?? 0;
     }
 
     return NextResponse.json({
@@ -137,16 +171,21 @@ export async function POST(req: Request) {
       feedback: outcome.feedback,
       programStatus: outcome.programStatus,
       reasonCode: outcome.reasonCode ?? null,
+      filledCells: outcome.filledCells ?? null,
+      missingCells: outcome.missingCells ?? null,
+      extraCells: outcome.extraCells ?? null,
       safetyPassed: true,
       model: interpreted.model,
       interpretLatencyMs: interpreted.latencyMs,
       latencyMs: Date.now() - startedAt,
-      mastery,
-      recorded,
-      // Never echo the child's utterance or the raw model payload.
+      mastery: persisted.mastery,
+      recorded: persisted.recorded,
+      crystals,
+      crystalsAwarded,
+      // Never echo utterance, client target, or raw model payload.
     });
   } catch (err) {
     console.error("tasks/attempt error:", err);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
   }
 }

@@ -33,14 +33,15 @@ const COPY: {
   changeEmail: string;
   emailSent: string;
   emailNoKey: string;
+  devCodeHint: string;
 } = {
     title: "Согласие родителя",
     intro:
       "MindShift Academy — обучающее приложение для детей. Прежде чем ваш ребёнок начнёт, нам нужно ваше согласие как родителя.",
     collect:
-      "Что мы собираем: сообщения, которые ребёнок пишет питомцу; имя и вид питомца; прогресс по урокам.",
+      "Что мы собираем: инструкции ребёнка монстру в сессиях мышления; имя и вид питомца; прогресс по сессиям (без хранения сырых сообщений в отчётах).",
     processing:
-      "Как обрабатываются данные: NVIDIA выполняет первичную проверку безопасности, а Google Gemini — дополнительную проверку. Microsoft Azure OpenAI помогает тьютору отвечать и проверяет задания. OpenAI может создавать изображение питомца. Данные используются только для функций курса.",
+      "Как обрабатываются данные: NVIDIA выполняет первичную проверку безопасности, а Google Gemini — дополнительную проверку. Microsoft Azure OpenAI помогает понимать инструкции к заданиям. OpenAI может создавать изображение питомца. Данные используются только для функций курса.",
     never:
       "Чего мы не делаем: не продаём данные, не показываем рекламу, не используем данные ребёнка для маркетинга.",
     rights:
@@ -61,6 +62,7 @@ const COPY: {
     emailSent: "Код отправлен на",
     emailNoKey:
       "Отправка писем пока не настроена (нет ключа). Код сгенерирован — попросите администратора включить почту.",
+    devCodeHint: "Локальная разработка: код показан ниже (письмо может не дойти).",
 };
 
 export default function ConsentPage() {
@@ -75,6 +77,7 @@ export default function ConsentPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [devCode, setDevCode] = useState<string | null>(null);
 
   const t = COPY;
 
@@ -118,7 +121,14 @@ export default function ConsentPage() {
         return;
       }
       setStep("code");
-      setNotice(data.emailSent ? `${t.emailSent} ${data.parentEmail}` : t.emailNoKey);
+      if (typeof data.devCode === "string" && data.devCode.length === 6) {
+        setDevCode(data.devCode);
+        setCode(data.devCode);
+        setNotice(`${t.devCodeHint} ${data.parentEmail ?? email}`);
+      } else {
+        setDevCode(null);
+        setNotice(data.emailSent ? `${t.emailSent} ${data.parentEmail}` : t.emailNoKey);
+      }
     } catch {
       setError("Сеть недоступна. Попробуйте ещё раз.");
     } finally {
@@ -189,6 +199,14 @@ export default function ConsentPage() {
         {notice && (
           <p role="status" aria-live="polite" className="mt-4 rounded-xl border border-secondary/30 bg-secondary/10 px-4 py-3 text-sm text-secondary">
             {notice}
+          </p>
+        )}
+        {devCode && (
+          <p
+            role="status"
+            className="mt-3 rounded-xl border border-violet-400/40 bg-violet-500/15 px-4 py-3 text-center font-mono text-2xl tracking-[0.4em] text-white"
+          >
+            {devCode}
           </p>
         )}
 

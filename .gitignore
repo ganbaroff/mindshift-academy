@@ -58,3 +58,6 @@ scripts/e2e/*.png
 
 # Installed agent skills (dev tooling, regenerable)
 .claude/skills/
+
+# Local CI crystal harness DB
+ci-crystals*.db

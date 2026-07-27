@@ -35,6 +35,9 @@ export function validateSession(session: SessionContent): ContentIssue[] {
     if (!task.promptRu?.trim()) {
       issues.push({ sessionId: id, message: `task ${task.id}: empty prompt` });
     }
+    if (!task.hintRu?.trim()) {
+      issues.push({ sessionId: id, message: `task ${task.id}: empty hintRu (scaffold required)` });
+    }
     if (task.family === "grid-draw") {
       if (!task.target?.length) {
         issues.push({ sessionId: id, message: `task ${task.id}: grid-draw needs target` });

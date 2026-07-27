@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     // NODE_ENV gate above) skips this so the offline safety regression suite still runs.
     if (!(isDev && testBypass) && !(await hasValidConsent(clerkId))) {
       return NextResponse.json(
-        { code: "CONSENT_REQUIRED", message: "Parental consent required." },
+        { code: "CONSENT_REQUIRED", message: "Нужно согласие родителя." },
         { status: 403 }
       );
     }

@@ -71,6 +71,7 @@ async function ensureServer() {
   serverProc = spawn(process.execPath, [nextCli, "dev", "-p", port], {
     cwd: root,
     stdio: "ignore",
+    env: { ...process.env, E2E_LEGACY_LESSONS: "1" },
   });
 
   const deadline = Date.now() + 60000;

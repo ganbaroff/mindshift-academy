@@ -58,7 +58,12 @@ export async function POST(req: Request) {
 
     // Report whether the email actually went out so the UI can hint when the key is missing.
     // NEVER include the code in the response.
-    return NextResponse.json({ ok: true, emailSent: sent, parentEmail });
+    const body: Record<string, unknown> = { ok: true, emailSent: sent, parentEmail };
+    // Local dev only: Resend sandbox often does not deliver; show code in UI so QA is not blocked.
+    if (process.env.NODE_ENV === "development") {
+      body.devCode = code;
+    }
+    return NextResponse.json(body);
   } catch (error) {
     console.error(
       "[consent/request-code] error:",

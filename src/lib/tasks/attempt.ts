@@ -15,9 +15,17 @@ export type AttemptOutcome = {
   feedback: string;
   programStatus: "ok" | "unclear";
   reasonCode?: string;
+  /** Populated for grid-draw when program parsed successfully. */
+  filledCells?: Cell[];
+  missingCells?: Cell[];
+  extraCells?: Cell[];
 };
 
-export function resolveGridAttempt(program: GridProgram, target: Cell[]): AttemptOutcome {
+export function resolveGridAttempt(
+  program: GridProgram,
+  target: Cell[],
+  opts: { hideTargetPanel?: boolean } = {}
+): AttemptOutcome {
   if (program.status !== "ok") {
     return {
       family: "grid-draw",
@@ -29,11 +37,21 @@ export function resolveGridAttempt(program: GridProgram, target: Cell[]): Attemp
   }
   const result = executeGrid(program);
   const verdict = checkGrid(result, target);
+  const filledCells: Cell[] = [...result.filled].map((k) => {
+    const [r, c] = k.split(",").map(Number);
+    return [r, c];
+  });
   return {
     family: "grid-draw",
     pass: verdict.pass,
-    feedback: renderGridDiff(result, target, verdict),
+    feedback: renderGridDiff(result, target, verdict, {
+      hideTargetPanel: opts.hideTargetPanel,
+    }),
     programStatus: "ok",
+    filledCells,
+    // Collision: don't ship missing cell list (encodes the hidden goal).
+    missingCells: opts.hideTargetPanel ? undefined : verdict.missing,
+    extraCells: verdict.extra,
   };
 }
 
