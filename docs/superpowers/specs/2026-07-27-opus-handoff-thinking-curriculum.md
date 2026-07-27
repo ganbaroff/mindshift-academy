@@ -46,15 +46,13 @@ Command: `npm run test:dual-children` (needs GEMINI or Azure key for live interp
 
 ## Product problems still open (prioritize)
 
-### P1 — Hint pedagogy calibration
-- Current `hintRu` is scaffold (good). Target grid is still visible as cyan goal (intentional for grid-draw).
-- Risk: child points at grid mentally without naming — OK for precision week if speech is required.
-- **Ask Opus:** should collision hide target until first fail? Cost curve (5 flat vs rising)?
+### P1 — Hint pedagogy calibration — PARTIAL DONE
+- Collision hides target until first attempt (shipped in #8).
+- Remaining: cost curve (flat 5 vs rising) — defer until child-test data.
 
 ### P1 — Crystal economy depth
-- Earn/spend works but: no parent top-up, no soft-fail when broke (only 402 message), no session completion bonus.
-- Gacha still separate economy from thinking path.
-- **Ask Opus:** unify currencies or keep thinking-only crystals?
+- Earn/spend works; insufficient → 402 RU.
+- **Closed-test decision (Atlas, 2026-07-27):** keep **shared** `User.crystals` with gacha. Forge farm closed by server-trusted attempts. Split balances only if child-test shows soft-fail conflict.
 
 ### P2 — Content scale
 - Plan = 5 weeks × 3 sessions. Only Week 1 authored.
@@ -63,10 +61,14 @@ Command: `npm run test:dual-children` (needs GEMINI or Azure key for live interp
 
 ### P2 — Azure interpreter gate
 - Locked decision: Azure primary. Local measured Gemini only.
-- Blocker for “confirm before more Week 1 authoring” is partially superseded (Week 1 already authored) — still needed before prod confidence.
+- Still needed before prod confidence.
 
 ### P2 — Parent weekly report
 - Dinner question exists in content; Resend domain historically unverified → email blocked.
+
+## Shipped on main (#8, 2026-07-27)
+
+Server-trusted attempts · session unlock · crystal hint economy · Week 1 s1–s3 UI · forge trust CI · Turso curriculum DDL verified live.
 
 ## Suggested Opus output format
 
