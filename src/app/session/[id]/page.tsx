@@ -266,6 +266,8 @@ export default function ThinkingSessionPage() {
         if (!prefersReducedMotion) {
           confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#a78bfa", "#22d3ee"] });
         }
+      } else {
+        soundEngine.play("fail");
       }
     } catch {
       setFeedback("Связь потерялась. Подожди секунду и попробуй снова.");

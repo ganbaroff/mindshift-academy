@@ -73,7 +73,7 @@ export async function GET(req: Request) {
           to: parentEmail,
           subject: `${user.monster.name} ждёт — отчёт за неделю`,
           react: WeeklyReport({
-            parentName: "Hörmətli valideyn",
+            parentName: "Уважаемый родитель",
             childName: user.username.split("@")[0],
             monsterName: user.monster.name,
             monsterEmoji: user.monster.emoji,

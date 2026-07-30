@@ -101,24 +101,37 @@ export async function activateAccessCode(
 }
 
 /**
- * Child redemption: the code must be active (parent-activated) and unexpired. Single-use — an
- * atomic conditional update flips active -> redeemed so a double-tap/replay can't redeem twice.
- * Returns the clerkId to mint a sign-in ticket for.
+ * Child redemption: the code must be activated (parent-activated) and unexpired. The FIRST
+ * redemption is single-use via an atomic conditional update (active -> redeemed) so a
+ * double-tap/replay can't redeem twice. A redemption of an ALREADY-redeemed code is allowed
+ * and returns the same clerkId unchanged — deliberate re-entry to the same account (e.g. an
+ * expired Clerk session), not a security hole: the code is a single-ACCOUNT key, not
+ * single-use, until it expires (spec §2). Returns the clerkId to mint a sign-in ticket for.
  */
 export async function redeemAccessCode(
   rawCode: string
 ): Promise<{ ok: boolean; clerkId?: string; reason?: string }> {
   const code = normalizeCode(rawCode);
   if (code.length !== CODE_LEN) return { ok: false, reason: "malformed" };
+  // Scan BOTH active (not yet redeemed) and redeemed (already claimed) rows: a redeemed
+  // row whose clerkId matches is a RETURNING child re-entering the same account, not a
+  // replay attack. Deliberate (CEO decision): a child whose Clerk session expired must
+  // not be permanently locked out just because the code was already used once.
   const rows = await prisma.accessCode.findMany({
-    where: { status: "active" },
-    select: { id: true, codeHash: true, salt: true, clerkId: true, expiresAt: true },
+    where: { status: { in: ["active", "redeemed"] } },
+    select: { id: true, codeHash: true, salt: true, clerkId: true, expiresAt: true, status: true },
   });
   for (const r of rows) {
     if (!hashesEqual(hashAccessValue(code, r.salt), r.codeHash)) continue;
     if (r.expiresAt.getTime() < Date.now()) return { ok: false, reason: "expired" };
     if (!r.clerkId) return { ok: false, reason: "not_activated" };
-    // Atomic single-use: only the update that still sees status:"active" wins the race.
+    if (r.status === "redeemed") {
+      // Re-entry to the SAME account: no state change; the code remains the family's
+      // key until expiresAt.
+      return { ok: true, clerkId: r.clerkId };
+    }
+    // Atomic single-use flip (first redemption): only the update that still sees
+    // status:"active" wins the race.
     const res = await prisma.accessCode.updateMany({
       where: { id: r.id, status: "active" },
       data: { status: "redeemed", redeemedAt: new Date() },

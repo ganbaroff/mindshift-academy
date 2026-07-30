@@ -210,7 +210,7 @@ export const PromptInput = () => {
           id: Math.random().toString(),
           sender: "monster",
           avatar: "⚠️",
-          text: "Произошла ошибка при отправке запроса на сервер. Убедись, что Next.js работает!"
+          text: "Что-то пошло не так. Попробуй ещё раз!"
         }
       ]);
     } finally {

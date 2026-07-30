@@ -33,7 +33,8 @@ export const DAILY_QUESTS = [
 
 export function applyMoodDecay(currentMood: number, missedDays: number): number {
   const decayed = currentMood - STREAK_MATH.MOOD_DROP_PER_MISSED_DAY * missedDays;
-  return Math.max(0, decayed);
+  // Floor 55: absence must never turn the pet sad (<50 = sad face) — no neglect punishment (product rule).
+  return Math.max(55, decayed);
 }
 
 export function recoverMood(currentMood: number): number {
