@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rollGacha } from "@/lib/retention-engine";
+import { hasValidConsent } from "@/lib/consent";
 
 export async function POST() {
   try {
@@ -11,6 +12,11 @@ export async function POST() {
     if (!clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (!(await hasValidConsent(clerkId))) {
+      return NextResponse.json({ error: "Нужно согласие родителя" }, { status: 403 });
+    }
+
     const user = await prisma.user.findUnique({ where: { clerkId } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

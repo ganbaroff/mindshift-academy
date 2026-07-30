@@ -36,6 +36,17 @@ export async function restartChildData(clerkId: string): Promise<ChildDataMutati
 export async function deleteChildData(clerkId: string): Promise<ChildDataMutationResult> {
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.findUnique({ where: { clerkId } });
+
+    // Access codes carry PII (issuedForEmail) tied either to this account directly or to
+    // the parent email on record. Erasure must remove both, or a code survives account
+    // deletion and still resolves to the erased family's email on GET /access-code/activate.
+    const consentRow = await tx.parentalConsent.findUnique({ where: { clerkId } });
+    const accessCodes = await tx.accessCode.deleteMany({
+      where: consentRow?.parentEmail
+        ? { OR: [{ clerkId }, { issuedForEmail: consentRow.parentEmail }] }
+        : { clerkId },
+    });
+
     const [consent, verification] = await Promise.all([
       tx.parentalConsent.deleteMany({ where: { clerkId } }),
       tx.consentVerification.deleteMany({ where: { clerkId } }),
@@ -51,6 +62,12 @@ export async function deleteChildData(clerkId: string): Promise<ChildDataMutatio
       await tx.user.delete({ where: { id: user.id } });
     }
 
-    return { found: Boolean(user) || consent.count > 0 || verification.count > 0 };
+    return {
+      found:
+        Boolean(user) ||
+        consent.count > 0 ||
+        verification.count > 0 ||
+        accessCodes.count > 0,
+    };
   });
 }

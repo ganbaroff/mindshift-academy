@@ -203,6 +203,16 @@ export async function POST(req: Request) {
     const chat = provider.getChatClient();
     const safety = provider.getSafetyClient();
 
+    // FAIL-CLOSED: a missing chat client in prod means "Simulated Mode" below would silently
+    // serve an unmoderated, AI-less canned experience to children. Only the dev/test-bypass
+    // path may run without a configured provider; a real prod misconfiguration must 503.
+    if (!chat && !isDev) {
+      return NextResponse.json(
+        { error: "Сервис временно недоступен. Попробуй позже." },
+        { status: 503 }
+      );
+    }
+
     if (chat && !safety) {
       return NextResponse.json(
         { error: "Service temporarily unavailable" },

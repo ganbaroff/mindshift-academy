@@ -17,6 +17,16 @@ const schema = z.object({
 });
 
 export async function GET(req: Request) {
+  if (rateLimitMisconfiguredInProd()) {
+    return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+  }
+  const key = publicClientKey(req);
+  if (!key) return NextResponse.json({ error: "Rate limit unavailable" }, { status: 429 });
+  const rl = await rateLimit("access-activate-status", key, 20, 60);
+  if (!rl.success) {
+    return NextResponse.json({ error: "Слишком много попыток. Подождите немного." }, { status: 429 });
+  }
+
   const token = new URL(req.url).searchParams.get("t") ?? "";
   const found = await findActivationByToken(token);
   if (!found) return NextResponse.json({ error: "not_found" }, { status: 404 });

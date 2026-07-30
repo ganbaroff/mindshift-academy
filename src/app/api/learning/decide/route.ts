@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { hasValidConsent } from "@/lib/consent";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import {
   atlasDecide,
   AtlasAdapterError,
@@ -42,8 +44,20 @@ async function resolveUser(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await resolveUser(req);
-    if (!user) {
+    if (!user || !user.clerkId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const clerkId = user.clerkId;
+
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: "Сервис временно недоступен" }, { status: 503 });
+    }
+    const rl = await rateLimit("learning-decide", clerkId, 30, 60);
+    if (!rl.success) {
+      return NextResponse.json({ error: "Слишком много запросов. Подожди немного." }, { status: 429 });
+    }
+    if (!(await hasValidConsent(clerkId))) {
+      return NextResponse.json({ error: "Нужно согласие родителя" }, { status: 403 });
     }
 
     const parsed = decideBodySchema.safeParse(await req.json().catch(() => ({})));
@@ -55,7 +69,10 @@ export async function POST(req: Request) {
     }
 
     const body = parsed.data;
-    const learnerId = body.learnerId ?? user.id;
+    if (body.learnerId && body.learnerId !== user.id) {
+      return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+    }
+    const learnerId = user.id;
 
     const result = await atlasDecide({
       userId: user.id,
