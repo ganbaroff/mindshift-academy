@@ -1,0 +1,67 @@
+# Cursor Handoff — MindShift V1 Implementation (Compound Sprint)
+Date 2026-07-31. Authority: CEO delegation orders of 31.07.2026. Cursor implements; it does NOT decide product direction.
+
+## 1. Outcome
+A production-like, controlled-pilot-ready MindShift V1: Russian-language, ages 8-11, the full 15-session thinking programme, safe return/resume, capstone, truthful certificate, and test proof for all of it. Pilot = 10 invited families in Baku, free.
+
+## 2. Sources of truth (precedence order)
+1) Explicit CEO decisions (delegation orders 31.07.2026); 2) docs/canon/MINDSHIFT-PRODUCT-CANON-V1.md; 3) docs/superpowers/specs/2026-07-27-thinking-curriculum-design.md (mechanism); 4) domain docs, each authoritative in its area: docs/curriculum/MINDSHIFT-RU-CURRICULUM-V1.md (all 15 sessions), docs/architecture/MINDSHIFT-LEARNER-STATE-CONTRACT.md (state/identity/recovery), docs/product/MINDSHIFT-ENGAGEMENT-AND-CERTIFICATE.md (evolution/rewards/certificate), docs/release/MINDSHIFT-PILOT-READINESS.md (defect register, gates); 5) docs/FOUNDER-REQUIREMENTS-RECORD.md; 6) historical docs = evidence only. On any conflict, the higher source wins; if two same-level sources conflict, STOP and escalate.
+
+## 3. Verified reality snapshot (31.07.2026, receipts in the readiness doc + verification ledger)
+- Canon package committed locally (top commit 8dcb298); branch docs/closed-test-audit-grill is 10 commits AHEAD of origin/main (origin tip 7aaeffb); the two security-fix commits 2a54913 + d14ed08 are LOCAL ONLY.
+- Both prod hosts (academy.volaura.app and mindshift-academy-three.vercel.app) serve the SAME deployment (byte-identical HTML, same Clerk headers) of the 24.07 era — it does NOT contain the 31.07 security fixes. /session/w1-s1 returns 307 for anonymous (auth gate live).
+- Weeks 2-5 content absent (src/content/curriculum has only week-1). Executor families beyond grid-draw not implemented.
+- Gacha randomness still in code (api/gacha/claim + GachaCalendar) — canon orders deterministic replacement.
+- No /certificate route. Onboarding ROUTING already goes to /session/w1-s1 (verified router.push targets) — only residual legacy COPY needs alignment.
+- Landing "/" and /enter-code have NO signed-in awareness (no useUser/useAuth; not in proxy protected list) — returning child friction, confirmed gap.
+- Session UI has no true e2e (parent-journey only status-checks /session/w1-s1; never drives the page).
+- Consent email default locale is already "ru" (request-code route line ~54) — no work needed, keep a regression test.
+- Streak fields exist in schema but are NOT rendered child-facing (grep receipt) — keep frozen per canon.
+- Prod DB session-table presence = UNKNOWN (not queryable read-only) — W0 must verify before any deploy.
+
+## 4. Execution sequence (waves are strict; do not reorder)
+Map to readiness-doc waves: readiness W1 -> this W1; readiness W2 split across this W2+W3; readiness W3 -> this W0+W4; readiness W4 -> this W5.
+
+### W0 — Baseline, parity, migration proof (no deploy!)
+Tasks: generate and COMMIT a migrations baseline (prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script -> prisma/migrations/0000_baseline/migration.sql + README explaining the turso-db-push.mjs apply workflow and the additive-only pilot rule); rollback drill against a LOCAL libsql file copy (document transcript in docs/release/); write a parity report: exact behavioral deltas between prod (24.07 era) and local HEAD (list from commits 2a54913, d14ed08 + canon docs); prepare (not execute) the deploy checklist incl. prod-DB table verification step and consent-screen vendor-disclosure check (Azure OpenAI tutor/judge + NVIDIA Llama Guard + Google Gemini must be named to parents — verify live copy version 2026-07-24).
+Acceptance evidence: migrations dir committed; drill transcript file; parity report file; npm run lint + npm test green (baseline numbers recorded).
+
+### W1 — Content engine + 15 sessions
+Tasks: implement the four missing executor families per spec sec.6 (sequence-world, rule-runner, pattern-expand, claim-check) as pure deterministic executors + checkers returning readable diffs; interpreter literalness fixture suites per family (incl. misspelled child input); enforce the content validator (a session without misconception/transfer/deterministic check fails the build); author weeks 2-5 (12 session files) exactly per docs/curriculum/MINDSHIFT-RU-CURRICULUM-V1.md cards (Russian copy comes from that doc's cards and uniform policies).
+Acceptance: content validator passes 15/15 sessions; unit fixtures per family incl. edge cases; interpreter fixtures in CI; npm test green with the new suites counted.
+
+### W2 — Learner state, return, mastery, recovery
+Tasks: signed-in awareness on "/" and /enter-code (signed-in visitor gets a continue-path, never a dead code form); resume derivation proof (arc position re-derived from TaskAttempt; refresh mid-session drill); code re-entry drill (redeemed code -> same account, state-contract behavior); consent-revoked mid-session calm screen (readiness P1-29); onboarding residual copy alignment (text only, per curriculum narrative; routing already correct); mastery-tier selection verified wired (spec sec.8); Lane-4 metric additions as ADDITIVE migrations: DegradeEvent (count-only, no userId, cause enum, hour bucket), ReportDeliveryLog (clerkId ref, ok, errorClass), SessionCost (tokens/cost only, zero text); keep the consent-email ru-default under a regression test.
+Acceptance: e2e drills (refresh, device change/re-entry, revoke mid-session) green; additive-only migration proof; unit tests for derivations.
+
+### W3 — Engagement, capstone, certificate, parent closure
+Tasks: competency-tied evolution stages (derived purely from mastery milestones; graduation aura at capstone per engagement doc); milestone chest REPLACING gacha (remove randomness entirely, repurpose or remove GachaCalendar, grandfather existing Inventory, fixed visible rewards: tier1=10/tier2=15/tier3=20 crystals, named weekly cosmetic); /certificate route (protected; criteria exactly: 15/15 deterministic-gated sessions + all 5 concepts at threshold + capstone + own-words formulation SUBMITTED (quality never gates); alias entered by parent at issuance; unique non-derivable ID; print CSS); capstone session-15 flow incl. calm closure; parent completion letter + weekly report v2 (mastery per skill, struggled-most, dinner question from the week's misconception).
+Acceptance: deterministic test proving NO random reward path exists; pure-fn tests for evolution derivation; e2e capstone -> certificate print page; report snapshot test; banned-lexicon scan passes on all new child-facing copy.
+
+### W4 — Tests, accessibility, mobile, AI-failure, safety
+Tasks: true session-UI e2e driving all 15 sessions (chromium; entry + one session flow also firefox/webkit); accessibility per research checklist (18 items — see Appendix A): >=44px child targets, >=16px inputs (iOS zoom), captions with all voice, prefers-reduced-motion gating EVERY animation path incl. canvas confetti, 4.5:1 / 3:1 contrast incl. focus rings, aria-live counters present in initial DOM, modal focus traps + Escape, no drag-only tasks, nudge-pattern audit on consent/onboarding; design-token pass (P0-15/16: one bg token, 3 opacity levels; fold P0-10 contrast fix or delete legacy chat surface); Russian errors sweep (P0-17, errors.ts); AI-failure drills as automated tests: interpreter down -> choice-mode completes the session; judge down -> Itog deferred; tutor down -> canned encouragement; missing provider keys in prod mode -> 503 (never silent unmoderated); safety fail-closed drills (classifier error -> refuse); per-session token budget enforcement test (SessionCost populated).
+Acceptance: full matrix green in CI; a11y checklist with per-item receipts; drill outputs committed; zero U+FFFD/mojibake in child-facing strings (scan).
+
+### W5 — Controlled pilot release candidate
+Tasks: pilot ops per readiness wave 4 + Lane-1 legal artefacts (all in Russian, marked as drafts pending counsel): privacy notice; subprocessor list (Azure, NVIDIA, Google, Clerk, Vercel, Turso, Upstash, Resend); retention schedule documenting the no-child-text-retention flow; parent rights page (access/export/delete/revoke); incident protocol (freeze -> assess -> notify parent -> log; ministry-notification trigger marked counsel-gate); operator contact line on dashboard/consent; 10 family codes prepared per docs/PARENT-ACCESS-RUNBOOK.md (prepare, do not send); operator metrics SQL pack (activation, day-7 return, completion, mastery, fallback frequency, report delivery, cost per learner — derivations per Appendix B); kill-switch drill (AI env flag off -> deterministic degrade) executed and logged; RC tag created locally.
+Acceptance: all artefact files exist; drills logged; readiness no-go checklist walked item by item with receipts; final report written (sec. 7 template).
+
+## 5. Red gates — ANY of these = STOP, report, do not proceed
+1 missing migration/rollback proof; 2 consent/privacy breach of any kind; 3 raw child text retained in any log/table/metric; 4 broken re-entry (a child who returns cannot continue); 5 cross-child data access; 6 untested new session UI at RC time; 7 AI fallback dead end (a session that cannot finish without AI); 8 certificate issued without full evidence; 9 unresolved P0 from the readiness register; 10 production deploy or prod migration WITHOUT direct CEO approval. Team additions: 11 push to the public origin without CEO word; 12 any mojibake (U+FFFD) in child-facing strings; 13 banned-lexicon violation in child-facing copy.
+
+## 6. Cursor MUST NOT
+Expand scope; add paid providers or new external services; make public-launch or legal claims; add child-to-child chat or public portfolios; add random rewards of any kind; run destructive migrations; deploy anywhere; push to origin; rename the product; touch credentials/env/production config; edit consent legal copy beyond sourcing it from canon (legal wording changes are counsel-gated).
+
+## 7. Final report template (fill at the end of every wave and at RC)
+Status: VERIFIED (all acceptance evidence green, receipts attached) / PARTIAL (list exactly what passed and what remains) / BLOCKED (name the red gate). Then: the exact next safe command for Cursor, or the exact CEO escalation (decision needed, default recommendation, evidence, cost of delay, safe default).
+
+## Appendix A — Accessibility requirements for ages 8-11 (research-derived, sources in the research report of 31.07)
+List the 18 numbered requirements exactly as provided: (1) grid tiles/code boxes/hint buttons >=44px, primary tiles ~2cm; (2) >=24px spacing where hit area smaller; (3) inputs >=16px font on mobile; (4) body >=16px, short sentences, no text walls; (5) plain sans-serif, line-height >=1.5, no italics in instruction; (6) captions for every voiced instruction; (7) no pre-gesture sound, mute always instant; (8) prefers-reduced-motion gates every animation incl. canvas; (9) auto-motion >5s has pause/stop/hide; (10) contrast 4.5:1 text, 3:1 UI/focus; (11) no drag-only interactions; (12) retry/undo always, copy per no-shame canon; (13) counters in aria-live regions present initially; (14) modals: focus trap, aria-modal, focus restore, Escape; (15) focus-visible >=3:1 everywhere; (16) numeric inputmode on code entry; (17) consent/onboarding nudge audit (no asymmetric yes/no); (18) profiling/personalization off by default.
+
+## Appendix B — Privacy-safe metrics model (research-derived)
+Derive-from-existing: activation = AccessCode.redeemedAt -> first completed session; day-7 return = activity dates vs redeemedAt; completion = session records per week; mastery = ConceptMastery >= threshold. Small additions (additive migrations, W2): DegradeEvent (count-only, no userId), ReportDeliveryLog (clerkId, ok, errorClass), SessionCost (tokens/cost, no text). Manual: support log. Forbidden: third-party analytics, pixels, fingerprinting, session replay, behavioral profiling, raw child text anywhere, cross-child dashboards.
+
+## Appendix C — Legal/pilot artefacts (drafts, counsel-gated; Lane-1 research 31.07)
+The 9-item checklist with tags: privacy notice RU (to-build); consent record (exists); subprocessor list (to-build); retention schedule (to-build); parent rights page (to-build); incident protocol w/ ministry-trigger counsel-gate (to-build); AZ registration exemption <1000 subjects (counsel-gate); operator contact (to-build); monitor 2026 AZ minors amendments (counsel-gate). Trademark: pilot under working name = LOW risk; public/US = higher, counsel clearance pre-public (never a Cursor concern).
+
+END of document.
