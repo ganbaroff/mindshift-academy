@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { InteractiveShowcase } from "@/components/showcase/InteractiveShowcase";
+import { SignedInContinue } from "@/components/access/SignedInContinue";
 
 const benefitsRu = [
   {
@@ -111,6 +112,8 @@ export default function HomePage() {
           {t.signIn}
         </Link>
       </header>
+
+      <SignedInContinue />
 
       <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-12 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12 lg:px-8 lg:pb-16 lg:pt-10">
         <div className="flex flex-col justify-center space-y-7">

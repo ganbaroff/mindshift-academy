@@ -164,8 +164,29 @@ export async function hasHintUnlocked(
   return Boolean(row);
 }
 
-/** Task ids already passed (crystal award recorded) for a session. */
+/** Task ids already passed for a session — prefer TaskAttempt (contract), fall back to RewardEvent. */
 export async function listPassedTaskIds(userId: string, sessionId: string): Promise<string[]> {
+  const { getSession } = await import("@/content/curriculum");
+  const { deriveResumeFromAttempts } = await import("./resume");
+  const session = getSession(sessionId);
+
+  const attemptRows = await prisma.taskAttempt.findMany({
+    where: { userId, sessionId, pass: true },
+    select: { taskId: true, tier: true, pass: true },
+  });
+  const withTaskId = attemptRows.filter(
+    (r): r is { taskId: string; tier: number; pass: boolean } => Boolean(r.taskId)
+  );
+
+  if (session && withTaskId.length > 0) {
+    return deriveResumeFromAttempts(
+      session.tasks,
+      withTaskId.map((r) => ({ taskId: r.taskId, pass: r.pass, tier: r.tier })),
+      session.minTier
+    ).passedTaskIds;
+  }
+
+  // Legacy fallback: crystal award ledger (pre-W2 rows without sessionId/taskId).
   const prefix = `taskpass:${sessionId}:`;
   const rows = await prisma.rewardEvent.findMany({
     where: { userId, eventId: { startsWith: prefix } },

@@ -90,6 +90,14 @@ export { RULE_FIXTURES } from "./fixtures/rule-runner";
 export { PATTERN_FIXTURES } from "./fixtures/pattern-expand";
 export { CLAIM_FIXTURES } from "./fixtures/claim-check";
 export { masteryAfterTask, tierForMastery } from "./mastery";
+export { selectOfferedTier, effectiveTaskTier } from "./tier-select";
+export {
+  deriveResumeFromAttempts,
+  curriculumAttemptEventId,
+  parseCurriculumAttemptEventId,
+  type AttemptEvidence,
+  type ResumeDerivation,
+} from "./resume";
 export { spacingAfterOutcome, pickReviewConcept, isDue } from "./spacing";
 export { sessionComplete, type SessionDef, type SessionTaskResult } from "./session";
 export { fakeInterpretUtterance } from "./fake-interpreter";

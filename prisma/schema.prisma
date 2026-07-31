@@ -24,6 +24,8 @@ model User {
   conceptMasteries   ConceptMastery[]
   atlasLearningSessions AtlasLearningSession[]
   taskAttempts       TaskAttempt[]
+  reportDeliveryLogs ReportDeliveryLog[]
+  sessionCosts       SessionCost[]
 }
 
 model Monster {
@@ -149,9 +151,56 @@ model TaskAttempt {
   pass      Boolean
   /// Client idempotency key — replay awards nothing twice.
   eventId   String?  @unique
+  /// Additive W2: curriculum session id for resume derivation (nullable for legacy rows).
+  sessionId String?
+  /// Additive W2: curriculum task id for resume derivation (nullable for legacy rows).
+  taskId    String?
   createdAt DateTime @default(now())
 
   @@index([userId, concept])
+  @@index([userId, sessionId])
+}
+
+/// Pseudonymous session-scoped AI-degrade event (Section 3A.2).
+/// Forbidden: child text, prompts, AI responses, Clerk ID, IP, fingerprints, precise timestamps.
+model DegradeEvent {
+  id                  String   @id @default(cuid())
+  eventId             String   @unique
+  opaqueSessionId     String
+  lessonId            String
+  providerStage       String
+  causeEnum           String
+  occurredDayBucket   String
+  resolvedByFallback  Boolean
+  retentionUntil      DateTime
+}
+
+/// Parent report delivery outcome — no child text.
+model ReportDeliveryLog {
+  id         String   @id @default(cuid())
+  clerkId    String
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?
+  ok         Boolean
+  errorClass String?
+  createdAt  DateTime @default(now())
+
+  @@index([clerkId])
+}
+
+/// Per-session token/cost meter — zero free text.
+model SessionCost {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId    String
+  promptTokens Int      @default(0)
+  completionTokens Int  @default(0)
+  costMicros   Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, sessionId])
+  @@index([userId])
 }
 
 // Atlas NBA session audit — decision metadata stored in VOLAURA, not Atlas.

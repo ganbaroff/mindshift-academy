@@ -24,6 +24,7 @@ import {
 import { persistTaskAttempt } from "@/lib/tasks/persist";
 import { awardTaskPassCrystals, ensureStarterCrystals } from "@/lib/tasks/crystals";
 import { resolveCurriculumTask } from "@/lib/tasks/resolve-task";
+import { selectOfferedTier, effectiveTaskTier } from "@/lib/tasks/tier-select";
 import type { Cell, GridProgram, SequenceProgram } from "@/lib/tasks/types";
 import type { RuleProgram } from "@/lib/tasks/rule-runner";
 import type { PatternProgram } from "@/lib/tasks/pattern-expand";
@@ -81,7 +82,6 @@ export async function POST(req: Request) {
     const { session, task } = resolved;
     const family = task.family;
     const concept = session.concept;
-    const tier = task.tier;
     const target = task.target as Cell[] | undefined;
 
     if (family === "grid-draw" && (!target || target.length === 0)) {
@@ -165,6 +165,13 @@ export async function POST(req: Request) {
       },
     });
 
+    const masteryRow = await prisma.conceptMastery.findUnique({
+      where: { userId_concept: { userId: dbUser.id, concept } },
+      select: { mastery: true },
+    });
+    const offeredTier = selectOfferedTier(masteryRow?.mastery ?? 0);
+    const tier = effectiveTaskTier(task.tier, offeredTier, task.role);
+
     const persisted = await persistTaskAttempt({
       userId: dbUser.id,
       concept,
@@ -172,6 +179,8 @@ export async function POST(req: Request) {
       tier,
       pass: outcome.pass,
       eventId,
+      sessionId,
+      taskId,
     });
 
     await ensureStarterCrystals(dbUser.id);

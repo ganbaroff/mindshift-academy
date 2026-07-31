@@ -14,6 +14,7 @@ import {
   isCurriculumSessionComplete,
 } from "@/lib/tasks/crystals";
 import { nextSessionId, prerequisiteSessionId } from "@/lib/tasks/resolve-task";
+import { selectOfferedTier } from "@/lib/tasks/tier-select";
 
 export async function GET(
   req: Request,
@@ -78,6 +79,12 @@ export async function GET(
     const crystals = await ensureStarterCrystals(dbUser.id);
     const passedTaskIds = await listPassedTaskIds(dbUser.id, id);
     const complete = await isCurriculumSessionComplete(dbUser.id, id);
+    const masteryRow = await prisma.conceptMastery.findUnique({
+      where: { userId_concept: { userId: dbUser.id, concept: session.concept } },
+      select: { mastery: true },
+    });
+    const mastery = masteryRow?.mastery ?? 0;
+    const offeredTier = selectOfferedTier(mastery);
 
     // Never ship hintRu until /api/hints/reveal spends crystals.
     // Collision targets stay in payload for post-fail reveal; UI hides until fail.
@@ -87,6 +94,8 @@ export async function GET(
       crystals,
       sessionComplete: complete,
       nextSessionId: nextSessionId(id),
+      mastery,
+      offeredTier,
     });
   } catch (err) {
     console.error("tasks/session error:", err);

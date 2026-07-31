@@ -13,6 +13,8 @@ export type PersistAttemptInput = {
   tier: 1 | 2 | 3;
   pass: boolean;
   eventId?: string;
+  sessionId?: string;
+  taskId?: string;
 };
 
 export type PersistAttemptResult = {
@@ -35,6 +37,8 @@ export async function persistTaskAttempt(
           tier: input.tier,
           pass: input.pass,
           eventId: input.eventId,
+          sessionId: input.sessionId,
+          taskId: input.taskId,
         },
       });
     } catch (e) {
@@ -59,6 +63,8 @@ export async function persistTaskAttempt(
         family: input.family,
         tier: input.tier,
         pass: input.pass,
+        sessionId: input.sessionId,
+        taskId: input.taskId,
       },
     });
   }

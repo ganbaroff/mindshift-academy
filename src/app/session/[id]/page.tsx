@@ -60,6 +60,7 @@ export default function ThinkingSessionPage() {
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
+  const [consentEnded, setConsentEnded] = useState(false);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -98,7 +99,7 @@ export default function ThinkingSessionPage() {
             prerequisiteSessionId?: string;
           };
           if (sessionRes.status === 403 && body.code === "CONSENT_REQUIRED") {
-            router.replace("/consent");
+            if (!cancelled) setConsentEnded(true);
             return;
           }
           if (sessionRes.status === 403 && body.code === "SESSION_LOCKED") {
@@ -188,7 +189,7 @@ export default function ThinkingSessionPage() {
         cost?: number;
       };
       if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
-        router.replace("/consent");
+        setConsentEnded(true);
         return;
       }
       if (!res.ok) {
@@ -233,7 +234,7 @@ export default function ThinkingSessionPage() {
       const data = (await res.json()) as AttemptResponse & { code?: string };
 
       if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
-        router.replace("/consent");
+        setConsentEnded(true);
         return;
       }
 
@@ -276,6 +277,34 @@ export default function ThinkingSessionPage() {
       setIsSending(false);
     }
   };
+
+  if (consentEnded) {
+    return (
+      <div
+        className="min-h-screen bg-[#090d16] text-white flex flex-col"
+        data-testid="consent-ended-calm"
+      >
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center space-y-5 max-w-md">
+            <MonsterAvatar mood="thinking" color="#a78bfa" size={96} />
+            <h1 className="text-2xl font-semibold">Сессия завершена</h1>
+            <p className="text-sm text-white/70 leading-relaxed">
+              Родитель закрыл доступ к обучению. Это спокойная пауза — прогресс
+              сохранён. Когда согласие снова будет подтверждено, можно продолжить
+              с того же места.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white"
+            >
+              На главный экран
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   if (loadError) {
     return (

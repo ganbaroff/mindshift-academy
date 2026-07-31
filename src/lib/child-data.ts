@@ -16,6 +16,8 @@ export async function restartChildData(clerkId: string): Promise<ChildDataMutati
     await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
     await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
     await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
+    await tx.sessionCost.deleteMany({ where: { userId: user.id } });
+    await tx.reportDeliveryLog.deleteMany({ where: { userId: user.id } });
     await tx.inventory.deleteMany({ where: { userId: user.id } });
     await tx.monster.deleteMany({ where: { userId: user.id } });
     await tx.lessonProgress.deleteMany({ where: { userId: user.id } });
@@ -59,7 +61,11 @@ export async function deleteChildData(clerkId: string): Promise<ChildDataMutatio
       await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
       await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
       await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
+      await tx.sessionCost.deleteMany({ where: { userId: user.id } });
+      await tx.reportDeliveryLog.deleteMany({ where: { OR: [{ userId: user.id }, { clerkId }] } });
       await tx.user.delete({ where: { id: user.id } });
+    } else {
+      await tx.reportDeliveryLog.deleteMany({ where: { clerkId } });
     }
 
     return {
