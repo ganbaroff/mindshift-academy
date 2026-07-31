@@ -7,6 +7,7 @@ import {
   atlasOutcome,
   AtlasAdapterError,
 } from "@/lib/atlas-learning/adapter.server";
+import { Errors } from "@/lib/errors";
 
 const outcomeBodySchema = z.object({
   idempotencyKey: z.string().min(1),
@@ -43,32 +44,32 @@ export async function POST(req: Request) {
   try {
     const user = await resolveUser(req);
     if (!user || !user.clerkId) {
-      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
+      return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
     }
     const clerkId = user.clerkId;
 
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Сервис временно недоступен" }, { status: 503 });
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
     }
     const rl = await rateLimit("learning-outcome", clerkId, 30, 60);
     if (!rl.success) {
-      return NextResponse.json({ error: "Слишком много запросов. Подожди немного." }, { status: 429 });
+      return NextResponse.json({ error: Errors.rateLimited }, { status: 429 });
     }
     if (!(await hasValidConsent(clerkId))) {
-      return NextResponse.json({ error: "Нужно согласие родителя" }, { status: 403 });
+      return NextResponse.json({ error: Errors.consentRequired }, { status: 403 });
     }
 
     const parsed = outcomeBodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "???????? ??????.", details: parsed.error.flatten() },
+        { error: Errors.badRequest, details: parsed.error.flatten() },
         { status: 400 },
       );
     }
 
     const body = parsed.data;
     if (body.learnerId && body.learnerId !== user.id) {
-      return NextResponse.json({ error: "Доступ запрещён" }, { status: 403 });
+      return NextResponse.json({ error: Errors.forbidden }, { status: 403 });
     }
     const learnerId = user.id;
 
@@ -93,6 +94,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: err.message, code: err.code }, { status });
     }
     console.error("[learning/outcome]", err);
-    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

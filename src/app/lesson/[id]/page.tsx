@@ -221,10 +221,10 @@ export default function LessonPage() {
   if (!lessonData) return null;
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-sans relative">
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col font-sans relative">
       <AnimatePresence>
         {showSplash && (
-          <div className="fixed inset-0 z-[110] bg-[#070b14]/97 flex flex-col items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-[110] bg-[var(--color-bg-base)]/97 flex flex-col items-center justify-center pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}

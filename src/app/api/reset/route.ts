@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { restartChildData } from "@/lib/child-data";
+import { Errors } from "@/lib/errors";
 
 // "Start over" for the CURRENT signed-in child: resets THEIR OWN progress to a fresh state
 // (0/0/0, lesson 1) and clears Academy gameplay state. Requires auth and only ever touches
@@ -14,7 +15,7 @@ import { restartChildData } from "@/lib/child-data";
 export async function POST() {
   const { userId: clerkId } = await auth();
   if (!clerkId) {
-    return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
+    return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
   }
 
   try {
@@ -23,6 +24,6 @@ export async function POST() {
     return NextResponse.json({ ok: true, xp: 0, crystals: 0, streak: 0, activeStep: 1 });
   } catch (error) {
     console.error("[reset] failed:", (error as { name?: string })?.name ?? "Error");
-    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

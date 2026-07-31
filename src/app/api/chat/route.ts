@@ -15,6 +15,7 @@ import { isLessonRelevantTutorReply } from "@/lib/lesson-output";
 // Reward logic (getOrCreateLesson + updateUserRewards, incl. the anti-double-award guards)
 // lives in @/lib/rewards. The reward GATE stays here at the call site (serverStepId === activeStepId).
 import { updateUserRewards } from "@/lib/rewards";
+import { Errors } from "@/lib/errors";
 
 // SOUL: map a lesson step (1..5) to its persona prompt. The CALL SITE keys this off the
 // VIEWED lesson (viewedStepId = the URL lessonId), NOT the server progress step — so a child
@@ -141,11 +142,11 @@ export async function POST(req: Request) {
     // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +
     //    judge + tutor + output x2), so it MUST fail-closed in prod without a distributed limiter.
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
     }
     const rl = await rateLimit("chat", clerkId, 20, 10);
     if (!rl.success) {
-      return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
+      return NextResponse.json({ error: Errors.rateLimited }, { status: 429 });
     }
 
     // 2. Zod Validation
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
     const parseResult = chatRequestSchema.safeParse(rawBody);
 
     if (!parseResult.success) {
-      return NextResponse.json({ error: "???????? ??????.", details: parseResult.error.format() }, { status: 400 });
+      return NextResponse.json({ error: Errors.badRequest, details: parseResult.error.format() }, { status: 400 });
     }
 
     const { messages, activeStepId, activeSkin, activeMonsterName, eventId } = parseResult.data;
@@ -215,7 +216,7 @@ export async function POST(req: Request) {
 
     if (chat && !safety) {
       return NextResponse.json(
-        { error: "?????? ???????? ??????????." },
+        { error: Errors.unavailable },
         { status: 503 }
       );
     }

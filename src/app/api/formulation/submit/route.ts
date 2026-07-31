@@ -26,7 +26,7 @@ export async function POST(req: Request) {
     const isDev = process.env.NODE_ENV === "development";
     const testBypass = req.headers.get("x-test-bypass") === "true";
     if (testBypass && !isDev) {
-      return NextResponse.json({ error: "???????? ????? ??????????." }, { status: 403 });
+      return NextResponse.json({ error: Errors.bypassUnavailable }, { status: 403 });
     }
     if (isDev && testBypass) {
       clerkId = "test_user_id";

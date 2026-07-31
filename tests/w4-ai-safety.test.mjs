@@ -145,6 +145,15 @@ console.log("\n=== W4 mojibake scan ===");
   const { findMojibake } = load("src/lib/mojibake.ts");
   check("detects U+FFFD", findMojibake("bad\uFFFD").includes("U+FFFD"));
   check("clean RU ok", findMojibake("Монстр слышит только то, что сказано").length === 0);
+  check(
+    "detects ascii ??? in string literal",
+    findMojibake('return { error: "???-?? ????? ?? ???." }').includes("ascii-question-corruption")
+  );
+  check(
+    "regex source with ?{3} not a false positive alone",
+    findMojibake("const re = /\\\\?{3,}/; const ok = 'чисто';").length === 0 ||
+      !findMojibake("const ok = 'чисто';").includes("ascii-question-corruption")
+  );
 
   const { readdirSync, statSync, existsSync } = require("node:fs");
   const surfaces = [
@@ -153,8 +162,11 @@ console.log("\n=== W4 mojibake scan ===");
     "src/app/onboarding",
     "src/app/enter-code",
     "src/app/certificate",
+    "src/app/api",
+    "src/lib/errors.ts",
     "src/lib/tasks/unclear-copy.ts",
     "src/components/capstone",
+    "src/components/chat",
   ];
   function walk(dir, acc = []) {
     if (!existsSync(dir)) return acc;
@@ -182,7 +194,7 @@ console.log("\n=== W4 mojibake scan ===");
       }
     }
   }
-  check("zero U+FFFD/mojibake on child-facing surfaces", dirty === 0);
+  check("zero U+FFFD/mojibake/??? on child-facing surfaces", dirty === 0);
 }
 
 console.log("\n=== W4 design tokens P0-15/16 + P0-10 ===");
@@ -190,10 +202,52 @@ console.log("\n=== W4 design tokens P0-15/16 + P0-10 ===");
   const css = readFileSync(join(root, "src/app/globals.css"), "utf8");
   check("bg-base token", css.includes("--color-bg-base"));
   check("3 text opacity tokens", css.includes("--text-primary") && css.includes("--text-secondary") && css.includes("--text-muted"));
+
   const prompt = readFileSync(join(root, "src/components/chat/PromptInput.tsx"), "utf8");
-  check("P0-10 folded: no cyan gradient send", !prompt.includes("from-violet-500 to-cyan-500"));
+  const sendBtn = prompt.match(/onClick=\{handleSend\}[\s\S]*?className="([^"]+)"/);
+  check("P0-10 send button found", Boolean(sendBtn));
+  const sendClass = sendBtn?.[1] ?? "";
+  check("P0-10 send: no bg-gradient", !/bg-gradient/.test(sendClass));
+  check("P0-10 send: no from-* gradient stop", !/\bfrom-/.test(sendClass));
+  check("P0-10 send: no to-* gradient stop", !/\bto-/.test(sendClass));
+  check("P0-10 send uses solid primary token", sendClass.includes("bg-[var(--color-primary)]"));
+  check("P0-10 no amber gradient CTA in PromptInput", !prompt.includes("from-amber-500") && !prompt.includes("bg-gradient-to-r"));
+
   const session = readFileSync(join(root, "src/app/session/[id]/page.tsx"), "utf8");
-  check("session send solid primary", session.includes("bg-[var(--color-primary)]"));
+  check("session uses bg-base token", session.includes("bg-[var(--color-bg-base)]"));
+  check("session no hardcoded #090d16", !session.includes("#090d16"));
+
+  // Hardcoded near-black hex only allowed at token definition (+ email clients + themeColor metadata).
+  const { readdirSync, statSync, existsSync } = require("node:fs");
+  function walk(dir, acc = []) {
+    if (!existsSync(dir)) return acc;
+    const st = statSync(dir);
+    if (st.isFile()) {
+      acc.push(dir);
+      return acc;
+    }
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p, acc);
+      else acc.push(p);
+    }
+    return acc;
+  }
+  const allowHardcodedBlack = (file) =>
+    file.replace(/\\/g, "/").includes("src/app/globals.css") ||
+    file.replace(/\\/g, "/").includes("/emails/") ||
+    file.replace(/\\/g, "/").endsWith("src/app/layout.tsx");
+  let blackHits = 0;
+  for (const file of [...walk(join(root, "src/app")), ...walk(join(root, "src/components"))]) {
+    if (!/\.(ts|tsx|css)$/.test(file)) continue;
+    if (allowHardcodedBlack(file)) continue;
+    const text = readFileSync(file, "utf8");
+    if (/#090d16|#070b14/i.test(text)) {
+      blackHits++;
+      console.error(`  hardcoded black in ${file}`);
+    }
+  }
+  check("P0-15/16 zero hardcoded #090d16/#070b14 outside token/email/themeColor", blackHits === 0);
 }
 
 console.log(`\nW4 drills: ${passed} passed, ${failed} failed`);

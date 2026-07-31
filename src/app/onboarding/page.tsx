@@ -299,7 +299,7 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col items-center justify-center text-white font-sans">
         <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin motion-reduce:animate-none" />
         <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора…</p>
       </div>

@@ -305,7 +305,7 @@ export default function ThinkingSessionPage() {
   if (consentEnded) {
     return (
       <div
-        className="min-h-screen bg-[#090d16] text-white flex flex-col"
+        className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col"
         data-testid="consent-ended-calm"
       >
         <Header />
@@ -332,7 +332,7 @@ export default function ThinkingSessionPage() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
@@ -358,7 +358,7 @@ export default function ThinkingSessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
@@ -372,7 +372,7 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone && formulationEcho) {
       return (
-        <div className="min-h-screen bg-[#090d16] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
           <Header />
           <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
         </div>
@@ -381,7 +381,7 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone) {
       return (
-        <div className="min-h-screen bg-[#090d16] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
           <Header />
           <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
             <MonsterAvatar mood="celebrating" size={120} />
@@ -446,7 +446,7 @@ export default function ThinkingSessionPage() {
     }
 
     return (
-      <div className="min-h-screen bg-[#090d16] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-8 text-center">
           <MonsterAvatar mood="happy" size={120} />
@@ -480,7 +480,7 @@ export default function ThinkingSessionPage() {
 
   if (pastLastWithoutComplete) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-6 text-center">
           <MonsterAvatar mood="thinking" size={100} />

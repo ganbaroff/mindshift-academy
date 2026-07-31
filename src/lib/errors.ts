@@ -12,6 +12,7 @@ export const Errors = {
   consentRequired: "Нужно согласие родителя.",
   badRequest: "Неверный запрос.",
   notFound: "Не найдено.",
+  noConsentToRevoke: "Нет согласия для отзыва.",
   rateLimited: "Слишком много запросов, подожди немного.",
   unavailable: "Сервис временно недоступен.",
   bypassUnavailable: "Тестовый обход недоступен.",

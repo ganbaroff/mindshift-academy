@@ -5,6 +5,7 @@ import WeeklyReportV2 from "@/emails/weekly-report-v2";
 import { selectWeeklyReportRecipients } from "@/lib/weekly-report-recipients";
 import { isCurrentValidConsent } from "@/lib/consent-policy";
 import { buildWeeklyReportV2 } from "@/lib/parent-reports";
+import { Errors } from "@/lib/errors";
 
 // Vercel Cron: runs every Friday at 18:00 UTC (22:00 Baku)
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/weekly-report", "schedule": "0 18 * * 5" }] }
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
 
   // P1-D: fail CLOSED. When CRON_SECRET is unset OR the header doesn't match, reject.
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
+    return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
   }
 
   const resendKey = process.env.RESEND_API_KEY;
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: "Weekly-report email configuration is incomplete",
+        error: Errors.unavailable,
         hint: "Set RESEND_API_KEY and RESEND_FROM to enable email sending",
       },
       { status: 503 }
@@ -107,6 +108,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("[weekly-report] CRON failed:", error);
-    return NextResponse.json({ error: "Weekly report CRON failed" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

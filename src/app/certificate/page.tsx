@@ -74,7 +74,7 @@ export default function CertificatePage() {
   const label = cert?.recipientLabel ?? DEFAULT_CERTIFICATE_LABEL;
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-white print:bg-white print:text-black">
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-white print:bg-white print:text-black">
       <div className="print:hidden">
         <Header />
       </div>
