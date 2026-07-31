@@ -61,3 +61,7 @@ scripts/e2e/*.png
 
 # Local CI crystal harness DB
 ci-crystals*.db
+
+# W0 drill ephemeral outputs
+docs/release/_w0_drill_workspace/*.out.txt
+
