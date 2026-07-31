@@ -14,6 +14,7 @@ import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 import { moderate } from "@/lib/moderation";
 import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
 import { Errors } from "@/lib/errors";
+import { minimizeChildText } from "@/lib/privacy";
 import {
   getFakeAiMode,
   ITOG_DEFERRED_MESSAGE,
