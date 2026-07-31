@@ -1,0 +1,18 @@
+=== W0 ROLLBACK DRILL START ===
+work.db: C:\Projects\mindshift-academy\docs\release\_w0_drill_workspace\work.db
+pre.db:  C:\Projects\mindshift-academy\docs\release\_w0_drill_workspace\pre.db
+baseline path (NOT used as rollback): C:\Projects\mindshift-academy\prisma\migrations\0000_baseline\migration.sql
+A1 empty tables: []
+A2 after baseline on EMPTY: 12 tables: ["AccessCode","AtlasLearningSession","ConceptMastery","ConsentVerification","Inventory","Lesson","LessonProgress","Monster","ParentalConsent","RewardEvent","TaskAttempt","User"]
+A3 seeded User count=1; AccessCode count=1
+A4 snapshot pre.db written (bytes=172032)
+B1 non-empty proof: tables=12, users=1
+B2 EXPLICIT NON-APPLICATION: refusing to re-run 0000_baseline against non-empty work.db (Section 3A.1).
+B3 after intentional damage: User count=1, ids=
+    user-drill-DAMAGED | Damaged | xp=999
+C1 restored work.db FROM pre.db file copy (this IS the rollback)
+C2 after restore: User count=1
+    user-drill-1 | DrillChild | xp=10
+C3 PASS: restore matched pre-damage snapshot
+C4 PASS: rollback mechanism = file copy restore, NOT CREATE-from-empty baseline re-run
+=== W0 ROLLBACK DRILL PASS ===
