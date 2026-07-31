@@ -26,6 +26,10 @@ Root cause: wrong-encoding write in `93862b4`. Repair routes all calm RU through
 - Also replaced leftover `bg-[#070b14]` in lesson + onboarding
 - Test: **zero** `#090d16` / `#070b14` under `src/app` + `src/components` outside token def / emails / `layout.tsx` themeColor
 
+## Commit
+- `d53e9941a9af3f6878a1c67d858cf4ec1951387d` — `fix(w4): Restore Cyrillic API errors and close ??? scanner gap`
+- Prior falsifying wave: `93862b4` (encoding destruction)
+
 ## Gates
 - `npm run lint` → exit 0
 - `npm test` → exit 0 (deterministic 72 + tasks 27 + fixtures + mastery 34 + W2 38 + W3 52 + W4 drills 42 + a11y 18 + session matrix 96)
