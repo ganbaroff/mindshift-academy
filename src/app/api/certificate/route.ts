@@ -101,7 +101,10 @@ export async function GET(req: Request) {
     });
   } catch (err) {
     console.error("certificate GET error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Что-то пошло не так. Попробуй ещё раз!" },
+      { status: 500 }
+    );
   }
 }
 
@@ -214,6 +217,9 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("certificate POST error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Что-то пошло не так. Попробуй ещё раз!" },
+      { status: 500 }
+    );
   }
 }
