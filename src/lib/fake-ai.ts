@@ -11,10 +11,20 @@ export type FakeAiMode =
   | "tutor_down"
   | "moderation_error";
 
+/**
+ * Pilot kill-switch: AI_KILL_SWITCH=1 forces deterministic degrade (interpreter_down /
+ * choice-mode). Used for incident freeze and W5 drill — not a live-provider path.
+ */
+export function isAiKillSwitchOn(env: NodeJS.ProcessEnv = process.env): boolean {
+  const v = (env.AI_KILL_SWITCH ?? "").trim().toLowerCase();
+  return v === "1" || v === "true" || v === "on";
+}
+
 /** Active fake mode — never enables itself in production unless explicitly forced for drills. */
 export function getFakeAiMode(
   env: NodeJS.ProcessEnv = process.env
 ): FakeAiMode {
+  if (isAiKillSwitchOn(env)) return "interpreter_down";
   const raw = (env.FAKE_AI_MODE ?? "").trim().toLowerCase();
   if (
     raw === "ok" ||

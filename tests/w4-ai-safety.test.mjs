@@ -27,11 +27,13 @@ function check(name, cond) {
 
 console.log("\n=== W4 fake-AI modes ===");
 {
-  const { getFakeAiMode, shouldUseFakeInterpreter, CANNED_TUTOR_ENCOURAGEMENT, ITOG_DEFERRED_MESSAGE } =
+  const { getFakeAiMode, shouldUseFakeInterpreter, isAiKillSwitchOn, CANNED_TUTOR_ENCOURAGEMENT, ITOG_DEFERRED_MESSAGE } =
     load("src/lib/fake-ai.ts");
   check("default off", getFakeAiMode({}) === "off");
   check("FAKE_AI=1 → ok", getFakeAiMode({ FAKE_AI: "1" }) === "ok");
   check("interpreter_down mode", getFakeAiMode({ FAKE_AI_MODE: "interpreter_down" }) === "interpreter_down");
+  check("AI_KILL_SWITCH=1 → interpreter_down", getFakeAiMode({ AI_KILL_SWITCH: "1" }) === "interpreter_down");
+  check("isAiKillSwitchOn", isAiKillSwitchOn({ AI_KILL_SWITCH: "1" }) === true);
   check("useFake for ok", shouldUseFakeInterpreter("ok") === true);
   check("canned tutor copy non-empty", CANNED_TUTOR_ENCOURAGEMENT.length > 10);
   check("itog deferred copy non-empty", ITOG_DEFERRED_MESSAGE.length > 10);

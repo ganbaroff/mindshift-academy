@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Mail, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
+import { OperatorContactLine } from "@/components/support/OperatorContactLine";
 
 // Parental consent screen (docs/COPPA-CONSENT-SPEC.md §3 flow, RU-only release copy).
 // Flow: enter parent email (defaults to Clerk email) -> request 6-digit code -> enter code +
@@ -189,6 +190,10 @@ export default function ConsentPage() {
           <p>{t.never}</p>
           <p>{t.rights}</p>
           <p>{t.additionalDisclosures}</p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+          <OperatorContactLine />
         </div>
 
         {/* Error region — purple per design system, never red. */}
