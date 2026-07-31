@@ -91,19 +91,21 @@ export const claimProgramSchema = z.discriminatedUnion("status", [
  * Client `target` / `family` / `concept` / `tier` are ignored if present (compat).
  */
 export const attemptRequestSchema = z.object({
-  utterance: z.string().trim().min(1).max(500),
+  utterance: z.string().trim().max(500).optional().default(""),
+  /** Choice-mode fallback id when interpreter is down (deterministic tiles). */
+  choiceId: z.string().trim().min(1).max(64).optional(),
   sessionId: z.string().min(1).max(64),
   taskId: z.string().min(1).max(64),
   /** Idempotency for TaskAttempt — never stores utterance. */
   eventId: z.string().min(8).max(100),
-  // Legacy fields — stripped; kept optional so old clients don't 400 on unknown... 
-  // actually zod strips unknown by default. Explicit ignore:
   family: z
     .enum(["grid-draw", "sequence-world", "rule-runner", "pattern-expand", "claim-check"])
     .optional(),
   target: z.array(cellSchema).optional(),
   concept: z.string().min(1).max(64).optional(),
   tier: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
+}).refine((v) => Boolean(v.choiceId) || (v.utterance && v.utterance.length > 0), {
+  message: "utterance_or_choice_required",
 });
 
 export type AttemptRequest = z.infer<typeof attemptRequestSchema>;

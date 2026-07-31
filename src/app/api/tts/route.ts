@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
 
     // COPPA CONSENT GATE (spec §5): TTS voices the child's / tutor's text; gate it on valid
@@ -22,16 +22,16 @@ export async function POST(req: Request) {
     }
     // P0-4: in prod with no distributed limiter, refuse rather than run a paid TTS unthrottled.
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const rl = await rateLimit("tts", clerkId, 15, 60);
     if (!rl.success) {
-      return NextResponse.json({ error: "Rate limit exceeded. Please wait." }, { status: 429 });
+      return NextResponse.json({ error: "??????? ????? ????????, ??????? ???????." }, { status: 429 });
     }
 
     const { text } = await req.json();
     if (!text) {
-      return NextResponse.json({ error: "Text field is required" }, { status: 400 });
+      return NextResponse.json({ error: "???????? ??????." }, { status: 400 });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -61,6 +61,6 @@ export async function POST(req: Request) {
     }, { status: 503 });
   } catch (error: unknown) {
     console.error("[tts] generation failed:", (error as { name?: string })?.name ?? "Error");
-    return NextResponse.json({ error: "Failed to generate voice output" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

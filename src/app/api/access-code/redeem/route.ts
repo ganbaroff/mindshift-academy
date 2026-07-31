@@ -13,10 +13,10 @@ const schema = z.object({ code: z.string().min(1).max(40) });
 export async function POST(req: Request) {
   try {
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ ok: false, error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ ok: false, error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const key = publicClientKey(req);
-    if (!key) return NextResponse.json({ ok: false, error: "Rate limit unavailable" }, { status: 429 });
+    if (!key) return NextResponse.json({ ok: false, error: "?????? ???????? ??????????." }, { status: 429 });
     // Tight limit: brute-forcing an 8-char / 30-symbol space is infeasible at 8/min.
     const rl = await rateLimit("access-redeem", key, 8, 60);
     if (!rl.success) {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     }
 
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid payload" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ ok: false, error: "???????? ??????." }, { status: 400 });
 
     const res = await redeemAccessCode(parsed.data.code);
     if (!res.ok || !res.clerkId) {
@@ -36,6 +36,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, ticket });
   } catch (error) {
     console.error("[access/redeem] error:", (error as { name?: string })?.name ?? "Error");
-    return NextResponse.json({ ok: false, error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

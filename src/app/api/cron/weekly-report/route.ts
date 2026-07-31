@@ -15,7 +15,7 @@ export async function GET(req: Request) {
 
   // P1-D: fail CLOSED. When CRON_SECRET is unset OR the header doesn't match, reject.
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
   }
 
   const resendKey = process.env.RESEND_API_KEY;

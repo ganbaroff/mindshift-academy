@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   try {
     const user = await resolveUser(req);
     if (!user || !user.clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
     const clerkId = user.clerkId;
 
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     const parsed = decideBodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
+        { error: "???????? ??????.", details: parsed.error.flatten() },
         { status: 400 },
       );
     }
@@ -108,6 +108,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: 502 });
     }
     console.error("[learning/decide]", err);
-    return NextResponse.json({ error: "Decide failed" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

@@ -141,7 +141,7 @@ export async function POST(req: Request) {
     // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +
     //    judge + tutor + output x2), so it MUST fail-closed in prod without a distributed limiter.
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const rl = await rateLimit("chat", clerkId, 20, 10);
     if (!rl.success) {
@@ -153,7 +153,7 @@ export async function POST(req: Request) {
     const parseResult = chatRequestSchema.safeParse(rawBody);
 
     if (!parseResult.success) {
-      return NextResponse.json({ error: "Invalid payload data", details: parseResult.error.format() }, { status: 400 });
+      return NextResponse.json({ error: "???????? ??????.", details: parseResult.error.format() }, { status: 400 });
     }
 
     const { messages, activeStepId, activeSkin, activeMonsterName, eventId } = parseResult.data;
@@ -215,7 +215,7 @@ export async function POST(req: Request) {
 
     if (chat && !safety) {
       return NextResponse.json(
-        { error: "Service temporarily unavailable" },
+        { error: "?????? ???????? ??????????." },
         { status: 503 }
       );
     }

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     const { auth } = await import("@clerk/nextjs/server");
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
 
     // COPPA CONSENT GATE (spec §5): the monster stores the child's pet name/look and its
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     // P0-4: per-user rate limit + prod fail-closed — this can run a PAID gpt-image generation,
     // so a shared invite or "regenerate" spam must not burn it unthrottled.
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const rl = await rateLimit("monster", clerkId, 10, 60);
     if (!rl.success) {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const { name, emoji, color, promptUsed, skipImage } = await req.json();
 
     if (!name || !emoji || !color || !promptUsed) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json({ error: "???????? ??????." }, { status: 400 });
     }
 
     // NV2: constrain child-supplied strings so they can't restructure the image prompt
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
   } catch (error: unknown) {
     console.error("[monster] generation failed:", (error as { name?: string })?.name ?? "Error");
     return NextResponse.json(
-      { error: "Something went wrong. Please try again later." },
+      { error: "???-?? ????? ?? ???. ???????? ??? ???!" },
       { status: 500 }
     );
   }

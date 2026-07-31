@@ -120,6 +120,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("hints/reveal error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json({ error: "Что-то пошло не так. Попробуй ещё раз!" }, { status: 500 });
   }
 }

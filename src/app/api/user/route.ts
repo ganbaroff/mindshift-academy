@@ -99,6 +99,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ...user, completedLessonIds });
   } catch (error) {
     console.error("Database user error:", error);
-    return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

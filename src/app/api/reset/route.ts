@@ -14,7 +14,7 @@ import { restartChildData } from "@/lib/child-data";
 export async function POST() {
   const { userId: clerkId } = await auth();
   if (!clerkId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
   }
 
   try {
@@ -23,6 +23,6 @@ export async function POST() {
     return NextResponse.json({ ok: true, xp: 0, crystals: 0, streak: 0, activeStep: 1 });
   } catch (error) {
     console.error("[reset] failed:", (error as { name?: string })?.name ?? "Error");
-    return NextResponse.json({ error: "Failed to reset stats" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

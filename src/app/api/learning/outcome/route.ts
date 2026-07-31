@@ -43,7 +43,7 @@ export async function POST(req: Request) {
   try {
     const user = await resolveUser(req);
     if (!user || !user.clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
     const clerkId = user.clerkId;
 
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const parsed = outcomeBodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
+        { error: "???????? ??????.", details: parsed.error.flatten() },
         { status: 400 },
       );
     }
@@ -93,6 +93,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: err.message, code: err.code }, { status });
     }
     console.error("[learning/outcome]", err);
-    return NextResponse.json({ error: "Outcome failed" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

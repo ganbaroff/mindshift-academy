@@ -18,10 +18,10 @@ const schema = z.object({
 
 export async function GET(req: Request) {
   if (rateLimitMisconfiguredInProd()) {
-    return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+    return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
   }
   const key = publicClientKey(req);
-  if (!key) return NextResponse.json({ error: "Rate limit unavailable" }, { status: 429 });
+  if (!key) return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 429 });
   const rl = await rateLimit("access-activate-status", key, 20, 60);
   if (!rl.success) {
     return NextResponse.json({ error: "Слишком много попыток. Подождите немного." }, { status: 429 });
@@ -36,17 +36,17 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const key = publicClientKey(req);
-    if (!key) return NextResponse.json({ error: "Rate limit unavailable" }, { status: 429 });
+    if (!key) return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 429 });
     const rl = await rateLimit("access-activate", key, 10, 60);
     if (!rl.success) {
       return NextResponse.json({ error: "Слишком много попыток. Подождите немного." }, { status: 429 });
     }
 
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    if (!parsed.success) return NextResponse.json({ error: "???????? ??????." }, { status: 400 });
     const { activationToken, serviceConsent, externalAiConsent } = parsed.data;
 
     // Both opt-ins are mandatory (COPPA consent, spec §0). Reject before any side effect.
@@ -89,6 +89,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[access/activate] error:", (error as { name?: string })?.name ?? "Error");
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

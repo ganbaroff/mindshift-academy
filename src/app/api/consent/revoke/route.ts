@@ -8,11 +8,11 @@ export async function POST() {
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
     const ok = await revokeConsent(clerkId);
     if (!ok) {
-      return NextResponse.json({ error: "No consent to revoke" }, { status: 404 });
+      return NextResponse.json({ error: "??? ???????? ??? ??????." }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -20,6 +20,6 @@ export async function POST() {
       "[consent/revoke] error:",
       (error as { name?: string })?.name ?? "Error"
     );
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }

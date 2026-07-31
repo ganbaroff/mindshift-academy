@@ -342,7 +342,7 @@ export const PromptInput = () => {
           type="button"
           disabled={inputLocked || isSending}
           aria-busy={isSending}
-          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:from-violet-600 hover:to-cyan-600 hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          className="flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-[var(--color-primary-violet)] hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <span>{isSending ? "Отправка…" : "Отправить промпт"}</span>
           {isSending ? (

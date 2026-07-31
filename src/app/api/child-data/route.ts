@@ -6,7 +6,7 @@ import { deleteChildData } from "@/lib/child-data";
 export async function DELETE() {
   const { userId: clerkId } = await auth();
   if (!clerkId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
   }
 
   try {

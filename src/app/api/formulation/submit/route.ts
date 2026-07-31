@@ -13,7 +13,12 @@ import {
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 import { moderate } from "@/lib/moderation";
 import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
-import { minimizeChildText } from "@/lib/privacy";
+import { Errors } from "@/lib/errors";
+import {
+  getFakeAiMode,
+  ITOG_DEFERRED_MESSAGE,
+} from "@/lib/fake-ai";
+import { recordDegradeEvent } from "@/lib/degrade-events";
 
 export async function POST(req: Request) {
   try {
@@ -21,7 +26,7 @@ export async function POST(req: Request) {
     const isDev = process.env.NODE_ENV === "development";
     const testBypass = req.headers.get("x-test-bypass") === "true";
     if (testBypass && !isDev) {
-      return NextResponse.json({ error: "Test bypass unavailable." }, { status: 403 });
+      return NextResponse.json({ error: "???????? ????? ??????????." }, { status: 403 });
     }
     if (isDev && testBypass) {
       clerkId = "test_user_id";
@@ -110,6 +115,26 @@ export async function POST(req: Request) {
       },
     });
 
+    const fakeMode = getFakeAiMode();
+    if (fakeMode === "judge_down") {
+      await recordDegradeEvent({
+        lessonId: sessionId,
+        providerStage: "judge",
+        causeEnum: "provider_down",
+        resolvedByFallback: true,
+      });
+      return NextResponse.json({
+        ok: true,
+        submitted: true,
+        contentVersion: meta.contentVersion,
+        dayBucket: meta.dayBucket,
+        complete: true,
+        itogDeferred: true,
+        message: ITOG_DEFERRED_MESSAGE,
+        echo: utterance,
+      });
+    }
+
     // Echo utterance only in this response for current-session UI — not persisted.
     return NextResponse.json({
       ok: true,
@@ -121,6 +146,6 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     console.error("formulation submit error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

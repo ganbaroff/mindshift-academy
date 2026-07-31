@@ -46,17 +46,21 @@ export type RuleVerdict = {
   results: RuleMapResult[];
 };
 
-function pickAction(rule: ChildRule, ahead: RuleMapCell): RuleAction {
-  const matches =
-    rule.if.kind === "always" ||
-    (rule.if.kind === "tile" && rule.if.value === ahead);
-  if (matches) return rule.then;
-  return rule.else ?? "stop";
+function pickAction(rules: ChildRule[], ahead: RuleMapCell): RuleAction {
+  for (const rule of rules) {
+    const matches =
+      rule.if.kind === "always" ||
+      (rule.if.kind === "tile" && rule.if.value === ahead);
+    if (matches) return rule.then;
+  }
+  for (const rule of rules) {
+    if (rule.else) return rule.else;
+  }
+  return "stop";
 }
 
 function evaluateMap(map: RuleMap, rules: ChildRule[]): RuleMapResult {
-  const rule = rules[0];
-  if (!rule) {
+  if (!rules.length) {
     return {
       mapId: map.id,
       actionTaken: "stop",
@@ -64,7 +68,7 @@ function evaluateMap(map: RuleMap, rules: ChildRule[]): RuleMapResult {
       note: "правил нет — я не знаю, что делать",
     };
   }
-  const action = pickAction(rule, map.ahead);
+  const action = pickAction(rules, map.ahead);
   const avoidStep = action === "stop" || action === "wait" || action === "turn_left" || action === "turn_right";
   let pass = false;
   let note = `впереди «${map.ahead}», я сделал «${action}»`;

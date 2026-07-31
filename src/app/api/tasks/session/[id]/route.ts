@@ -111,6 +111,6 @@ export async function GET(
     });
   } catch (err) {
     console.error("tasks/session error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json({ error: "Что-то пошло не так. Попробуй ещё раз!" }, { status: 500 });
   }
 }

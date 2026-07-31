@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     // Keep the cheap public-funnel rate limit (abuse cap). It runs first so a 429 is cheap.
     // Fail-closed in prod if the limiter is misconfigured (documented in DEPLOY-CHECKLIST).
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const clientKey = publicClientKey(req);
     if (!clientKey) {

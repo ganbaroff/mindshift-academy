@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "????????? ???? ? ???????." }, { status: 401 });
     }
 
     const user = await currentUser();
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     }
 
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: "?????? ???????? ??????????." }, { status: 503 });
     }
     const rl = await rateLimit("consent-verify", clerkId, 10, 60);
     if (!rl.success) {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json({ error: "???????? ??????." }, { status: 400 });
     }
     const { code, serviceConsent, externalAiConsent } = parsed.data;
 
@@ -93,6 +93,6 @@ export async function POST(req: Request) {
       "[consent/verify] error:",
       (error as { name?: string })?.name ?? "Error"
     );
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: "???-?? ????? ?? ???. ???????? ??? ???!" }, { status: 500 });
   }
 }
