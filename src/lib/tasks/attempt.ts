@@ -5,8 +5,27 @@
 
 import { checkGrid, executeGrid, renderGridDiff } from "./grid-draw";
 import { checkSequence, executeSequence, renderSequenceDiff } from "./sequence-world";
+import {
+  checkRuleRunner,
+  executeRuleRunner,
+  renderRuleDiff,
+  type ChildRule,
+  type RuleMap,
+} from "./rule-runner";
+import {
+  checkPattern,
+  executePattern,
+  renderPatternDiff,
+  type PatternRule,
+} from "./pattern-expand";
+import {
+  checkClaimCheck,
+  executeClaimCheck,
+  renderClaimDiff,
+  type Claim,
+} from "./claim-check";
 import { unclearMessage } from "./unclear-copy";
-import type { Cell, GridProgram, SequenceProgram, TaskFamilyId } from "./types";
+import type { Cell, GridProgram, SequenceProgram, TaskFamilyId, UnclearReasonCode } from "./types";
 
 export type AttemptOutcome = {
   family: TaskFamilyId;
@@ -15,11 +34,23 @@ export type AttemptOutcome = {
   feedback: string;
   programStatus: "ok" | "unclear";
   reasonCode?: string;
-  /** Populated for grid-draw when program parsed successfully. */
   filledCells?: Cell[];
   missingCells?: Cell[];
   extraCells?: Cell[];
 };
+
+function unclearOutcome(
+  family: TaskFamilyId,
+  reasonCode: string
+): AttemptOutcome {
+  return {
+    family,
+    pass: false,
+    feedback: unclearMessage(reasonCode as UnclearReasonCode),
+    programStatus: "unclear",
+    reasonCode,
+  };
+}
 
 export function resolveGridAttempt(
   program: GridProgram,
@@ -27,13 +58,7 @@ export function resolveGridAttempt(
   opts: { hideTargetPanel?: boolean } = {}
 ): AttemptOutcome {
   if (program.status !== "ok") {
-    return {
-      family: "grid-draw",
-      pass: false,
-      feedback: unclearMessage(program.reasonCode),
-      programStatus: "unclear",
-      reasonCode: program.reasonCode,
-    };
+    return unclearOutcome("grid-draw", program.reasonCode);
   }
   const result = executeGrid(program);
   const verdict = checkGrid(result, target);
@@ -49,7 +74,6 @@ export function resolveGridAttempt(
     }),
     programStatus: "ok",
     filledCells,
-    // Collision: don't ship missing cell list (encodes the hidden goal).
     missingCells: opts.hideTargetPanel ? undefined : verdict.missing,
     extraCells: verdict.extra,
   };
@@ -57,13 +81,7 @@ export function resolveGridAttempt(
 
 export function resolveSequenceAttempt(program: SequenceProgram): AttemptOutcome {
   if (program.status !== "ok") {
-    return {
-      family: "sequence-world",
-      pass: false,
-      feedback: unclearMessage(program.reasonCode),
-      programStatus: "unclear",
-      reasonCode: program.reasonCode,
-    };
+    return unclearOutcome("sequence-world", program.reasonCode);
   }
   const result = executeSequence(program);
   const verdict = checkSequence(result);
@@ -71,6 +89,61 @@ export function resolveSequenceAttempt(program: SequenceProgram): AttemptOutcome
     family: "sequence-world",
     pass: verdict.pass,
     feedback: renderSequenceDiff(result, verdict),
+    programStatus: "ok",
+  };
+}
+
+export function resolveRuleAttempt(
+  program: { status: "ok"; rules: ChildRule[] } | { status: "unclear"; reasonCode: string },
+  maps: RuleMap[]
+): AttemptOutcome {
+  if (program.status !== "ok") {
+    return unclearOutcome("rule-runner", program.reasonCode);
+  }
+  const result = executeRuleRunner(program, maps);
+  const verdict = checkRuleRunner(result);
+  return {
+    family: "rule-runner",
+    pass: verdict.pass,
+    feedback: renderRuleDiff(result, verdict),
+    programStatus: "ok",
+  };
+}
+
+export function resolvePatternAttempt(
+  program: { status: "ok"; rule: PatternRule } | { status: "unclear"; reasonCode: string },
+  expected: string[],
+  expandCount?: number
+): AttemptOutcome {
+  if (program.status !== "ok") {
+    return unclearOutcome("pattern-expand", program.reasonCode);
+  }
+  const count = expandCount ?? expected.length;
+  const result = executePattern(program, count);
+  const verdict = checkPattern(result, expected);
+  return {
+    family: "pattern-expand",
+    pass: verdict.pass,
+    feedback: renderPatternDiff(result, expected, verdict),
+    programStatus: "ok",
+  };
+}
+
+export function resolveClaimAttempt(
+  program:
+    | { status: "ok"; labels: Record<string, boolean> }
+    | { status: "unclear"; reasonCode: string },
+  claims: Claim[]
+): AttemptOutcome {
+  if (program.status !== "ok") {
+    return unclearOutcome("claim-check", program.reasonCode);
+  }
+  const result = executeClaimCheck(program, claims);
+  const verdict = checkClaimCheck(result);
+  return {
+    family: "claim-check",
+    pass: verdict.pass,
+    feedback: renderClaimDiff(result, verdict),
     programStatus: "ok",
   };
 }

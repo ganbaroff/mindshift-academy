@@ -14,11 +14,20 @@ import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
 import { prisma } from "@/lib/prisma";
 import { attemptRequestSchema } from "@/lib/tasks/schemas";
 import { interpretUtterance } from "@/lib/tasks/interpreter";
-import { resolveGridAttempt, resolveSequenceAttempt } from "@/lib/tasks/attempt";
+import {
+  resolveClaimAttempt,
+  resolveGridAttempt,
+  resolvePatternAttempt,
+  resolveRuleAttempt,
+  resolveSequenceAttempt,
+} from "@/lib/tasks/attempt";
 import { persistTaskAttempt } from "@/lib/tasks/persist";
 import { awardTaskPassCrystals, ensureStarterCrystals } from "@/lib/tasks/crystals";
 import { resolveCurriculumTask } from "@/lib/tasks/resolve-task";
 import type { Cell, GridProgram, SequenceProgram } from "@/lib/tasks/types";
+import type { RuleProgram } from "@/lib/tasks/rule-runner";
+import type { PatternProgram } from "@/lib/tasks/pattern-expand";
+import type { ClaimCheckProgram } from "@/lib/tasks/claim-check";
 
 export async function POST(req: Request) {
   const startedAt = Date.now();
@@ -78,6 +87,15 @@ export async function POST(req: Request) {
     if (family === "grid-draw" && (!target || target.length === 0)) {
       return NextResponse.json({ error: "У задания нет цели на сервере." }, { status: 500 });
     }
+    if (family === "rule-runner" && (!task.ruleMaps || task.ruleMaps.length === 0)) {
+      return NextResponse.json({ error: "У задания нет карт на сервере." }, { status: 500 });
+    }
+    if (family === "pattern-expand" && (!task.patternExpected || task.patternExpected.length === 0)) {
+      return NextResponse.json({ error: "У задания нет эталона узора на сервере." }, { status: 500 });
+    }
+    if (family === "claim-check" && (!task.claims || task.claims.length === 0)) {
+      return NextResponse.json({ error: "У задания нет утверждений на сервере." }, { status: 500 });
+    }
 
     const safety = getSafetyClient();
     if (!safety) {
@@ -122,7 +140,17 @@ export async function POST(req: Request) {
         ? resolveGridAttempt(interpreted.program as GridProgram, target as Cell[], {
             hideTargetPanel: task.role === "collision",
           })
-        : resolveSequenceAttempt(interpreted.program as SequenceProgram);
+        : family === "sequence-world"
+          ? resolveSequenceAttempt(interpreted.program as SequenceProgram)
+          : family === "rule-runner"
+            ? resolveRuleAttempt(interpreted.program as RuleProgram, task.ruleMaps!)
+            : family === "pattern-expand"
+              ? resolvePatternAttempt(
+                  interpreted.program as PatternProgram,
+                  task.patternExpected!,
+                  task.patternExpandCount
+                )
+              : resolveClaimAttempt(interpreted.program as ClaimCheckProgram, task.claims!);
 
     const dbUser = await prisma.user.upsert({
       where: { clerkId },

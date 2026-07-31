@@ -21,4 +21,9 @@ export type SequenceProgram =
   | { status: "ok"; steps: string[] }
   | { status: RefusalStatus; reasonCode: UnclearReasonCode };
 
-export type TaskFamilyId = "grid-draw" | "sequence-world";
+export type TaskFamilyId =
+  | "grid-draw"
+  | "sequence-world"
+  | "rule-runner"
+  | "pattern-expand"
+  | "claim-check";

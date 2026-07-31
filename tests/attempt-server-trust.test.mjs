@@ -91,7 +91,9 @@ console.log("\n=== session order gates ===");
   check("s2 needs s1", prerequisiteSessionId("w1-s2") === "w1-s1");
   check("s3 needs s2", prerequisiteSessionId("w1-s3") === "w1-s2");
   check("s1 next s2", nextSessionId("w1-s1") === "w1-s2");
-  check("s3 no next", nextSessionId("w1-s3") === null);
+  check("w1-s3 next w2-s1", nextSessionId("w1-s3") === "w2-s1");
+  check("w5-s3 no next", nextSessionId("w5-s3") === null);
+  check("w2-s1 needs w1-s3", prerequisiteSessionId("w2-s1") === "w1-s3");
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

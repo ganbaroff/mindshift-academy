@@ -29,19 +29,67 @@ export {
   type SequenceVerdict,
 } from "./sequence-world";
 
+export {
+  RULE_RUNNER_PROMPT,
+  checkRuleRunner,
+  executeRuleRunner,
+  renderRuleDiff,
+  type ChildRule,
+  type RuleMap,
+  type RuleProgram,
+  type RuleExecuteResult,
+  type RuleVerdict,
+} from "./rule-runner";
+
+export {
+  PATTERN_EXPAND_PROMPT,
+  checkPattern,
+  executePattern,
+  renderPatternDiff,
+  type PatternRule,
+  type PatternProgram,
+  type PatternExecuteResult,
+  type PatternVerdict,
+} from "./pattern-expand";
+
+export {
+  CLAIM_CHECK_PROMPT,
+  checkClaimCheck,
+  executeClaimCheck,
+  renderClaimDiff,
+  type Claim,
+  type ClaimCheckProgram,
+  type ClaimCheckResult,
+  type ClaimCheckVerdict,
+} from "./claim-check";
+
 export { unclearMessage, UNCLEAR_REASON_CODES } from "./unclear-copy";
-export { attemptRequestSchema, gridProgramSchema, sequenceProgramSchema } from "./schemas";
+export { attemptRequestSchema, gridProgramSchema, sequenceProgramSchema, ruleProgramSchema, patternProgramSchema, claimProgramSchema } from "./schemas";
 export {
   coerceRawProgram,
   interpretUtterance,
   parseGridProgram,
   parseSequenceProgram,
+  parseRuleProgram,
+  parsePatternProgram,
+  parseClaimProgram,
   type ChatConn,
   type InterpretResult,
 } from "./interpreter";
-export { resolveGridAttempt, resolveSequenceAttempt, type AttemptOutcome } from "./attempt";
+export {
+  resolveGridAttempt,
+  resolveSequenceAttempt,
+  resolveRuleAttempt,
+  resolvePatternAttempt,
+  resolveClaimAttempt,
+  type AttemptOutcome,
+} from "./attempt";
 export { GRID_FIXTURES } from "./fixtures/grid-draw";
 export { SEQUENCE_FIXTURES } from "./fixtures/sequence-world";
+export { RULE_FIXTURES } from "./fixtures/rule-runner";
+export { PATTERN_FIXTURES } from "./fixtures/pattern-expand";
+export { CLAIM_FIXTURES } from "./fixtures/claim-check";
 export { masteryAfterTask, tierForMastery } from "./mastery";
 export { spacingAfterOutcome, pickReviewConcept, isDue } from "./spacing";
 export { sessionComplete, type SessionDef, type SessionTaskResult } from "./session";
+export { fakeInterpretUtterance } from "./fake-interpreter";

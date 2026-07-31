@@ -5,11 +5,20 @@
  */
 import {
   GRID_SIZE,
+  checkClaimCheck,
   checkGrid,
+  checkPattern,
+  checkRuleRunner,
   checkSequence,
+  executeClaimCheck,
   executeGrid,
+  executePattern,
+  executeRuleRunner,
   executeSequence,
+  renderClaimDiff,
   renderGridDiff,
+  renderPatternDiff,
+  renderRuleDiff,
   renderSequenceDiff,
 } from "../src/lib/tasks/index.ts";
 
@@ -88,6 +97,76 @@ console.log("\n=== 4. Sequence world preconditions ===");
   });
   check("full correct sequence passes", checkSequence(done).pass);
   check(`grid size is ${GRID_SIZE}`, GRID_SIZE === 4);
+}
+
+console.log("\n=== 5. rule-runner executor (edge cases) ===");
+{
+  const maps = [
+    { id: "open", ahead: "open", successWhen: "goal" },
+    { id: "wall", ahead: "wall", successWhen: "wait_on_wall" },
+    { id: "trap", ahead: "trap", successWhen: "stop_on_trap" },
+  ];
+  const good = executeRuleRunner(
+    { rules: [{ if: { kind: "tile", value: "open" }, then: "step", else: "stop" }] },
+    maps
+  );
+  check("rule with else passes all maps", checkRuleRunner(good).pass);
+
+  const noElse = executeRuleRunner(
+    { rules: [{ if: { kind: "tile", value: "open" }, then: "step" }] },
+    maps
+  );
+  // default else=stop → wall/trap avoid via stop — also passes; force fail with always-step
+  const alwaysStep = executeRuleRunner(
+    { rules: [{ if: { kind: "always" }, then: "step" }] },
+    maps
+  );
+  check("blind step fails wall/trap", !checkRuleRunner(alwaysStep).pass);
+
+  const empty = executeRuleRunner({ rules: [] }, maps);
+  check("empty rules fail", !checkRuleRunner(empty).pass);
+
+  const text = renderRuleDiff(alwaysStep, checkRuleRunner(alwaysStep));
+  check("rule diff shame-free", !/ошибк|неправильн|провал/i.test(text));
+  void noElse;
+}
+
+console.log("\n=== 6. pattern-expand executor (edge cases) ===");
+{
+  const arith = executePattern({ rule: { kind: "arithmetic", start: 1, step: 1 } }, 5);
+  check("arithmetic expands", checkPattern(arith, ["1", "2", "3", "4", "5"]).pass);
+
+  const wrong = checkPattern(arith, ["1", "2", "3", "4", "банан"]);
+  check("mismatch fails and names index", !wrong.pass && wrong.mismatches[0]?.index === 4);
+
+  const cycle = executePattern({ rule: { kind: "cycle", items: ["а", "б"] } }, 4);
+  check("cycle expands", checkPattern(cycle, ["а", "б", "а", "б"]).pass);
+
+  const emptyItems = executePattern({ rule: { kind: "cycle", items: [] } }, 2);
+  check("empty cycle yields placeholders", emptyItems.terms.join(",") === "?,?");
+
+  const ptext = renderPatternDiff(arith, ["1", "2", "3", "4", "банан"], wrong);
+  check("pattern diff shame-free", !/ошибк|неправильн|провал/i.test(ptext));
+}
+
+console.log("\n=== 7. claim-check executor (edge cases) ===");
+{
+  const claims = [
+    { id: "a", text: "2+2=4", truth: true },
+    { id: "b", text: "confidence=truth", truth: false },
+  ];
+  const good = executeClaimCheck({ labels: { a: true, b: false } }, claims);
+  check("correct labels pass", checkClaimCheck(good).pass);
+
+  const missFalse = executeClaimCheck({ labels: { a: true, b: true } }, claims);
+  const v = checkClaimCheck(missFalse);
+  check("missed false caught", !v.pass && v.missedFalseIds.includes("b"));
+
+  const unlabeled = executeClaimCheck({ labels: { a: true } }, claims);
+  check("unlabeled fails", !checkClaimCheck(unlabeled).pass && checkClaimCheck(unlabeled).unlabeledIds.includes("b"));
+
+  const ctext = renderClaimDiff(missFalse, v);
+  check("claim diff shame-free", !/ошибк|неправильн|провал/i.test(ctext));
 }
 
 console.log(`\n${fail === 0 ? "TASK ENGINE: all checks passed" : `TASK ENGINE: ${fail} FAILED`} (${pass} passed)\n`);

@@ -1,0 +1,86 @@
+import type { SessionContent } from "../types";
+
+export const week3Session3: SessionContent = {
+  id: "w3-s3",
+  week: 3,
+  session: 3,
+  concept: "conditions",
+  misconception: "сработало на одном примере — значит работает всегда",
+  titleRu: "Правило для всех дорог",
+  explanationRu: "Правило «под одну карту» падает на скрытой. Нужно правило, которое работает на любой дороге из набора.",
+  dinnerQuestionRu: "Спросите: «Правило сработало один раз — значит всегда?» Пусть ребёнок придумает случай, где то же правило сломается.",
+  practiceRequired: 3,
+  minTier: 1,
+  tasks: [
+    {
+      id: "w3s3-collision",
+      role: "collision",
+      family: "rule-runner",
+      tier: 1,
+      promptRu: "Одно правило на четыре карты — одна скрыта. Не подгоняй только под видимую.",
+      hintRu: "Твоё правило про ЭТУ карту или про ЛЮБУЮ?",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w3s3-p1",
+      role: "practice",
+      family: "rule-runner",
+      tier: 1,
+      promptRu: "Скажи общее правило: свободно — шаг; стена или ловушка — стой; цель — шаг.",
+      hintRu: "Правило должно держаться и на скрытой карте.",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w3s3-p2",
+      role: "practice",
+      family: "rule-runner",
+      tier: 1,
+      promptRu: "Ещё раз: одно правило для всех дорог, включая скрытую.",
+      hintRu: "Не описывай одну карту — опиши любую.",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w3s3-p3",
+      role: "practice",
+      family: "rule-runner",
+      tier: 2,
+      promptRu: "Уточни правило так, чтобы скрытая цель тоже проходилась.",
+      hintRu: "Про эту карту или про любую?",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w3s3-transfer",
+      role: "transfer",
+      family: "rule-runner",
+      tier: 1,
+      promptRu: "Предскажи: на какой из видимых карт слабое правило упадёт — и скажи сильное.",
+      hintRu: "Правило для любой дороги, не для одной картинки.",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    }
+  ],
+};
