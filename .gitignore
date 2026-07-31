@@ -68,4 +68,8 @@ docs/release/_w0_drill_workspace/*.out.txt
 docs/release/_w2_drill_workspace/*.out.txt
 docs/release/_w2_drill_workspace/*.db
 docs/release/_w2_drill_workspace/drill-console.log
+# W3 drill ephemeral outputs
+docs/release/_w3_drill_workspace/*.out.txt
+docs/release/_w3_drill_workspace/*.db
+docs/release/_w3_drill_workspace/drill-console.log
 

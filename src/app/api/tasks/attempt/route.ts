@@ -22,9 +22,14 @@ import {
   resolveSequenceAttempt,
 } from "@/lib/tasks/attempt";
 import { persistTaskAttempt } from "@/lib/tasks/persist";
-import { awardTaskPassCrystals, ensureStarterCrystals } from "@/lib/tasks/crystals";
+import { awardTaskPassCrystals, ensureStarterCrystals, isCurriculumSessionComplete } from "@/lib/tasks/crystals";
 import { resolveCurriculumTask } from "@/lib/tasks/resolve-task";
 import { selectOfferedTier, effectiveTaskTier } from "@/lib/tasks/tier-select";
+import {
+  awardSessionMilestoneCrystals,
+  awardWeeklyCosmeticIfReady,
+} from "@/lib/milestone-awards";
+import { WEEK_SESSIONS } from "@/lib/evolution";
 import type { Cell, GridProgram, SequenceProgram } from "@/lib/tasks/types";
 import type { RuleProgram } from "@/lib/tasks/rule-runner";
 import type { PatternProgram } from "@/lib/tasks/pattern-expand";
@@ -195,6 +200,30 @@ export async function POST(req: Request) {
       });
       crystals = award.crystals;
       crystalsAwarded = award.awarded;
+
+      // Milestone chest: fixed session-tier crystals when the session gate closes.
+      const sessionDone = await isCurriculumSessionComplete(dbUser.id, sessionId);
+      if (sessionDone) {
+        const chest = await awardSessionMilestoneCrystals({
+          userId: dbUser.id,
+          sessionId,
+          tier,
+        });
+        crystals = chest.crystals;
+        if (chest.awarded) crystalsAwarded = true;
+
+        const completed: string[] = [];
+        for (const week of [1, 2, 3, 4, 5] as const) {
+          for (const sid of WEEK_SESSIONS[week]) {
+            if (await isCurriculumSessionComplete(dbUser.id, sid)) completed.push(sid);
+          }
+          await awardWeeklyCosmeticIfReady({
+            userId: dbUser.id,
+            week,
+            completedSessionIds: completed,
+          });
+        }
+      }
     } else {
       const cur = await prisma.user.findUnique({
         where: { id: dbUser.id },

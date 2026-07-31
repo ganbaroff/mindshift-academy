@@ -26,6 +26,10 @@ model User {
   taskAttempts       TaskAttempt[]
   reportDeliveryLogs ReportDeliveryLog[]
   sessionCosts       SessionCost[]
+  /// Optional parent-set certificate display label (max 32, filtered). Never logged/metrics.
+  certificateDisplayLabel String?
+  formulationSubmissions FormulationSubmission[]
+  certificate            Certificate?
 }
 
 model Monster {
@@ -201,6 +205,34 @@ model SessionCost {
 
   @@unique([userId, sessionId])
   @@index([userId])
+}
+
+/// Own-words formulation SUBMITTED metadata only — NEVER raw child text (Section 3A.3).
+model FormulationSubmission {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId      String
+  contentVersion String
+  dayBucket      String
+  complete       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, sessionId])
+  @@index([userId])
+}
+
+/// Issued certificate — unique non-derivable id; no public verification page.
+model Certificate {
+  id               String   @id
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Printed recipient label (default or filtered parent display label).
+  recipientLabel   String
+  formulationVersion String
+  formulationDayBucket String
+  issuedDayBucket  String
+  createdAt        DateTime @default(now())
 }
 
 // Atlas NBA session audit — decision metadata stored in VOLAURA, not Atlas.

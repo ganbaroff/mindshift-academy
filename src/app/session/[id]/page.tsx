@@ -9,12 +9,14 @@ import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
 import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
+import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 
 type TaskResult = {
   id: string;
@@ -61,6 +63,11 @@ export default function ThinkingSessionPage() {
   const [hintBusy, setHintBusy] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
   const [consentEnded, setConsentEnded] = useState(false);
+  const [formulationText, setFormulationText] = useState("");
+  const [formulationEcho, setFormulationEcho] = useState<string | null>(null);
+  const [formulationBusy, setFormulationBusy] = useState(false);
+  const [formulationError, setFormulationError] = useState<string | null>(null);
+  const [certificateReady, setCertificateReady] = useState(false);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -344,6 +351,83 @@ export default function ThinkingSessionPage() {
   }
 
   if (done) {
+    const isCapstone = session.id === CAPSTONE_SESSION_ID;
+
+    if (isCapstone && formulationEcho) {
+      return (
+        <div className="min-h-screen bg-[#090d16] text-white">
+          <Header />
+          <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
+        </div>
+      );
+    }
+
+    if (isCapstone) {
+      return (
+        <div className="min-h-screen bg-[#090d16] text-white">
+          <Header />
+          <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
+            <MonsterAvatar mood="celebrating" size={120} />
+            <h1 className="text-3xl font-bold text-center">Итог: своими словами</h1>
+            <p className="text-gray-300 text-center">
+              Напиши главное правило мышления. Качество не мешает завершить путь — важно
+              подать формулировку.
+            </p>
+            <textarea
+              value={formulationText}
+              onChange={(e) => setFormulationText(e.target.value)}
+              rows={4}
+              className="w-full rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-base text-white"
+              placeholder="Моё главное правило мышления…"
+              data-testid="formulation-input"
+            />
+            {formulationError ? (
+              <p className="text-sm text-violet-200" role="alert">
+                {formulationError}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={formulationBusy}
+              data-testid="formulation-submit"
+              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
+              onClick={async () => {
+                setFormulationBusy(true);
+                setFormulationError(null);
+                try {
+                  const res = await fetch("/api/formulation/submit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      utterance: formulationText,
+                      sessionId: CAPSTONE_SESSION_ID,
+                    }),
+                  });
+                  const body = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    setFormulationError(
+                      typeof body.error === "string"
+                        ? body.error
+                        : "Не удалось сохранить. Попробуй ещё раз."
+                    );
+                    return;
+                  }
+                  setFormulationEcho(
+                    typeof body.echo === "string" ? body.echo : formulationText
+                  );
+                  setCertificateReady(true);
+                } finally {
+                  setFormulationBusy(false);
+                }
+              }}
+            >
+              Подать формулировку
+            </button>
+          </main>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-[#090d16] text-white">
         <Header />
