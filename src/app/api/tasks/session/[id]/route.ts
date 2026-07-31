@@ -25,11 +25,23 @@ export async function GET(
     const isDev = process.env.NODE_ENV === "development";
     const testBypass = req.headers.get("x-test-bypass") === "true";
 
+    // Bypass header outside development is never accepted — clean 403, never 500.
+    if (testBypass && !isDev) {
+      return NextResponse.json(
+        { error: "Test bypass unavailable.", code: "BYPASS_UNAVAILABLE" },
+        { status: 403 }
+      );
+    }
+
     if (isDev && testBypass) {
       clerkId = "test_user_id";
     } else {
-      const { auth } = await import("@clerk/nextjs/server");
-      clerkId = (await auth()).userId;
+      try {
+        const { auth } = await import("@clerk/nextjs/server");
+        clerkId = (await auth()).userId;
+      } catch {
+        return NextResponse.json({ error: "Требуется вход в аккаунт." }, { status: 401 });
+      }
     }
 
     if (!clerkId) {

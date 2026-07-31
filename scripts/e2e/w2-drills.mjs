@@ -94,19 +94,31 @@ async function main() {
   const sess = await page.goto(`${BASE}/session/w1-s1`, { waitUntil: "domcontentloaded" });
   record("anonymous session is gated (not 200 open UI)", sess ? sess.status() !== 200 || !(await page.locator("body").innerText()).includes("Сессия завершена") : false);
 
-  // Resume derivation proof is unit-tested; here we assert API contract with bypass if available.
+  // Session API: 200 with payload, or clean 401/403 when unauthenticated / bypass unavailable.
+  // A 500 is NEVER a pass.
   const api = await fetch(`${BASE}/api/tasks/session/w1-s1`, {
     headers: { "x-test-bypass": "true" },
   });
-  if (api.status === 200) {
+  if (api.status === 500) {
+    record("session API never returns 500 for auth/bypass path", false, "status=500");
+  } else if (api.status === 200) {
     const body = await api.json();
     record("session API returns passedTaskIds array", Array.isArray(body.passedTaskIds));
-    record("session API returns offeredTier", body.offeredTier === 1 || body.offeredTier === 2 || body.offeredTier === 3);
+    record(
+      "session API returns offeredTier",
+      body.offeredTier === 1 || body.offeredTier === 2 || body.offeredTier === 3
+    );
+  } else if (api.status === 401 || api.status === 403) {
+    record(
+      "session API returns clean 401/403 when unauthenticated or bypass unavailable",
+      true,
+      `status=${api.status}`
+    );
   } else {
     record(
-      "session API bypass unavailable in this env (status recorded)",
-      true,
-      `status=${api.status} — resume unit drill still green in tests/w2-learner-state`
+      "session API returns expected auth or success status",
+      false,
+      `unexpected status=${api.status}`
     );
   }
 
