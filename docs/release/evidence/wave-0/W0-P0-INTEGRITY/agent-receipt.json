@@ -1,0 +1,86 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "2af0621cf14c15fda06373ffcf7fa141233a92f2",
+  "headSha": "deab44e6ddad9dac74d74c0df2f3869e77c9c7a9",
+  "commits": [
+    "2c51d0aad05864b910ac58feb1e423c8369bb1fd",
+    "73638c2ce2436f352a90108649555b31eaeb454f",
+    "deab44e6ddad9dac74d74c0df2f3869e77c9c7a9"
+  ],
+  "changedFiles": [
+    "docs/release/_w4_drill_workspace/session-choice-matrix-receipt.md",
+    "docs/release/evidence/wave-0/W0-P0-INTEGRITY/task-brief.md",
+    "src/app/api/tasks/attempt/route.ts",
+    "src/app/session/[id]/page.tsx",
+    "src/content/curriculum/types.ts",
+    "src/content/curriculum/validate.ts",
+    "src/content/curriculum/week-5/session-3.ts",
+    "src/lib/tasks/attempt.ts",
+    "src/lib/tasks/choice-mode.ts",
+    "src/lib/tasks/crystals.ts",
+    "src/lib/tasks/fake-interpreter.ts",
+    "src/lib/tasks/index.ts",
+    "src/lib/tasks/interpreter.ts",
+    "src/lib/tasks/pattern-expand.ts",
+    "src/lib/tasks/session.ts",
+    "src/lib/tasks/tier-select.ts",
+    "src/lib/tasks/types.ts",
+    "src/lib/tasks/unclear-copy.ts",
+    "tests/interpreter-contract.test.mjs",
+    "tests/session-mastery.test.mjs",
+    "tests/tasks.test.mjs",
+    "tests/w4-ai-safety.test.mjs",
+    "tests/w4-session-matrix.test.mjs"
+  ],
+  "red": {
+    "command": "npm run test:tasks && npm run test:session && npx tsx tests/w4-ai-safety.test.mjs && npm run test:interpreter-contract",
+    "expectedFailure": "copied output accepted or reason lost; capstone completes without collision/prediction; fallback derives canonical answers; signed numeric list reaches provider inference",
+    "exitCode": 1,
+    "checks": null
+  },
+  "green": [
+    {
+      "command": "npm run test:tasks",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 29
+    },
+    {
+      "command": "npm run test:session",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 38
+    },
+    {
+      "command": "npx tsx tests/w4-ai-safety.test.mjs",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 44
+    },
+    {
+      "command": "npm run test:interpreter-contract",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 26
+    },
+    {
+      "command": "npm run test:interpreter-fixtures",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 65
+    },
+    {
+      "command": "npm run verify:academy:offline",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 18
+    }
+  ],
+  "concerns": [
+    "This ticket does not certify task-family UI surfaces, worked examples, or the current /session browser journey; those remain Wave 1 release blockers.",
+    "The safe degraded path now pauses instead of leaking answers; provider-independent interactive recovery remains Wave 1/2 scope."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}
