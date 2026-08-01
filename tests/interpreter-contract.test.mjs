@@ -14,6 +14,7 @@ import { unclearMessage } from "../src/lib/tasks/unclear-copy.ts";
 import { GRID_FIXTURES } from "../src/lib/tasks/fixtures/grid-draw.ts";
 import { SEQUENCE_FIXTURES } from "../src/lib/tasks/fixtures/sequence-world.ts";
 import { UNCLEAR_REASON_CODES } from "../src/lib/tasks/unclear-copy.ts";
+import { fakeInterpretUtterance } from "../src/lib/tasks/fake-interpreter.ts";
 
 let pass = 0;
 let fail = 0;
@@ -53,6 +54,26 @@ console.log("\n=== pattern rule-form preflight ===");
     copiedList.program.status === "unclear" &&
       copiedList.program.reasonCode === "copied_output" &&
       providerCalls === 0
+  );
+
+  const copiedDescendingList = await interpretUtterance(
+    "pattern-expand",
+    "5, 4, 3, 2, 1, 0, -1, -2, -3, -4",
+    conn
+  );
+  check(
+    "negative terms do not masquerade as a subtraction rule",
+    copiedDescendingList.program.status === "unclear" &&
+      copiedDescendingList.program.reasonCode === "copied_output" &&
+      providerCalls === 0
+  );
+  const fakeDescending = fakeInterpretUtterance(
+    "pattern-expand",
+    "5, 4, 3, 2, 1, 0, -1, -2, -3, -4"
+  );
+  check(
+    "fake interpreter applies the same copied-output preflight",
+    fakeDescending.status === "unclear" && fakeDescending.reasonCode === "copied_output"
   );
 
   const explicitRule = await interpretUtterance(

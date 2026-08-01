@@ -37,7 +37,7 @@ export function hasExplicitPatternRule(utterance: string): boolean {
     /(?:^|\s)(?:вычит|уменьш)\p{L}*/u,
     /(?:^|\s)(?:повтор|цикл|черед)\p{L}*/u,
     /(?:^|\s)кажд\p{L}*\s+раз/u,
-    /(?:^|\s)[+−-]\s*\d/u,
+    /(?:^|\s)(?:плюс|минус)\s+\d/u,
   ].some((cue) => cue.test(text));
 }
 
