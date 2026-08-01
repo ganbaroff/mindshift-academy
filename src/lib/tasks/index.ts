@@ -65,7 +65,17 @@ export {
 } from "./claim-check";
 
 export { unclearMessage, UNCLEAR_REASON_CODES } from "./unclear-copy";
-export { attemptRequestSchema, gridProgramSchema, sequenceProgramSchema, ruleProgramSchema, patternProgramSchema, claimProgramSchema } from "./schemas";
+export {
+  attemptRequestSchema,
+  gridProgramSchema,
+  sequenceProgramSchema,
+  ruleProgramSchema,
+  patternProgramSchema,
+  claimProgramSchema,
+  structuredProgramSchema,
+  parseStructuredProgram,
+  type StructuredProgram,
+} from "./schemas";
 export {
   coerceRawProgram,
   interpretUtterance,

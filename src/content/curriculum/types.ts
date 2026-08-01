@@ -59,11 +59,16 @@ export type SessionContent = {
 
 /** Public claim — ground-truth stripped (never send answer key to client). */
 export type PublicClaim = Omit<Claim, "truth">;
+export type PublicRuleMap = Omit<RuleMap, "successWhen">;
 
 /** Public session payload — hints stripped until purchased. */
-export type PublicContentTask = Omit<ContentTask, "hintRu" | "claims"> & {
+export type PublicContentTask = Omit<
+  ContentTask,
+  "hintRu" | "claims" | "patternExpected" | "ruleMaps"
+> & {
   hintAvailable: boolean;
   claims?: PublicClaim[];
+  ruleMaps?: PublicRuleMap[];
 };
 
 export type PublicSessionContent = Omit<SessionContent, "tasks"> & {
@@ -73,14 +78,20 @@ export type PublicSessionContent = Omit<SessionContent, "tasks"> & {
 export function toPublicSession(session: SessionContent): PublicSessionContent {
   return {
     ...session,
-    tasks: session.tasks.map(({ hintRu: _hint, claims, ...task }) => ({
-      ...task,
-      ...(claims
-        ? {
-            claims: claims.map((c) => ({ id: c.id, text: c.text })),
-          }
-        : {}),
-      hintAvailable: Boolean(_hint?.trim()),
-    })),
+    tasks: session.tasks.map(
+      ({ hintRu, claims, patternExpected, ruleMaps, ...task }) => {
+        void patternExpected;
+        return {
+          ...task,
+          ...(claims
+            ? { claims: claims.map((claim) => ({ id: claim.id, text: claim.text })) }
+            : {}),
+          ...(ruleMaps
+            ? { ruleMaps: ruleMaps.map(({ id, ahead }) => ({ id, ahead })) }
+            : {}),
+          hintAvailable: Boolean(hintRu.trim()),
+        };
+      }
+    ),
   };
 }

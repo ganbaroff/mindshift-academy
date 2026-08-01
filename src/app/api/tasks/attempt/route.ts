@@ -13,7 +13,7 @@ import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { minimizeChildText } from "@/lib/privacy";
 import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
 import { prisma } from "@/lib/prisma";
-import { attemptRequestSchema } from "@/lib/tasks/schemas";
+import { attemptRequestSchema, parseStructuredProgram } from "@/lib/tasks/schemas";
 import { interpretUtterance } from "@/lib/tasks/interpreter";
 import { fakeInterpretUtterance } from "@/lib/tasks/fake-interpreter";
 import {
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: Errors.badRequest }, { status: 400 });
     }
 
-    const { utterance, choiceId, eventId, sessionId, taskId } = parsed.data;
+    const { utterance, choiceId, program, eventId, sessionId, taskId } = parsed.data;
     const resolved = resolveCurriculumTask(sessionId, taskId);
     if (!resolved) {
       return NextResponse.json(
@@ -138,6 +138,35 @@ export async function POST(req: Request) {
         choiceMode: false,
         choices: buildChoiceOptions(task),
         latencyMs: Date.now() - startedAt,
+      });
+    }
+
+    // Visible family workspaces submit closed actions; no text/provider is involved.
+    if (program) {
+      const structured = parseStructuredProgram(family, program);
+      if (!structured) {
+        return NextResponse.json(
+          { error: Errors.badRequest, code: "BAD_PROGRAM" },
+          { status: 400 }
+        );
+      }
+      const outcome = resolveProgram(family, structured, task, target);
+      return finalizeAttempt({
+        clerkId,
+        concept,
+        family,
+        tierAuthored: task.tier,
+        role: task.role,
+        outcome,
+        eventId,
+        sessionId,
+        taskId,
+        startedAt,
+        model: "structured-ui",
+        interpretLatencyMs: 0,
+        promptTokens: 0,
+        completionTokens: 0,
+        choiceModeUsed: false,
       });
     }
 
