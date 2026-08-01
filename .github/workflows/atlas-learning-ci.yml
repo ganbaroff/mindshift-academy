@@ -18,6 +18,9 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      # Prisma 7 ships an ungenerated client after npm ci. Generate it before any
+      # unit test imports the persistence layer, just as the clean build job does.
+      - run: npx prisma generate
       # The release gate requires zero lint errors, but nothing enforced it here, so two
       # errors sat on the product line unnoticed. Running it in CI is what keeps that gate real.
       - run: npm run lint

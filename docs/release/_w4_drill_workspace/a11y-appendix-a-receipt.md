@@ -1,6 +1,6 @@
 # W4 Accessibility Appendix A — per-item receipts
 
-Date: 2026-07-31
+Date: 2026-08-01
 
 ## A1. grid tiles / hint buttons >=44px; primary tiles ~2cm
 - Result: **PASS**

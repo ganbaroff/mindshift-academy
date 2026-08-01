@@ -1,6 +1,6 @@
 # W4 session choice-mode matrix (all 15)
 
-Date: 2026-07-31
+Date: 2026-08-01
 Provider: deterministic choice-mode (no live AI)
 
 - PASS curriculum has 15 sessions
