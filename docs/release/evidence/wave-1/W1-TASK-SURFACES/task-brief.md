@@ -34,6 +34,7 @@
 5. Tier 1 includes a short world reminder; all tiers announce their adaptive level.
 6. No component consumes a server answer key or infers a current answer.
 7. Grid reset, sequence remove/reset, and other edits are deterministic and local.
+8. Rule tasks can express the curriculum's explicit `иначе` branch, not only one-off tile cases.
 
 ## TDD commands
 

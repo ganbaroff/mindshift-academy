@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { TaskWorkspace } from "../src/components/curriculum/task-surfaces/TaskWorkspace.tsx";
+import { buildRuleProgram } from "../src/components/curriculum/task-surfaces/RuleSurface.tsx";
+import { checkRuleRunner, executeRuleRunner } from "../src/lib/tasks/rule-runner.ts";
 
 const tasks = [
   {
@@ -95,7 +97,42 @@ assert.doesNotMatch(combined, /current-a|current-b|grid-current|patternExpected|
 assert.match(combined, /Выбрать клетку 1, 1/);
 assert.match(combined, /Добавить действие/);
 assert.match(combined, /Что впереди:/);
+assert.match(combined, /Иначе, для остальных случаев/);
 assert.match(combined, /Начальное число/);
 assert.match(combined, /Утверждение:/);
+
+assert.deepEqual(
+  buildRuleProgram(
+    ["wall", "open", "trap"],
+    { wall: "wait", open: "otherwise", trap: "stop" },
+    "step"
+  ),
+  {
+    status: "ok",
+    rules: [
+      { if: { kind: "tile", value: "wall" }, then: "wait", else: "step" },
+      { if: { kind: "tile", value: "trap" }, then: "stop" },
+    ],
+  },
+  "rule workspace must encode an explicit otherwise branch plus exceptions"
+);
+
+const generalRule = buildRuleProgram(
+  ["open", "wall", "trap", "goal"],
+  { open: "otherwise", wall: "wait", trap: "stop", goal: "otherwise" },
+  "step"
+);
+assert.equal(
+  checkRuleRunner(
+    executeRuleRunner(generalRule, [
+      { id: "open", ahead: "open", successWhen: "goal" },
+      { id: "wall", ahead: "wall", successWhen: "wait_on_wall" },
+      { id: "trap", ahead: "trap", successWhen: "stop_on_trap" },
+      { id: "goal", ahead: "goal", successWhen: "goal" },
+    ])
+  ).pass,
+  true,
+  "explicit exceptions plus the otherwise branch must generalize across all maps"
+);
 
 console.log("session-task-surfaces: 5/5 families render accessible structured workspaces");
