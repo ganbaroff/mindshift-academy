@@ -405,13 +405,35 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
     page.on("response", (response) => {
       if (response.status() >= 500) pageErrors.push(`HTTP ${response.status()} ${response.url()}`);
     });
+    page.on("requestfailed", (request) => {
+      if (request.url().includes("/_next/") || request.url().includes("/api/")) {
+        pageErrors.push(`failed ${request.url()} ${request.failure()?.errorText ?? "unknown"}`);
+      }
+    });
 
     const curriculum = loadCurriculum();
     for (const sessionId of SESSION_IDS) {
       const session = curriculum.find((candidate) => candidate.id === sessionId);
       assert.ok(session, `curriculum contains ${sessionId}`);
-      await page.goto(`${baseUrl}/session/${sessionId}?demo=1`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId(`task-workspace-${session.tasks[0].family}`).waitFor({ timeout: 20000 });
+      const navigation = await page.goto(`${baseUrl}/session/${sessionId}?demo=1`, { waitUntil: "domcontentloaded" });
+      try {
+        await page.getByTestId(`task-workspace-${session.tasks[0].family}`).waitFor({ timeout: 20000 });
+      } catch (error) {
+        await page.screenshot({ path: join(outDir, "desktop-session-failure.png"), fullPage: true }).catch(() => {});
+        const apiProbe = await page.evaluate(async () => {
+          const result = {};
+          for (const path of ["/api/tasks/session/w1-s1", "/api/user"]) {
+            try {
+              const response = await fetch(path);
+              result[path] = { status: response.status };
+            } catch (probeError) {
+              result[path] = { error: String(probeError) };
+            }
+          }
+          return result;
+        });
+        throw new Error(`desktop workspace unavailable for ${sessionId}: status=${navigation?.status() ?? "none"} url=${page.url()} title=${await page.title()} body=${(await page.locator("body").innerText()).slice(0, 300)} api=${JSON.stringify(apiProbe)} diagnostics=${pageErrors.join(" | ")} cause=${error instanceof Error ? error.message : String(error)}`);
+      }
       if (sessionId === "w1-s1") {
         await page.screenshot({ path: join(outDir, "desktop-w1-s1.png"), fullPage: true });
       }
@@ -590,8 +612,18 @@ export async function runCurrentSessionUiSuite(options = {}) {
       return receipt;
     }
 
-    await verifyMobile(browser, baseUrl, outDir);
     const coverage = await verifyAllSessions(browser, baseUrl, outDir);
+    await browser.close();
+    browser = null;
+
+    // The full desktop run intentionally completes w1-s1. Reset the throwaway
+    // learner before capturing independent 320px first-session evidence.
+    resetCrossBrowserFixture(databaseUrl);
+    browser = await chromium.launch({ headless: true });
+    await verifyMobile(browser, baseUrl, outDir);
+    await browser.close();
+    browser = null;
+
     let crossBrowserEvidence = null;
     if (crossBrowser) {
       crossBrowserEvidence = await verifyCrossBrowserSmokes(baseUrl, databaseUrl, outDir);
