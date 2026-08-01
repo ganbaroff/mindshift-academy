@@ -40,6 +40,7 @@ export const GATE_DEFINITIONS = Object.freeze({
       ["npm", ["run", "test:session-integration"]],
       ["npm", ["run", "test:display-grid-accessibility"]],
       ["npm", ["run", "test:onboarding-comprehension"]],
+      ["npm", ["run", "test:task-ownership-isolation"]],
       ["npm", ["run", "test:dual-children"]],
       ["npm", ["run", "test:w2"]],
       ["npm", ["run", "test:w3"]],

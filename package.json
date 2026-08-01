@@ -28,6 +28,7 @@
     "test:display-grid-accessibility": "node tests/display-grid-accessibility.test.mjs",
     "test:dual-children": "npx tsx tests/dual-children.test.mjs",
     "test:crystals": "node scripts/test-crystals.mjs",
+    "test:task-ownership-isolation": "node scripts/run-task-ownership-isolation.mjs",
     "test:parent-journey": "node scripts/e2e/parent-journey.mjs",
     "db:push-turso-curriculum": "node scripts/turso-apply-curriculum-ddl.mjs",
     "test:regression": "node scripts/regression.mjs",
