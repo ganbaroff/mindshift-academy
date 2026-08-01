@@ -3,7 +3,8 @@
 import { spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
+import { platformInvocation } from "./qa/academy-gates.mjs";
 
 function run(command, args, env) {
   return new Promise((resolve, reject) => {
@@ -38,15 +39,11 @@ try {
     ["node_modules/prisma/build/index.js", "db", "push", "--url", databaseUrl],
     env
   );
-  await run(
-    process.execPath,
-    [
-      join(dirname(process.execPath), "node_modules", "npm", "bin", "npx-cli.js"),
-      "tsx",
-      "tests/structured-attempt-route.test.mjs",
-    ],
-    env
-  );
+  const invocation = platformInvocation("npx", [
+    "tsx",
+    "tests/structured-attempt-route.test.mjs",
+  ]);
+  await run(invocation.command, invocation.args, env);
 } finally {
   await rm(tempDir, { recursive: true, force: true });
 }
