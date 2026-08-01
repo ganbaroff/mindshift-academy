@@ -1,0 +1,56 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "d090c19",
+  "headSha": "883ba60cceab84f4b0193d0e7b0199472525e689",
+  "commits": [
+    "883ba60cceab84f4b0193d0e7b0199472525e689"
+  ],
+  "changedFiles": [
+    "docs/release/evidence/wave-4/W4-TASK-OWNERSHIP-ISOLATION/task-brief.md",
+    "package.json",
+    "scripts/qa/academy-gates.mjs",
+    "scripts/run-task-ownership-isolation.mjs",
+    "src/lib/tasks/crystals.ts",
+    "tests/academy-gates.test.mjs",
+    "tests/task-ownership-isolation.test.mjs"
+  ],
+  "red": {
+    "command": "node scripts/run-task-ownership-isolation.mjs",
+    "expectedFailure": "Global task event ids made child B inherit child A's hint/pass idempotency and legacy hint ownership.",
+    "exitCode": 1,
+    "checks": 6
+  },
+  "green": [
+    {
+      "command": "npm run test:task-ownership-isolation",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 6
+    },
+    {
+      "command": "npm run test:gate-contract",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 9
+    },
+    {
+      "command": "npm run lint",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    },
+    {
+      "command": "npm run build",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    }
+  ],
+  "concerns": [
+    "Build reports existing Turbopack workspace-root and non-distributed rate-limit warnings; neither is modified by this ticket.",
+    "No production ledger migration was needed because legacy rows remain readable only by their recorded owner."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}
