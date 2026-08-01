@@ -1,0 +1,33 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "07ec6f8",
+  "headSha": "6becaff30090d086cf2a465c042c43d688bf5494",
+  "commits": ["6becaff30090d086cf2a465c042c43d688bf5494"],
+  "changedFiles": [
+    "docs/release/evidence/wave-4/W4-MOOD-DECAY-PRIVACY/task-brief.md",
+    "package.json",
+    "scripts/qa/academy-gates.mjs",
+    "src/app/api/cron/mood-decay/route.ts",
+    "tests/academy-gates.test.mjs",
+    "tests/mood-decay-privacy.test.mjs"
+  ],
+  "red": {
+    "command": "node tests/mood-decay-privacy.test.mjs",
+    "expectedFailure": "Warning logs interpolated child/identity-bearing names and catch logged the raw error object.",
+    "exitCode": 1,
+    "checks": 3
+  },
+  "green": [
+    { "command": "npm run test:mood-decay-privacy", "expectedFailure": null, "exitCode": 0, "checks": 3 },
+    { "command": "npm run test:gate-contract", "expectedFailure": null, "exitCode": 0, "checks": 9 },
+    { "command": "npm run lint", "expectedFailure": null, "exitCode": 0, "checks": null },
+    { "command": "npm run build", "expectedFailure": null, "exitCode": 0, "checks": null }
+  ],
+  "concerns": [
+    "Build retains existing Turbopack workspace-root and non-distributed rate-limit warnings; this ticket does not modify them.",
+    "The contract prevents the known identifiers and raw catch object from this route; a wider log-retention audit remains separate work."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}
