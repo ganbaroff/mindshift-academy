@@ -447,9 +447,11 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     for (const prerequisiteId of ["w5-s1", "w5-s2"]) {
       const prerequisite = curriculum.find((session) => session.id === prerequisiteId);
       assert.ok(prerequisite, `curriculum contains ${prerequisiteId}`);
+      milestone = `capstone:${prerequisiteId}:entry`;
       await page.goto(`${baseUrl}/session/${prerequisiteId}?demo=1`, { waitUntil: "domcontentloaded" });
       await page.getByTestId(`task-workspace-${prerequisite.tasks[0].family}`).waitFor({ timeout: 30000 });
       for (const [index, task] of prerequisite.tasks.entries()) {
+        milestone = `capstone:${prerequisiteId}:${task.id}`;
         await driveTask(page, task);
         await passTask(page, task, index === prerequisite.tasks.length - 1);
       }
@@ -461,6 +463,7 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
     await page.getByTestId(`task-workspace-${capstone.tasks[0].family}`).waitFor({ timeout: 30000 });
     for (const [index, task] of capstone.tasks.entries()) {
+      milestone = `capstone:w5-s3:${task.id}`;
       await driveTask(page, task);
       await passTask(page, task, index === capstone.tasks.length - 1);
     }
