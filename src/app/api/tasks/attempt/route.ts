@@ -122,7 +122,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
     }
 
-    // Tutor-down drill: canned encouragement (no live tutor on session path).
+    // Provider degradation never exposes an answer-bearing assessed fallback.
     if (fakeMode === "tutor_down" && !choiceId) {
       await recordDegradeEvent({
         lessonId: sessionId,
@@ -135,13 +135,13 @@ export async function POST(req: Request) {
         feedback: CANNED_TUTOR_ENCOURAGEMENT,
         programStatus: "unclear",
         safetyPassed: true,
-        choiceMode: true,
+        choiceMode: false,
         choices: buildChoiceOptions(task),
         latencyMs: Date.now() - startedAt,
       });
     }
 
-    // Choice-mode path — deterministic, no AI.
+    // Legacy choice requests are fail-closed; programForChoice derives no answers.
     if (choiceId) {
       const program = programForChoice(task, choiceId);
       if (!program || program.status !== "ok") {
@@ -206,7 +206,7 @@ export async function POST(req: Request) {
 
     const forModel = minimizeChildText(utterance);
 
-    // Interpreter down → choice-mode tiles (session can still finish).
+    // Interpreter down: pause safely until deterministic task surfaces take over.
     if (fakeMode === "interpreter_down") {
       await recordDegradeEvent({
         lessonId: sessionId,
@@ -216,10 +216,10 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({
         pass: false,
-        feedback: "Монстрик сейчас думает медленнее обычного. Выбери вариант ниже.",
+        feedback: "Монстрик сейчас не может разобрать слова. Прогресс сохранён — попробуй немного позже.",
         programStatus: "unclear",
         safetyPassed: true,
-        choiceMode: true,
+        choiceMode: false,
         choices: buildChoiceOptions(task),
         latencyMs: Date.now() - startedAt,
       });
@@ -265,10 +265,10 @@ export async function POST(req: Request) {
       });
       return NextResponse.json({
         pass: false,
-        feedback: "Монстрик сейчас думает медленнее обычного. Выбери вариант ниже.",
+        feedback: "Монстрик сейчас не может разобрать слова. Прогресс сохранён — попробуй немного позже.",
         programStatus: "unclear",
         safetyPassed: true,
-        choiceMode: true,
+        choiceMode: false,
         choices: buildChoiceOptions(task),
         latencyMs: Date.now() - startedAt,
       });
@@ -333,7 +333,7 @@ async function finalizeAttempt(params: {
   concept: string;
   family: string;
   tierAuthored: 1 | 2 | 3;
-  role: "collision" | "practice" | "transfer" | string;
+  role: "collision" | "practice" | "prediction" | "transfer" | string;
   outcome: {
     pass: boolean;
     feedback: string;
@@ -385,13 +385,13 @@ async function finalizeAttempt(params: {
   }
 
   if (cost.overBudget && !params.choiceModeUsed && !params.outcome.pass) {
-    // Over budget: still allow choice-mode completion on next request.
+    // Over budget: pause safely; never synthesize a passing answer.
     return NextResponse.json({
       pass: false,
-      feedback: "Монстрик устал считать слова. Выбери вариант ниже — так мы точно закончим.",
+      feedback: "Монстрик устал считать слова. Прогресс сохранён — продолжим немного позже.",
       programStatus: "unclear",
       safetyPassed: true,
-      choiceMode: true,
+      choiceMode: false,
       choices: buildChoiceOptions(
         resolveCurriculumTask(params.sessionId, params.taskId)!.task
       ),
@@ -411,7 +411,10 @@ async function finalizeAttempt(params: {
   });
   const offeredTier = selectOfferedTier(masteryRow?.mastery ?? 0);
   const role =
-    params.role === "collision" || params.role === "practice" || params.role === "transfer"
+    params.role === "collision" ||
+    params.role === "practice" ||
+    params.role === "prediction" ||
+    params.role === "transfer"
       ? params.role
       : "practice";
   const tier = effectiveTaskTier(params.tierAuthored, offeredTier, role);

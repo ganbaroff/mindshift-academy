@@ -31,6 +31,13 @@ export function validateSession(session: SessionContent): ContentIssue[] {
     });
   }
 
+  if (session.requireCollision && !session.tasks.some((t) => t.role === "collision")) {
+    issues.push({ sessionId: id, message: "required collision task is missing" });
+  }
+  if (session.requirePrediction && !session.tasks.some((t) => t.role === "prediction")) {
+    issues.push({ sessionId: id, message: "required prediction task is missing" });
+  }
+
   for (const task of session.tasks) {
     if (!task.promptRu?.trim()) {
       issues.push({ sessionId: id, message: `task ${task.id}: empty prompt` });

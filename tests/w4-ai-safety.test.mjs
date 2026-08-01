@@ -39,11 +39,9 @@ console.log("\n=== W4 fake-AI modes ===");
   check("itog deferred copy non-empty", ITOG_DEFERRED_MESSAGE.length > 10);
 }
 
-console.log("\n=== W4 choice-mode completes tasks ===");
+console.log("\n=== W4 degraded choices never contain a passing answer ===");
 {
   const { programForChoice, passingChoiceId, buildChoiceOptions } = load("src/lib/tasks/choice-mode.ts");
-  const { resolveGridAttempt, resolveRuleAttempt, resolveSequenceAttempt, resolvePatternAttempt, resolveClaimAttempt } =
-    load("src/lib/tasks/attempt.ts");
 
   const gridTask = {
     id: "t",
@@ -57,14 +55,11 @@ console.log("\n=== W4 choice-mode completes tasks ===");
       [0, 1],
     ],
   };
-  const gProg = programForChoice(gridTask, passingChoiceId(gridTask));
-  const gOut = resolveGridAttempt(gProg, gridTask.target, { hideTargetPanel: false });
-  check("choice-mode grid passes", gOut.pass === true);
-  check("choice options >= 2", buildChoiceOptions(gridTask).length >= 2);
+  check("grid fallback cannot derive target", programForChoice(gridTask, passingChoiceId(gridTask)) === null);
+  check("grid fallback exposes no answer-bearing tiles", buildChoiceOptions(gridTask).length === 0);
 
   const seqTask = { ...gridTask, family: "sequence-world", target: undefined };
-  const sProg = programForChoice(seqTask, "full-sandwich");
-  check("choice-mode sequence passes", resolveSequenceAttempt(sProg).pass === true);
+  check("sequence fallback cannot supply canonical steps", programForChoice(seqTask, "full-sandwich") === null);
 
   const ruleTask = {
     ...gridTask,
@@ -77,8 +72,7 @@ console.log("\n=== W4 choice-mode completes tasks ===");
       { id: "m-goal", ahead: "goal", successWhen: "goal" },
     ],
   };
-  const rProg = programForChoice(ruleTask, "safe-rules");
-  check("choice-mode rule passes 4 maps", resolveRuleAttempt(rProg, ruleTask.ruleMaps).pass === true);
+  check("rule fallback cannot supply safe rules", programForChoice(ruleTask, "safe-rules") === null);
 
   const patTask = {
     ...gridTask,
@@ -87,8 +81,7 @@ console.log("\n=== W4 choice-mode completes tasks ===");
     patternExpected: ["2", "4", "6", "8", "10"],
     patternExpandCount: 5,
   };
-  const pProg = programForChoice(patTask, "match-expected");
-  check("choice-mode pattern passes", resolvePatternAttempt(pProg, patTask.patternExpected, 5).pass === true);
+  check("pattern fallback cannot derive the expected rule", programForChoice(patTask, "match-expected") === null);
 
   const claimTask = {
     ...gridTask,
@@ -99,8 +92,7 @@ console.log("\n=== W4 choice-mode completes tasks ===");
       { id: "b", text: "f", truth: false },
     ],
   };
-  const cProg = programForChoice(claimTask, "truthful");
-  check("choice-mode claim passes", resolveClaimAttempt(cProg, claimTask.claims).pass === true);
+  check("claim fallback cannot reveal truth labels", programForChoice(claimTask, "truthful") === null);
 }
 
 console.log("\n=== W4 SessionCost helpers ===");
@@ -110,7 +102,11 @@ console.log("\n=== W4 SessionCost helpers ===");
   check("budget is finite", SESSION_TOKEN_BUDGET > 1000);
   const attemptSrc = readFileSync(join(root, "src/app/api/tasks/attempt/route.ts"), "utf8");
   check("attempt route records SessionCost", attemptSrc.includes("recordSessionCost"));
-  check("attempt route offers choice-mode on interpreter down", attemptSrc.includes("interpreter_down"));
+  check(
+    "interpreter-down path pauses without answer-bearing choice mode",
+    attemptSrc.includes("interpreter_down") &&
+      attemptSrc.includes("Прогресс сохранён — попробуй немного позже.")
+  );
   check("attempt returns 503 on missing provider key path", attemptSrc.includes("NO_CHAT_PROVIDER") && attemptSrc.includes("503"));
 }
 

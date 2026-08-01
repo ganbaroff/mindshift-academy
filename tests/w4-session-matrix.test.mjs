@@ -1,6 +1,6 @@
 /**
- * W4 — all 15 sessions completable via choice-mode (deterministic, no live AI).
- * Proves red gate #7: session can finish without AI.
+ * W4 — authored deterministic programs can complete all 15 sessions.
+ * This is an engine/content matrix, not browser or degraded-mode evidence.
  */
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
@@ -10,7 +10,6 @@ import { writeFileSync, mkdirSync } from "node:fs";
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
-const { passingChoiceId, programForChoice } = require(join(root, "src/lib/tasks/choice-mode.ts"));
 const {
   resolveGridAttempt,
   resolveSequenceAttempt,
@@ -19,6 +18,62 @@ const {
   resolveClaimAttempt,
 } = require(join(root, "src/lib/tasks/attempt.ts"));
 const { sessionComplete } = require(join(root, "src/lib/tasks/session.ts"));
+
+const PASSING_SEQUENCE = [
+  "взять_нож",
+  "положить_хлеб",
+  "намазать_масло",
+  "положить_сыр",
+  "накрыть_хлебом",
+  "подать",
+];
+
+function smallestCycle(items) {
+  for (let size = 1; size < items.length; size++) {
+    if (items.every((item, index) => item === items[index % size])) {
+      return items.slice(0, size);
+    }
+  }
+  return null;
+}
+
+function authoredPassingProgram(task) {
+  if (task.family === "grid-draw") {
+    return task.target?.length ? { status: "ok", cells: task.target } : null;
+  }
+  if (task.family === "sequence-world") {
+    return { status: "ok", steps: PASSING_SEQUENCE };
+  }
+  if (task.family === "rule-runner") {
+    return {
+      status: "ok",
+      rules: [
+        { if: { kind: "tile", value: "open" }, then: "step" },
+        { if: { kind: "tile", value: "goal" }, then: "step" },
+        { if: { kind: "tile", value: "wall" }, then: "wait" },
+        { if: { kind: "tile", value: "trap" }, then: "stop" },
+      ],
+    };
+  }
+  if (task.family === "pattern-expand" && task.patternExpected?.length) {
+    const nums = task.patternExpected.map(Number);
+    if (nums.length >= 2 && nums.every(Number.isFinite)) {
+      const step = nums[1] - nums[0];
+      if (nums.every((value, index) => value === nums[0] + step * index)) {
+        return { status: "ok", rule: { kind: "arithmetic", start: nums[0], step } };
+      }
+    }
+    const items = smallestCycle(task.patternExpected);
+    return items ? { status: "ok", rule: { kind: "cycle", items } } : null;
+  }
+  if (task.family === "claim-check" && task.claims?.length) {
+    return {
+      status: "ok",
+      labels: Object.fromEntries(task.claims.map((claim) => [claim.id, claim.truth])),
+    };
+  }
+  return null;
+}
 
 let passed = 0;
 let failed = 0;
@@ -41,8 +96,7 @@ check("curriculum has 15 sessions", sessions.length === 15);
 for (const session of sessions) {
   const results = [];
   for (const task of session.tasks) {
-    const choiceId = passingChoiceId(task);
-    const program = programForChoice(task, choiceId);
+    const program = authoredPassingProgram(task);
     if (!program || program.status !== "ok") {
       check(`${session.id}/${task.id} program`, false, "no program");
       continue;
@@ -63,11 +117,11 @@ for (const session of sessions) {
       check(`${session.id}/${task.id} execute`, false, String(e.message || e));
       continue;
     }
-    check(`${session.id}/${task.id} choice-mode pass`, outcome.pass === true);
+    check(`${session.id}/${task.id} authored program pass`, outcome.pass === true);
     if (outcome.pass) {
       results.push({
         id: task.id,
-        role: task.role === "collision" ? "collision" : task.role,
+        role: task.role,
         pass: true,
         tier: task.tier,
       });
@@ -79,6 +133,8 @@ for (const session of sessions) {
       concept: session.concept,
       practiceRequired: session.practiceRequired,
       requireTransfer: true,
+      requireCollision: session.requireCollision,
+      requirePrediction: session.requirePrediction,
       minTier: session.minTier,
     },
     results
@@ -91,10 +147,10 @@ mkdirSync(outDir, { recursive: true });
 writeFileSync(
   join(outDir, "session-choice-matrix-receipt.md"),
   [
-    "# W4 session choice-mode matrix (all 15)",
+    "# W4 authored deterministic session matrix (all 15)",
     "",
     `Date: ${new Date().toISOString().slice(0, 10)}`,
-    "Provider: deterministic choice-mode (no live AI)",
+    "Provider: deterministic test programs (no live AI; not browser evidence)",
     "",
     ...lines,
     "",

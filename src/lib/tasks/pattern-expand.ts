@@ -12,11 +12,13 @@ export type PatternProgram =
 
 export type PatternExecuteResult = {
   terms: string[];
+  rule: PatternRule;
 };
 
 export type PatternVerdict = {
   pass: boolean;
   mismatches: { index: number; got: string; expected: string }[];
+  ruleIssue?: "copied_output";
 };
 
 /** Expand rule to `count` terms (0-based generation). */
@@ -34,13 +36,17 @@ export function executePattern(
       terms.push(items[i % items.length]!);
     }
   }
-  return { terms };
+  return { terms, rule };
 }
 
 export function checkPattern(
   result: PatternExecuteResult,
   expected: string[]
 ): PatternVerdict {
+  const copiedOutput =
+    result.rule.kind === "cycle" &&
+    expected.length > 0 &&
+    result.rule.items.length >= expected.length;
   const mismatches: PatternVerdict["mismatches"] = [];
   const n = Math.max(result.terms.length, expected.length);
   for (let i = 0; i < n; i++) {
@@ -48,7 +54,11 @@ export function checkPattern(
     const exp = expected[i] ?? "∅";
     if (got !== exp) mismatches.push({ index: i, got, expected: exp });
   }
-  return { pass: mismatches.length === 0 && expected.length > 0, mismatches };
+  return {
+    pass: mismatches.length === 0 && expected.length > 0 && !copiedOutput,
+    mismatches,
+    ...(copiedOutput ? { ruleIssue: "copied_output" as const } : {}),
+  };
 }
 
 export function renderPatternDiff(
@@ -60,7 +70,9 @@ export function renderPatternDiff(
     `  Ты сказал правило → я получил: ${result.terms.join(", ") || "—"}`,
     `  Ожидалось: ${expected.join(", ")}`,
   ];
-  if (verdict.pass) {
+  if (verdict.ruleIssue === "copied_output") {
+    lines.push("  Получился готовый список, а нужно короткое правило, которое можно повторять.");
+  } else if (verdict.pass) {
     lines.push("  Члены совпали один к одному.");
   } else {
     const first = verdict.mismatches[0];

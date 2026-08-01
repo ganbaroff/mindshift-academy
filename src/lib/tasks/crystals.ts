@@ -210,7 +210,7 @@ export async function isCurriculumSessionComplete(
     .filter((t) => passedSet.has(t.id))
     .map((t) => ({
       id: t.id,
-      role: t.role === "collision" ? ("collision" as const) : t.role,
+      role: t.role,
       pass: true,
       tier: t.tier,
     }));
@@ -220,6 +220,8 @@ export async function isCurriculumSessionComplete(
       concept: session.concept,
       practiceRequired: session.practiceRequired,
       requireTransfer: true,
+      requireCollision: session.requireCollision,
+      requirePrediction: session.requirePrediction,
       minTier: session.minTier,
     },
     results

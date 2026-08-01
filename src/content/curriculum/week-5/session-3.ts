@@ -11,6 +11,8 @@ export const week5Session3: SessionContent = {
   dinnerQuestionRu: "Спросите: «Если кто-то ответил очень уверенно — как проверить, а не поверить?» Пусть ребёнок предложит одну проверку.",
   practiceRequired: 2,
   minTier: 1,
+  requireCollision: true,
+  requirePrediction: true,
   tasks: [
     {
       id: "w5s3-act1",
@@ -24,6 +26,20 @@ export const week5Session3: SessionContent = {
         { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
         { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
         { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w5s3-act1-prediction",
+      role: "prediction",
+      family: "claim-check",
+      tier: 2,
+      promptRu: "Перед следующим прогоном предскажи результат правила: свободно или цель — шаг, стена — ждать, ловушка — стоп.",
+      hintRu: "Для каждой карты сначала посмотри на клетку впереди, затем примени правило буквально.",
+      claims: [
+        { id: "open", text: "На свободной клетке монстр сделает шаг.", truth: true },
+        { id: "wall", text: "Перед стеной монстр сделает шаг.", truth: false },
+        { id: "trap", text: "Перед ловушкой монстр остановится.", truth: true },
+        { id: "goal", text: "Перед целью монстр сделает шаг.", truth: true },
       ],
     },
     {

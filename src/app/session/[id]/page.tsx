@@ -88,9 +88,11 @@ export default function ThinkingSessionPage() {
         concept: session.concept,
         practiceRequired: session.practiceRequired,
         requireTransfer: true,
+        requireCollision: session.requireCollision,
+        requirePrediction: session.requirePrediction,
         minTier: session.minTier,
       },
-      results.map((r) => ({ ...r, role: r.role === "collision" ? "collision" : r.role }))
+      results
     );
   }, [session, results]);
 

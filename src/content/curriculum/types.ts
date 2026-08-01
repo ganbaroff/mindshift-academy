@@ -13,7 +13,7 @@ export const STARTER_CRYSTALS = 15;
 
 export type ContentTask = {
   id: string;
-  role: "collision" | "practice" | "transfer";
+  role: "collision" | "practice" | "prediction" | "transfer";
   family: TaskFamilyId;
   /** Authoring hint; runtime may raise/lower via mastery. */
   tier: 1 | 2 | 3;
@@ -51,6 +51,10 @@ export type SessionContent = {
   tasks: ContentTask[];
   practiceRequired: number;
   minTier: 1 | 2 | 3;
+  /** Require a passed collision task before session completion. */
+  requireCollision?: boolean;
+  /** Require a distinct passed prediction task before session completion. */
+  requirePrediction?: boolean;
 };
 
 /** Public claim — ground-truth stripped (never send answer key to client). */
