@@ -441,7 +441,22 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     );
 
     milestone = "capstone";
-    const capstone = loadCurriculum().find((session) => session.id === "w5-s3");
+    const curriculum = loadCurriculum();
+    // The real learner path must unlock the capstone through its prerequisites;
+    // navigating directly to w5-s3 is correctly rejected by the server.
+    for (const prerequisiteId of ["w5-s1", "w5-s2"]) {
+      const prerequisite = curriculum.find((session) => session.id === prerequisiteId);
+      assert.ok(prerequisite, `curriculum contains ${prerequisiteId}`);
+      await page.goto(`${baseUrl}/session/${prerequisiteId}?demo=1`, { waitUntil: "domcontentloaded" });
+      await page.getByTestId(`task-workspace-${prerequisite.tasks[0].family}`).waitFor({ timeout: 30000 });
+      for (const [index, task] of prerequisite.tasks.entries()) {
+        await driveTask(page, task);
+        await passTask(page, task, index === prerequisite.tasks.length - 1);
+      }
+      await page.getByRole("heading", { name: "Сессия пройдена!" }).waitFor({ timeout: 30000 });
+    }
+
+    const capstone = curriculum.find((session) => session.id === "w5-s3");
     assert.ok(capstone, "curriculum contains capstone session");
     await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
     await page.getByTestId(`task-workspace-${capstone.tasks[0].family}`).waitFor({ timeout: 30000 });
