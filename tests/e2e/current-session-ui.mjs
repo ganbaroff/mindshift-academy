@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import net from "node:net";
-import { chromium } from "playwright";
+import { chromium, firefox, webkit } from "playwright";
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
@@ -391,11 +391,141 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
   }
 }
 
+function browserBinaryUnavailable(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /executable (?:doesn't|does not) exist|browserType\.launch:.*not found|please run.*playwright install/i.test(message);
+}
+
+function crossBrowserFailureReason(browserName, milestone, error) {
+  if (browserBinaryUnavailable(error)) return `${browserName} executable unavailable`;
+  return `${browserName} smoke failed at ${milestone}`;
+}
+
+async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir) {
+  let browser = null;
+  let context = null;
+  let milestone = "entry";
+  const artifacts = [`current-session-${browserName}-trace.zip`, `current-session-${browserName}-capstone.png`];
+  try {
+    try {
+      browser = await browserType.launch({ headless: true });
+    } catch (error) {
+      return {
+        browser: browserName,
+        verdict: browserBinaryUnavailable(error) ? "BLOCKED" : "FAIL",
+        milestones: { entry: false, reloadResume: false, capstone: false },
+        reason: crossBrowserFailureReason(browserName, milestone, error),
+        artifacts: [],
+      };
+    }
+
+    context = await browser.newContext({
+      viewport: { width: 1280, height: 900 },
+      reducedMotion: "reduce",
+    });
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    await installAcademyBrowserRoutes(context);
+    const page = await context.newPage();
+
+    await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+    const firstWorkspace = page.getByTestId("task-workspace-grid-draw");
+    await firstWorkspace.waitFor({ timeout: 30000 });
+    const initialPrompt = await page.getByTestId("task-prompt-caption").innerText();
+    milestone = "reloadResume";
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
+    assert.equal(
+      await page.getByTestId("task-prompt-caption").innerText(),
+      initialPrompt,
+      `${browserName} reload changed the visible task`
+    );
+
+    milestone = "capstone";
+    const capstone = loadCurriculum().find((session) => session.id === "w5-s3");
+    assert.ok(capstone, "curriculum contains capstone session");
+    await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
+    await page.getByTestId(`task-workspace-${capstone.tasks[0].family}`).waitFor({ timeout: 30000 });
+    for (const [index, task] of capstone.tasks.entries()) {
+      await driveTask(page, task);
+      await passTask(page, task, index === capstone.tasks.length - 1);
+    }
+    await page.getByRole("heading", { name: "Итог: своими словами" }).waitFor({ timeout: 30000 });
+    await page.getByTestId("formulation-input").fill("Сначала проверить условие, затем проверить результат.");
+    await page.getByTestId("formulation-submit").click();
+    await page.getByTestId("capstone-calm-closure").waitFor({ timeout: 30000 });
+    await page.screenshot({ path: join(outDir, `current-session-${browserName}-capstone.png`), fullPage: true });
+    return {
+      browser: browserName,
+      verdict: "PASS",
+      milestones: { entry: true, reloadResume: true, capstone: true },
+      artifacts,
+    };
+  } catch (error) {
+    return {
+      browser: browserName,
+      verdict: browserBinaryUnavailable(error) ? "BLOCKED" : "FAIL",
+      milestones: {
+        entry: milestone !== "entry",
+        reloadResume: milestone === "capstone",
+        capstone: false,
+      },
+      reason: crossBrowserFailureReason(browserName, milestone, error),
+      artifacts: [],
+    };
+  } finally {
+    if (context) await context.tracing.stop({ path: join(outDir, `current-session-${browserName}-trace.zip`) }).catch(() => {});
+    if (context) await context.close().catch(() => {});
+    if (browser) await browser.close().catch(() => {});
+  }
+}
+
+async function verifyCrossBrowserSmokes(outDir) {
+  const checks = [
+    ["firefox", firefox],
+    ["webkit", webkit],
+  ];
+  const browsers = [];
+  for (const [browserName, browserType] of checks) {
+    // Each engine receives a fresh database and Next process. The deterministic
+    // test user is intentionally shared by the app, so reusing Chromium's DB
+    // would let an earlier run make capstone appear complete without this
+    // engine exercising its visible controls.
+    const tempRoot = mkdtempSync(join(tmpdir(), `mindshift-${browserName}-`));
+    const databaseUrl = `file:${join(tempRoot, "academy.db").replaceAll("\\", "/")}`;
+    let server = null;
+    try {
+      await prepareDatabase(databaseUrl, process.env);
+      const port = await freePort();
+      const running = startServer(port, databaseUrl);
+      server = running.child;
+      await running.ready;
+      browsers.push(await verifyCrossBrowserSmoke(browserType, browserName, `http://localhost:${port}`, outDir));
+    } catch {
+      browsers.push({
+        browser: browserName,
+        verdict: "FAIL",
+        milestones: { entry: false, reloadResume: false, capstone: false },
+        reason: `${browserName} isolated smoke environment failed`,
+        artifacts: [],
+      });
+    } finally {
+      await stopServer(server);
+    }
+  }
+  const verdict = browsers.some((item) => item.verdict === "FAIL")
+    ? "FAIL"
+    : browsers.some((item) => item.verdict === "BLOCKED")
+      ? "BLOCKED"
+      : "PASS";
+  return { verdict, browsers };
+}
+
 function persistReceipt(outDir, receipt) {
   writeFileSync(join(outDir, "browser-receipt.json"), `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
 }
 
-export async function runCurrentSessionUiSuite() {
+export async function runCurrentSessionUiSuite(options = {}) {
+  const crossBrowser = Boolean(options.crossBrowser);
   const outDir = evidenceDirectory();
   mkdirSync(outDir, { recursive: true });
   const startedAt = new Date().toISOString();
@@ -431,8 +561,11 @@ export async function runCurrentSessionUiSuite() {
 
     await verifyMobile(browser, baseUrl, outDir);
     const coverage = await verifyAllSessions(browser, baseUrl, outDir);
+    const crossBrowserEvidence = crossBrowser
+      ? await verifyCrossBrowserSmokes(outDir)
+      : null;
     const receipt = {
-      verdict: "PASS",
+      verdict: crossBrowserEvidence?.verdict ?? "PASS",
       startedAt,
       finishedAt: new Date().toISOString(),
       browser: "chromium",
@@ -444,9 +577,15 @@ export async function runCurrentSessionUiSuite() {
       directAttemptCallsFromTest: false,
       productionBypassAccepted: false,
       artifacts: ["mobile-320-w1-s1.png", "desktop-w1-s1.png", "current-session-chromium-trace.zip"],
+      ...(crossBrowserEvidence ? { crossBrowser: crossBrowserEvidence } : {}),
     };
     persistReceipt(outDir, receipt);
     console.log(`CURRENT_SESSION_UI: ${coverage.sessions}/15 sessions, ${coverage.tasks} tasks, ${coverage.families}/5 families`);
+    if (crossBrowserEvidence) {
+      for (const browserEvidence of crossBrowserEvidence.browsers) {
+        console.log(`CURRENT_SESSION_CROSS_BROWSER: ${browserEvidence.browser} ${browserEvidence.verdict}`);
+      }
+    }
     console.log(`BROWSER_EVIDENCE=${outDir}`);
     return receipt;
   } catch (error) {

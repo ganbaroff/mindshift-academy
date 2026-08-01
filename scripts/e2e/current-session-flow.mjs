@@ -20,6 +20,8 @@ if (typeof suite.runCurrentSessionUiSuite !== "function") {
   process.exit(2);
 }
 
-const result = await suite.runCurrentSessionUiSuite();
+const result = await suite.runCurrentSessionUiSuite({
+  crossBrowser: process.argv.includes("--cross-browser"),
+});
 const verdict = result === true ? "PASS" : result?.verdict;
 process.exit(verdict === "PASS" ? 0 : verdict === "BLOCKED" ? 2 : 1);
