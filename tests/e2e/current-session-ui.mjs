@@ -538,6 +538,12 @@ export async function runCurrentSessionUiSuite(options = {}) {
 
   try {
     assert.equal(hasDevTestBypass(new Headers({ "x-test-bypass": "true" }), "production"), false, "production rejects the test seam");
+    // Run Firefox/WebKit before the Chromium server is created. Next dev uses
+    // the worktree's build cache; concurrent servers can reset that cache and
+    // produce a transport-level refusal before the page is even reached.
+    const crossBrowserEvidence = crossBrowser
+      ? await verifyCrossBrowserSmokes(outDir)
+      : null;
     await prepareDatabase(databaseUrl, process.env);
     const port = await freePort();
     const running = startServer(port, databaseUrl);
@@ -561,9 +567,6 @@ export async function runCurrentSessionUiSuite(options = {}) {
 
     await verifyMobile(browser, baseUrl, outDir);
     const coverage = await verifyAllSessions(browser, baseUrl, outDir);
-    const crossBrowserEvidence = crossBrowser
-      ? await verifyCrossBrowserSmokes(outDir)
-      : null;
     const receipt = {
       verdict: crossBrowserEvidence?.verdict ?? "PASS",
       startedAt,
