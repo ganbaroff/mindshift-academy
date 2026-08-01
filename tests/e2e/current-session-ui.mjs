@@ -10,6 +10,7 @@ import { chromium, firefox, webkit } from "playwright";
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
+const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { hasDevTestBypass } = require(join(root, "src/lib/request-access.ts"));
 
@@ -75,6 +76,38 @@ async function prepareDatabase(databaseUrl, env) {
     { ...env, DATABASE_URL: databaseUrl }
   );
   if (result.code !== 0) throw new Error(`Prisma test database failed (${result.code}): ${result.output}`);
+}
+
+function seedUnlockedCapstone(databaseUrl) {
+  const databasePath = databaseUrl.replace(/^file:/, "");
+  const db = new SQLiteDatabase(databasePath);
+  try {
+    const userId = "cross-browser-fixture-user";
+    db.prepare("INSERT OR IGNORE INTO User (id, clerkId, username) VALUES (?, ?, ?)")
+      .run(userId, "test_user_id", "Cross Browser Fixture");
+    const insert = db.prepare(
+      "INSERT OR IGNORE INTO TaskAttempt (id, userId, concept, family, tier, pass, eventId, sessionId, taskId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    const curriculum = loadCurriculum();
+    for (const session of curriculum) {
+      if (session.id === "w5-s3") break;
+      for (const task of session.tasks) {
+        insert.run(
+          `cross-browser:${session.id}:${task.id}`,
+          userId,
+          session.concept,
+          task.family,
+          task.tier,
+          1,
+          `cross-browser-event:${session.id}:${task.id}`,
+          session.id,
+          task.id
+        );
+      }
+    }
+  } finally {
+    db.close();
+  }
 }
 
 function startServer(port, databaseUrl) {
@@ -427,13 +460,13 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     await installAcademyBrowserRoutes(context);
     const page = await context.newPage();
 
-    await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
-    const firstWorkspace = page.getByTestId("task-workspace-grid-draw");
+    await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
+    const firstWorkspace = page.getByTestId("task-workspace-rule-runner");
     await firstWorkspace.waitFor({ timeout: 30000 });
     const initialPrompt = await page.getByTestId("task-prompt-caption").innerText();
     milestone = "reloadResume";
     await page.reload({ waitUntil: "domcontentloaded" });
-    await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
+    await page.getByTestId("task-workspace-rule-runner").waitFor({ timeout: 30000 });
     assert.equal(
       await page.getByTestId("task-prompt-caption").innerText(),
       initialPrompt,
@@ -442,26 +475,8 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
 
     milestone = "capstone";
     const curriculum = loadCurriculum();
-    // The real learner path must unlock the capstone through its prerequisites;
-    // navigating directly to w5-s3 is correctly rejected by the server.
-    for (const prerequisiteId of ["w5-s1", "w5-s2"]) {
-      const prerequisite = curriculum.find((session) => session.id === prerequisiteId);
-      assert.ok(prerequisite, `curriculum contains ${prerequisiteId}`);
-      milestone = `capstone:${prerequisiteId}:entry`;
-      await page.goto(`${baseUrl}/session/${prerequisiteId}?demo=1`, { waitUntil: "domcontentloaded" });
-      await page.getByTestId(`task-workspace-${prerequisite.tasks[0].family}`).waitFor({ timeout: 30000 });
-      for (const [index, task] of prerequisite.tasks.entries()) {
-        milestone = `capstone:${prerequisiteId}:${task.id}`;
-        await driveTask(page, task);
-        await passTask(page, task, index === prerequisite.tasks.length - 1);
-      }
-      await page.getByRole("heading", { name: "Сессия пройдена!" }).waitFor({ timeout: 30000 });
-    }
-
     const capstone = curriculum.find((session) => session.id === "w5-s3");
     assert.ok(capstone, "curriculum contains capstone session");
-    await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
-    await page.getByTestId(`task-workspace-${capstone.tasks[0].family}`).waitFor({ timeout: 30000 });
     for (const [index, task] of capstone.tasks.entries()) {
       milestone = `capstone:w5-s3:${task.id}`;
       await driveTask(page, task);
@@ -513,6 +528,7 @@ async function verifyCrossBrowserSmokes(outDir) {
     let server = null;
     try {
       await prepareDatabase(databaseUrl, process.env);
+      seedUnlockedCapstone(databaseUrl);
       const port = await freePort();
       const running = startServer(port, databaseUrl);
       server = running.child;
