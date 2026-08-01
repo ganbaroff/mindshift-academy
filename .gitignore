@@ -59,6 +59,9 @@ scripts/e2e/*.png
 # Installed agent skills (dev tooling, regenerable)
 .claude/skills/
 
+# Isolated Codex implementation worktrees
+/.worktrees/
+
 # Local CI crystal harness DB
 ci-crystals*.db
 
