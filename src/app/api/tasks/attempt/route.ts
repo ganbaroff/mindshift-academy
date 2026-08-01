@@ -123,7 +123,7 @@ export async function POST(req: Request) {
     }
 
     // Provider degradation never exposes an answer-bearing assessed fallback.
-    if (fakeMode === "tutor_down" && !choiceId) {
+    if (fakeMode === "tutor_down" && !choiceId && !program) {
       await recordDegradeEvent({
         lessonId: sessionId,
         providerStage: "tutor",

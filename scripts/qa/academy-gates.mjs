@@ -35,6 +35,7 @@ export const GATE_DEFINITIONS = Object.freeze({
       ["npm", ["run", "test:interpreter-contract"]],
       ["npm", ["run", "test:session"]],
       ["npm", ["run", "test:attempt-trust"]],
+      ["npm", ["run", "test:structured-attempt"]],
       ["npm", ["run", "test:dual-children"]],
       ["npm", ["run", "test:w2"]],
       ["npm", ["run", "test:w3"]],

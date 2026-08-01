@@ -13,4 +13,3 @@
 - Stop condition: any production bypass, client answer-key field, database migration, or live provider requirement.
 - Timebox: 20 minutes per bounded worker/reviewer action.
 - Agent receipt path: `docs/release/evidence/wave-1/W1-STRUCTURED-ATTEMPT/agent-receipt.json`.
-

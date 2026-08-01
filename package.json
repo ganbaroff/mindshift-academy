@@ -21,6 +21,7 @@
     "test:e2e:sessions": "node scripts/e2e/w4-session-matrix.mjs",
     "test:e2e:current-sessions": "node scripts/e2e/current-session-flow.mjs",
     "test:attempt-trust": "npx tsx tests/attempt-server-trust.test.mjs",
+    "test:structured-attempt": "node scripts/run-structured-attempt-contract.mjs",
     "test:dual-children": "npx tsx tests/dual-children.test.mjs",
     "test:crystals": "node scripts/test-crystals.mjs",
     "test:parent-journey": "node scripts/e2e/parent-journey.mjs",
