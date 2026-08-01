@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getViewerAccess } from "@/lib/access";
 import { DashboardMonster } from "@/components/dashboard/DashboardMonster";
 import { ManageConsent } from "@/components/dashboard/ManageConsent";
+import { OperatorContactLine } from "@/components/support/OperatorContactLine";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -263,6 +264,16 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
         </div>
 
         <div className="space-y-6">
+          <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+              Поддержка пилота
+            </p>
+            <h2 className="mt-2 text-xl font-semibold text-white">Связь с оператором</h2>
+            <div className="mt-4">
+              <OperatorContactLine />
+            </div>
+          </section>
+
           {/* COPPA (§7): real (non-demo) parents can view + revoke consent here. */}
           {!isDemo && userId && <ManageConsent />}
 

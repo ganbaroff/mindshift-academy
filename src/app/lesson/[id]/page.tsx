@@ -8,7 +8,7 @@ import { ChatWindow } from "@/components/chat/ChatWindow";
 import { PromptInput } from "@/components/chat/PromptInput";
 import { MonsterCard } from "@/components/modals/MonsterCard";
 import { GeneratingOverlay } from "@/components/modals/GeneratingOverlay";
-import { GachaCalendar } from "@/components/gamification/GachaCalendar";
+import { MilestoneJourneyMap } from "@/components/gamification/MilestoneJourneyMap";
 import { LESSON_PROMPTS } from "@/lib/curriculum";
 import { CheckCircle2, BookOpen, Trophy, ShieldCheck, ChevronRight, Lock } from "lucide-react";
 import Link from "next/link";
@@ -45,9 +45,6 @@ export default function LessonPage() {
   const lessonId = parseInt(idStr, 10) || 1;
   const lessonKey = `lesson${lessonId}` as keyof typeof LESSON_PROMPTS;
   const lessonData = LESSON_PROMPTS[lessonKey];
-
-  const [streak, setStreak] = useState(0);
-  const [lastActive, setLastActive] = useState<string | null>(null);
 
   const [showSplash, setShowSplash] = useState(false);
   const [splashTitle, setSplashTitle] = useState("");
@@ -114,8 +111,6 @@ export default function LessonPage() {
         if (data && !data.error) {
           setCrystals(data.crystals ?? 0);
           setTotalXp(data.xp ?? 0);
-          setStreak(data.streak ?? 0);
-          if (data.lastActive) setLastActive(data.lastActive);
           // SERVER-AUTHORITATIVE RECONCILE: rebuild the completed-lesson unlock set from
           // server truth, overwriting the optimistic localStorage cache. The store now
           // caches server progress rather than owning an independent ledger — so a fresh
@@ -226,10 +221,10 @@ export default function LessonPage() {
   if (!lessonData) return null;
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-sans relative">
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col font-sans relative">
       <AnimatePresence>
         {showSplash && (
-          <div className="fixed inset-0 z-[110] bg-[#070b14]/97 flex flex-col items-center justify-center pointer-events-none">
+          <div className="fixed inset-0 z-[110] bg-[var(--color-bg-base)]/97 flex flex-col items-center justify-center pointer-events-none">
             <motion.div
               initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -385,7 +380,7 @@ export default function LessonPage() {
 
           </div>
 
-          <GachaCalendar currentStreak={streak} lastActive={lastActive} />
+          <MilestoneJourneyMap />
 
         </div>
 

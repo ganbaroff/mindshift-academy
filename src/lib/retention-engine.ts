@@ -1,4 +1,6 @@
-// Retention Engine — Gacha, Streak, and Mood mechanics
+// Retention Engine — mood floor + frozen streak fields.
+// Gacha randomness REMOVED (canon §6 / engagement §2). Milestone chest replaces it.
+// export function rollGacha — REMOVED; do not restore.
 
 export const STREAK_MATH = {
   MOOD_DROP_PER_MISSED_DAY: 25,
@@ -8,17 +10,10 @@ export const STREAK_MATH = {
   WARNING_THRESHOLD: 40,
 };
 
+/** @deprecated Daily-login gacha pools — kept as empty frozen constants for grandfather docs only. */
 export const GACHA_PROBABILITIES = {
-  DAILY_DROP: [
-    { type: "crystals" as const, amount: 10, chance: 0.50 },
-    { type: "crystals" as const, amount: 50, chance: 0.30 },
-    { type: "skin_shard" as const, itemId: "cyber_visor", chance: 0.15 },
-    { type: "crystals" as const, amount: 200, chance: 0.05 },
-  ],
-  DAY_7_GUARANTEE: [
-    { type: "skin" as const, itemId: "neon_wings", chance: 0.70 },
-    { type: "skin" as const, itemId: "golden_crown", chance: 0.30 },
-  ],
+  DAILY_DROP: [] as const,
+  DAY_7_GUARANTEE: [] as const,
   SHARDS_NEEDED_FOR_SKIN: 5,
 };
 
@@ -29,11 +24,10 @@ export const DAILY_QUESTS = [
   { id: "q4", promptTarget: "VISION", title: "Покажи мне кота", reward: 40 },
 ];
 
-// --- Logic functions ---
-
 export function applyMoodDecay(currentMood: number, missedDays: number): number {
   const decayed = currentMood - STREAK_MATH.MOOD_DROP_PER_MISSED_DAY * missedDays;
-  return Math.max(0, decayed);
+  // Floor 55: absence must never turn the pet sad (<50 = sad face) — no neglect punishment.
+  return Math.max(55, decayed);
 }
 
 export function recoverMood(currentMood: number): number {
@@ -51,41 +45,7 @@ export function getMissedDays(lastActive: Date): number {
   const now = new Date();
   const diffMs = now.getTime() - lastActive.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  return Math.max(0, diffDays - 1); // same-day and next-day = 0 missed
-}
-
-type GachaDrop =
-  | { type: "crystals"; amount: number }
-  | { type: "skin_shard"; itemId: string }
-  | { type: "skin"; itemId: string };
-
-export function rollGacha(streakDay: number): GachaDrop {
-  const isDay7 = streakDay > 0 && streakDay % 7 === 0;
-  const pool = isDay7
-    ? GACHA_PROBABILITIES.DAY_7_GUARANTEE
-    : GACHA_PROBABILITIES.DAILY_DROP;
-
-  const roll = Math.random();
-  let cumulative = 0;
-
-  for (const item of pool) {
-    cumulative += item.chance;
-    if (roll <= cumulative) {
-      if (item.type === "crystals") {
-        return { type: "crystals", amount: (item as { amount: number }).amount };
-      }
-      if (item.type === "skin_shard" || item.type === "skin") {
-        return { type: item.type, itemId: (item as { itemId: string }).itemId };
-      }
-    }
-  }
-
-  // Fallback to first item (should never reach here)
-  const fallback = pool[0];
-  if (fallback.type === "crystals") {
-    return { type: "crystals", amount: (fallback as { amount: number }).amount };
-  }
-  return { type: fallback.type as "skin", itemId: (fallback as { itemId: string }).itemId };
+  return Math.max(0, diffDays - 1);
 }
 
 export function getActiveDailyQuest(): (typeof DAILY_QUESTS)[number] {

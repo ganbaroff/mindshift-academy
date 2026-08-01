@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Errors } from "@/lib/errors";
 
 export async function GET(req: Request) {
   try {
@@ -99,6 +100,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ ...user, completedLessonIds });
   } catch (error) {
     console.error("Database user error:", error);
-    return NextResponse.json({ error: "Failed to fetch or create user" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

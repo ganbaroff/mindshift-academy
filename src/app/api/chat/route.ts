@@ -15,6 +15,7 @@ import { isLessonRelevantTutorReply } from "@/lib/lesson-output";
 // Reward logic (getOrCreateLesson + updateUserRewards, incl. the anti-double-award guards)
 // lives in @/lib/rewards. The reward GATE stays here at the call site (serverStepId === activeStepId).
 import { updateUserRewards } from "@/lib/rewards";
+import { Errors } from "@/lib/errors";
 
 // SOUL: map a lesson step (1..5) to its persona prompt. The CALL SITE keys this off the
 // VIEWED lesson (viewedStepId = the URL lessonId), NOT the server progress step — so a child
@@ -141,11 +142,11 @@ export async function POST(req: Request) {
     // 1. Rate limiting — this is the MOST expensive endpoint (~6 LLM calls: moderation x2 +
     //    judge + tutor + output x2), so it MUST fail-closed in prod without a distributed limiter.
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
     }
     const rl = await rateLimit("chat", clerkId, 20, 10);
     if (!rl.success) {
-      return NextResponse.json({ error: "Слишком много запросов, подожди немного." }, { status: 429 });
+      return NextResponse.json({ error: Errors.rateLimited }, { status: 429 });
     }
 
     // 2. Zod Validation
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
     const parseResult = chatRequestSchema.safeParse(rawBody);
 
     if (!parseResult.success) {
-      return NextResponse.json({ error: "Invalid payload data", details: parseResult.error.format() }, { status: 400 });
+      return NextResponse.json({ error: Errors.badRequest, details: parseResult.error.format() }, { status: 400 });
     }
 
     const { messages, activeStepId, activeSkin, activeMonsterName, eventId } = parseResult.data;
@@ -203,9 +204,19 @@ export async function POST(req: Request) {
     const chat = provider.getChatClient();
     const safety = provider.getSafetyClient();
 
+    // FAIL-CLOSED: a missing chat client in prod means "Simulated Mode" below would silently
+    // serve an unmoderated, AI-less canned experience to children. Only the dev/test-bypass
+    // path may run without a configured provider; a real prod misconfiguration must 503.
+    if (!chat && !isDev) {
+      return NextResponse.json(
+        { error: "Сервис временно недоступен. Попробуй позже." },
+        { status: 503 }
+      );
+    }
+
     if (chat && !safety) {
       return NextResponse.json(
-        { error: "Service temporarily unavailable" },
+        { error: Errors.unavailable },
         { status: 503 }
       );
     }

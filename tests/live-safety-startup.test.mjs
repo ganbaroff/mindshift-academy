@@ -22,7 +22,9 @@ if (!Number.isFinite(configuredDeadline) || configuredDeadline < 600000) {
 
 const child = spawn(process.execPath, ["tests/safety.test.mjs"], {
   cwd: root,
-  env: { ...process.env, DEADLINE_MS: "10000" },
+  // A cold first-page compilation on the current Next/Turbopack stack takes
+  // about 13s on Windows. Keep this lane bounded, but allow normal startup.
+  env: { ...process.env, DEADLINE_MS: "25000" },
   stdio: ["ignore", "pipe", "pipe"],
 });
 

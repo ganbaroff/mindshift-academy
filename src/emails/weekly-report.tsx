@@ -45,7 +45,7 @@ export default function WeeklyReport({
   return (
     <Html>
       <Head />
-      <Preview>{`${childName} прошёл ${lessonsCompleted} из ${totalLessons} уроков на этой неделе`}</Preview>
+      <Preview>{`${childName} прошёл(а) ${lessonsCompleted} из ${totalLessons} уроков на этой неделе`}</Preview>
       <Body style={bodyStyle}>
         <Container style={containerStyle}>
           <Section style={headerStyle}>

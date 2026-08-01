@@ -9,7 +9,7 @@ export const Header = () => {
   const crystals = useGameStore((state) => state.crystals);
 
   return (
-    <header className="sticky top-0 z-50 bg-[#090d16]/80 backdrop-blur-xl border-b border-white/5 px-8 py-4 flex justify-between items-center">
+    <header className="sticky top-0 z-50 bg-[var(--color-bg-base)]/80 backdrop-blur-xl border-b border-white/5 px-8 py-4 flex justify-between items-center">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center font-extrabold text-white text-xl shadow-[0_0_20px_rgba(139,92,246,0.3)]">
           M

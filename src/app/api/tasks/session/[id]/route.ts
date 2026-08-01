@@ -14,6 +14,7 @@ import {
   isCurriculumSessionComplete,
 } from "@/lib/tasks/crystals";
 import { nextSessionId, prerequisiteSessionId } from "@/lib/tasks/resolve-task";
+import { selectOfferedTier } from "@/lib/tasks/tier-select";
 
 export async function GET(
   req: Request,
@@ -24,11 +25,23 @@ export async function GET(
     const isDev = process.env.NODE_ENV === "development";
     const testBypass = req.headers.get("x-test-bypass") === "true";
 
+    // Bypass header outside development is never accepted — clean 403, never 500.
+    if (testBypass && !isDev) {
+      return NextResponse.json(
+        { error: "Test bypass unavailable.", code: "BYPASS_UNAVAILABLE" },
+        { status: 403 }
+      );
+    }
+
     if (isDev && testBypass) {
       clerkId = "test_user_id";
     } else {
-      const { auth } = await import("@clerk/nextjs/server");
-      clerkId = (await auth()).userId;
+      try {
+        const { auth } = await import("@clerk/nextjs/server");
+        clerkId = (await auth()).userId;
+      } catch {
+        return NextResponse.json({ error: "Требуется вход в аккаунт." }, { status: 401 });
+      }
     }
 
     if (!clerkId) {
@@ -78,6 +91,12 @@ export async function GET(
     const crystals = await ensureStarterCrystals(dbUser.id);
     const passedTaskIds = await listPassedTaskIds(dbUser.id, id);
     const complete = await isCurriculumSessionComplete(dbUser.id, id);
+    const masteryRow = await prisma.conceptMastery.findUnique({
+      where: { userId_concept: { userId: dbUser.id, concept: session.concept } },
+      select: { mastery: true },
+    });
+    const mastery = masteryRow?.mastery ?? 0;
+    const offeredTier = selectOfferedTier(mastery);
 
     // Never ship hintRu until /api/hints/reveal spends crystals.
     // Collision targets stay in payload for post-fail reveal; UI hides until fail.
@@ -87,9 +106,11 @@ export async function GET(
       crystals,
       sessionComplete: complete,
       nextSessionId: nextSessionId(id),
+      mastery,
+      offeredTier,
     });
   } catch (err) {
     console.error("tasks/session error:", err);
-    return NextResponse.json({ error: "Внутренняя ошибка." }, { status: 500 });
+    return NextResponse.json({ error: "Что-то пошло не так. Попробуй ещё раз!" }, { status: 500 });
   }
 }

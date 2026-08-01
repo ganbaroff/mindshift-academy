@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyMoodDecay, getMissedDays, shouldWarnParent } from "@/lib/retention-engine";
+import { Errors } from "@/lib/errors";
 
 // Vercel Cron: runs daily at 03:00 UTC (07:00 Baku)
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/mood-decay", "schedule": "0 3 * * *" }] }
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
   }
 
   try {
@@ -70,7 +71,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error("[mood-decay] CRON failed:", error);
     return NextResponse.json(
-      { error: "Mood decay CRON failed" },
+      { error: Errors.calmRetry },
       { status: 500 }
     );
   }

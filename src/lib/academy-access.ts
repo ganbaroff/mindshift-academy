@@ -28,3 +28,39 @@ export function parentConsentRedirect({
   if (!allowed) return "/no-access";
   return null;
 }
+
+/**
+ * Signed-in continue path for "/" and "/enter-code" (W2 / NEW-04).
+ * Never leaves a signed-in visitor on a dead code form when they already have a session.
+ */
+export type ContinuePathInput = AcademyEntryState & {
+  /** Monster already hatched → skip onboarding hatch. */
+  hasMonster: boolean;
+  /** First incomplete thinking-curriculum session id, or null if all 15 done. */
+  nextSessionId: string | null;
+};
+
+export type ContinuePath = {
+  href: string;
+  labelRu: string;
+};
+
+export function signedInContinuePath(input: ContinuePathInput): ContinuePath | null {
+  if (!input.signedIn) return null;
+  if (!input.allowed) {
+    return { href: "/no-access", labelRu: "Нет доступа" };
+  }
+  if (!input.consentValid) {
+    return { href: "/consent", labelRu: "Подтвердить согласие" };
+  }
+  if (!input.hasMonster) {
+    return { href: "/onboarding", labelRu: "Продолжить знакомство" };
+  }
+  if (input.nextSessionId) {
+    return {
+      href: `/session/${input.nextSessionId}`,
+      labelRu: "Продолжить обучение",
+    };
+  }
+  return { href: "/dashboard", labelRu: "В кабинет родителя" };
+}

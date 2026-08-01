@@ -210,7 +210,7 @@ export const PromptInput = () => {
           id: Math.random().toString(),
           sender: "monster",
           avatar: "⚠️",
-          text: "Произошла ошибка при отправке запроса на сервер. Убедись, что Next.js работает!"
+          text: "Что-то пошло не так. Попробуй ещё раз!"
         }
       ]);
     } finally {
@@ -280,7 +280,7 @@ export const PromptInput = () => {
         </p>
         <button 
           onClick={handleGenerateMonster}
-          className="w-full transform rounded-full bg-gradient-to-r from-amber-500 to-amber-600 px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-black shadow-lg transition-[transform,box-shadow,background-color] hover:scale-[1.02] hover:from-amber-600 hover:to-amber-700 hover:shadow-amber-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="w-full transform rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg transition-[transform,box-shadow,background-color] hover:scale-[1.02] hover:bg-[var(--color-primary-violet)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           ✨ Оживить и получить карточку монстра! ✨
         </button>
@@ -342,7 +342,7 @@ export const PromptInput = () => {
           type="button"
           disabled={inputLocked || isSending}
           aria-busy={isSending}
-          className="flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:from-violet-600 hover:to-cyan-600 hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          className="flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-[var(--color-primary-violet)] hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <span>{isSending ? "Отправка…" : "Отправить промпт"}</span>
           {isSending ? (

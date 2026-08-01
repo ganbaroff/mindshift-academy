@@ -1,0 +1,103 @@
+# W4 session choice-mode matrix (all 15)
+
+Date: 2026-08-01
+Provider: deterministic choice-mode (no live AI)
+
+- PASS curriculum has 15 sessions
+- PASS w1-s1/w1s1-collision choice-mode pass
+- PASS w1-s1/w1s1-p1 choice-mode pass
+- PASS w1-s1/w1s1-p2 choice-mode pass
+- PASS w1-s1/w1s1-p3 choice-mode pass
+- PASS w1-s1/w1s1-p4 choice-mode pass
+- PASS w1-s1/w1s1-p5 choice-mode pass
+- PASS w1-s1/w1s1-transfer choice-mode pass
+- PASS w1-s1 sessionComplete
+- PASS w1-s2/w1s2-collision choice-mode pass
+- PASS w1-s2/w1s2-p1 choice-mode pass
+- PASS w1-s2/w1s2-p2 choice-mode pass
+- PASS w1-s2/w1s2-p3 choice-mode pass
+- PASS w1-s2/w1s2-p4 choice-mode pass
+- PASS w1-s2/w1s2-p5 choice-mode pass
+- PASS w1-s2/w1s2-transfer choice-mode pass
+- PASS w1-s2 sessionComplete
+- PASS w1-s3/w1s3-collision choice-mode pass
+- PASS w1-s3/w1s3-p1 choice-mode pass
+- PASS w1-s3/w1s3-p2 choice-mode pass
+- PASS w1-s3/w1s3-p3 choice-mode pass
+- PASS w1-s3/w1s3-p4 choice-mode pass
+- PASS w1-s3/w1s3-p5 choice-mode pass
+- PASS w1-s3/w1s3-transfer choice-mode pass
+- PASS w1-s3 sessionComplete
+- PASS w2-s1/w2s1-collision choice-mode pass
+- PASS w2-s1/w2s1-p1 choice-mode pass
+- PASS w2-s1/w2s1-p2 choice-mode pass
+- PASS w2-s1/w2s1-p3 choice-mode pass
+- PASS w2-s1/w2s1-transfer choice-mode pass
+- PASS w2-s1 sessionComplete
+- PASS w2-s2/w2s2-collision choice-mode pass
+- PASS w2-s2/w2s2-p1 choice-mode pass
+- PASS w2-s2/w2s2-p2 choice-mode pass
+- PASS w2-s2/w2s2-p3 choice-mode pass
+- PASS w2-s2/w2s2-transfer choice-mode pass
+- PASS w2-s2 sessionComplete
+- PASS w2-s3/w2s3-collision choice-mode pass
+- PASS w2-s3/w2s3-p1 choice-mode pass
+- PASS w2-s3/w2s3-p2 choice-mode pass
+- PASS w2-s3/w2s3-p3 choice-mode pass
+- PASS w2-s3/w2s3-transfer choice-mode pass
+- PASS w2-s3 sessionComplete
+- PASS w3-s1/w3s1-collision choice-mode pass
+- PASS w3-s1/w3s1-p1 choice-mode pass
+- PASS w3-s1/w3s1-p2 choice-mode pass
+- PASS w3-s1/w3s1-p3 choice-mode pass
+- PASS w3-s1/w3s1-transfer choice-mode pass
+- PASS w3-s1 sessionComplete
+- PASS w3-s2/w3s2-collision choice-mode pass
+- PASS w3-s2/w3s2-p1 choice-mode pass
+- PASS w3-s2/w3s2-p2 choice-mode pass
+- PASS w3-s2/w3s2-p3 choice-mode pass
+- PASS w3-s2/w3s2-transfer choice-mode pass
+- PASS w3-s2 sessionComplete
+- PASS w3-s3/w3s3-collision choice-mode pass
+- PASS w3-s3/w3s3-p1 choice-mode pass
+- PASS w3-s3/w3s3-p2 choice-mode pass
+- PASS w3-s3/w3s3-p3 choice-mode pass
+- PASS w3-s3/w3s3-transfer choice-mode pass
+- PASS w3-s3 sessionComplete
+- PASS w4-s1/w4s1-collision choice-mode pass
+- PASS w4-s1/w4s1-p1 choice-mode pass
+- PASS w4-s1/w4s1-p2 choice-mode pass
+- PASS w4-s1/w4s1-p3 choice-mode pass
+- PASS w4-s1/w4s1-transfer choice-mode pass
+- PASS w4-s1 sessionComplete
+- PASS w4-s2/w4s2-collision choice-mode pass
+- PASS w4-s2/w4s2-p1 choice-mode pass
+- PASS w4-s2/w4s2-p2 choice-mode pass
+- PASS w4-s2/w4s2-p3 choice-mode pass
+- PASS w4-s2/w4s2-transfer choice-mode pass
+- PASS w4-s2 sessionComplete
+- PASS w4-s3/w4s3-collision choice-mode pass
+- PASS w4-s3/w4s3-p1 choice-mode pass
+- PASS w4-s3/w4s3-p2 choice-mode pass
+- PASS w4-s3/w4s3-p3 choice-mode pass
+- PASS w4-s3/w4s3-transfer choice-mode pass
+- PASS w4-s3 sessionComplete
+- PASS w5-s1/w5s1-collision choice-mode pass
+- PASS w5-s1/w5s1-p1 choice-mode pass
+- PASS w5-s1/w5s1-p2 choice-mode pass
+- PASS w5-s1/w5s1-p3 choice-mode pass
+- PASS w5-s1/w5s1-transfer choice-mode pass
+- PASS w5-s1 sessionComplete
+- PASS w5-s2/w5s2-collision choice-mode pass
+- PASS w5-s2/w5s2-p1 choice-mode pass
+- PASS w5-s2/w5s2-p2 choice-mode pass
+- PASS w5-s2/w5s2-p3 choice-mode pass
+- PASS w5-s2/w5s2-transfer choice-mode pass
+- PASS w5-s2 sessionComplete
+- PASS w5-s3/w5s3-act1 choice-mode pass
+- PASS w5-s3/w5s3-act1-practice choice-mode pass
+- PASS w5-s3/w5s3-act2 choice-mode pass
+- PASS w5-s3/w5s3-act3 choice-mode pass
+- PASS w5-s3 sessionComplete
+
+ALL GREEN

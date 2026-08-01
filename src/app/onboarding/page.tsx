@@ -265,20 +265,20 @@ function OnboardingContent() {
                 {petName} готов учиться!
               </p>
               <p className="text-sm text-white/60">
-                Первый урок: научи {petName} говорить. Напиши ему 3 слова, и он
-                ответит.
+                Первая сессия: научи {petName} слышать только то, что сказано —
+                клетка за клеткой, без угадывания.
               </p>
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-surface/80 p-4 text-left">
               <p className="text-xs font-medium uppercase tracking-widest text-white/40">
-                Урок 1 из 5
+                Сессия 1 из 15 · Неделя 1
               </p>
               <p className="mt-1 text-sm font-semibold text-white">
-                Пробуждение
+                Монстр слышит только то, что сказано
               </p>
               <p className="mt-1 text-sm text-white/60">
-                Дай питомцу 3 характеристики, чтобы он ожил
+                Точные команды для ИИ — старт программы мышления
               </p>
             </div>
 
@@ -286,7 +286,7 @@ function OnboardingContent() {
               onClick={goToFirstLesson}
               className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
             >
-              Начать урок
+              Начать сессию
               <ArrowRight className="h-4 w-4" />
             </button>
           </motion.div>
@@ -299,7 +299,7 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#070b14] flex flex-col items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col items-center justify-center text-white font-sans">
         <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin motion-reduce:animate-none" />
         <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора…</p>
       </div>

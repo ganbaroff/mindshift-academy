@@ -38,10 +38,58 @@ export function validateSession(session: SessionContent): ContentIssue[] {
     if (!task.hintRu?.trim()) {
       issues.push({ sessionId: id, message: `task ${task.id}: empty hintRu (scaffold required)` });
     }
-    if (task.family === "grid-draw") {
-      if (!task.target?.length) {
-        issues.push({ sessionId: id, message: `task ${task.id}: grid-draw needs target` });
-      }
+
+    // Deterministic check payload required per family (handoff W1 + §9).
+    switch (task.family) {
+      case "grid-draw":
+        if (!task.target?.length) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: grid-draw needs deterministic target`,
+          });
+        }
+        break;
+      case "sequence-world":
+        // Success is pure execute→served; no extra payload required.
+        break;
+      case "rule-runner":
+        if (!task.ruleMaps?.length) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: rule-runner needs ruleMaps (deterministic check)`,
+          });
+        }
+        break;
+      case "pattern-expand":
+        if (!task.patternExpected?.length) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: pattern-expand needs patternExpected`,
+          });
+        }
+        break;
+      case "claim-check":
+        if (!task.claims?.length) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: claim-check needs claims`,
+          });
+        } else {
+          const hasTrue = task.claims.some((c) => c.truth === true);
+          const hasFalse = task.claims.some((c) => c.truth === false);
+          if (!hasTrue || !hasFalse) {
+            issues.push({
+              sessionId: id,
+              message: `task ${task.id}: claim-check needs both true and false claims`,
+            });
+          }
+        }
+        break;
+      default:
+        issues.push({
+          sessionId: id,
+          message: `task ${task.id}: unknown family`,
+        });
     }
   }
 

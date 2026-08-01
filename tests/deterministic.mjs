@@ -66,7 +66,7 @@ const { deriveLockState, modalShouldOpen, completedLessonIdsFromUser, stepReward
 );
 const { getLesson } = await import("../src/lib/curriculum.ts");
 const { isPublicApiPath, hasDevTestBypass } = await import("../src/lib/request-access.ts");
-const { academyEntryRedirect, parentConsentRedirect } = await import("../src/lib/academy-access.ts");
+const { academyEntryRedirect, parentConsentRedirect, signedInContinuePath } = await import("../src/lib/academy-access.ts");
 const eq = (x, y) => JSON.stringify(x) === JSON.stringify(y);
 
 check("modal-on-replay stays shut (challengeCompleted but no grant)", modalShouldOpen(true, null) === false);
@@ -121,6 +121,23 @@ check(
     academyEntryRedirect({ signedIn: true, allowed: true, consentValid: false }) === "/consent" &&
     academyEntryRedirect({ signedIn: true, allowed: true, consentValid: true }) === null,
   "entry policy must preserve unauthenticated Clerk handling and prioritise allowlist before consent"
+);
+check(
+  "signed-in continue path never leaves ready learners on a dead code form",
+  signedInContinuePath({
+    signedIn: true,
+    allowed: true,
+    consentValid: true,
+    hasMonster: true,
+    nextSessionId: "w1-s2",
+  })?.href === "/session/w1-s2" &&
+    signedInContinuePath({
+      signedIn: false,
+      allowed: true,
+      consentValid: true,
+      hasMonster: true,
+      nextSessionId: "w1-s1",
+    }) === null
 );
 check(
   "parent consent route sends signed-out parents to sign-in and denied accounts to no-access",

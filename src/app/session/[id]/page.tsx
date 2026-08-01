@@ -9,12 +9,14 @@ import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
 import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
+import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 
 type TaskResult = {
   id: string;
@@ -35,6 +37,8 @@ type AttemptResponse = {
   crystalsAwarded?: boolean | null;
   safetyPassed?: boolean;
   error?: string;
+  choiceMode?: boolean;
+  choices?: { id: string; labelRu: string }[];
 };
 
 export default function ThinkingSessionPage() {
@@ -60,6 +64,13 @@ export default function ThinkingSessionPage() {
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
   const [hintError, setHintError] = useState<string | null>(null);
+  const [consentEnded, setConsentEnded] = useState(false);
+  const [formulationText, setFormulationText] = useState("");
+  const [formulationEcho, setFormulationEcho] = useState<string | null>(null);
+  const [formulationBusy, setFormulationBusy] = useState(false);
+  const [formulationError, setFormulationError] = useState<string | null>(null);
+  const [certificateReady, setCertificateReady] = useState(false);
+  const [choices, setChoices] = useState<{ id: string; labelRu: string }[] | null>(null);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -98,7 +109,7 @@ export default function ThinkingSessionPage() {
             prerequisiteSessionId?: string;
           };
           if (sessionRes.status === 403 && body.code === "CONSENT_REQUIRED") {
-            router.replace("/consent");
+            if (!cancelled) setConsentEnded(true);
             return;
           }
           if (sessionRes.status === 403 && body.code === "SESSION_LOCKED") {
@@ -188,7 +199,7 @@ export default function ThinkingSessionPage() {
         cost?: number;
       };
       if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
-        router.replace("/consent");
+        setConsentEnded(true);
         return;
       }
       if (!res.ok) {
@@ -208,18 +219,27 @@ export default function ThinkingSessionPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session || !currentTask || sendingRef.current || !utterance.trim()) return;
+    if (!session || !currentTask || sendingRef.current) return;
+    if (!utterance.trim() && !choices) return;
+
+    await runAttempt({ utterance: utterance.trim() });
+  };
+
+  const runAttempt = async (opts: { utterance?: string; choiceId?: string }) => {
+    if (!session || !currentTask || sendingRef.current) return;
+    if (!opts.choiceId && !opts.utterance?.trim()) return;
 
     sendingRef.current = true;
     setIsSending(true);
     setFeedback(null);
     setFilledCells([]);
     setMismatchCells([]);
+    if (!opts.choiceId) setChoices(null);
 
     try {
-      // Server loads target/family/tier — client must not be trusted.
       const payload = {
-        utterance: utterance.trim(),
+        utterance: opts.utterance ?? "",
+        choiceId: opts.choiceId,
         eventId: crypto.randomUUID(),
         sessionId: session.id,
         taskId: currentTask.id,
@@ -233,16 +253,21 @@ export default function ThinkingSessionPage() {
       const data = (await res.json()) as AttemptResponse & { code?: string };
 
       if (res.status === 403 && data.code === "CONSENT_REQUIRED") {
-        router.replace("/consent");
+        setConsentEnded(true);
         return;
       }
 
       if (!res.ok) {
-        setFeedback(data.error ?? "Что-то пошло не так. Попробуй ещё раз.");
+        setFeedback(data.error ?? "Что-то пошло не так. Попробуй ещё раз!");
         return;
       }
 
       setFeedback(data.feedback);
+      if (data.choiceMode && data.choices?.length) {
+        setChoices(data.choices);
+      } else if (opts.choiceId || data.pass) {
+        setChoices(null);
+      }
       if (typeof data.crystals === "number") setCrystals(data.crystals);
       if (data.filledCells?.length) setFilledCells(data.filledCells);
       if (data.missingCells?.length || data.extraCells?.length) {
@@ -266,6 +291,8 @@ export default function ThinkingSessionPage() {
         if (!prefersReducedMotion) {
           confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#a78bfa", "#22d3ee"] });
         }
+      } else {
+        soundEngine.play("fail");
       }
     } catch {
       setFeedback("Связь потерялась. Подожди секунду и попробуй снова.");
@@ -275,9 +302,37 @@ export default function ThinkingSessionPage() {
     }
   };
 
+  if (consentEnded) {
+    return (
+      <div
+        className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col"
+        data-testid="consent-ended-calm"
+      >
+        <Header />
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="text-center space-y-5 max-w-md">
+            <MonsterAvatar mood="thinking" color="#a78bfa" size={96} />
+            <h1 className="text-2xl font-semibold">Сессия завершена</h1>
+            <p className="text-sm text-white/70 leading-relaxed">
+              Родитель закрыл доступ к обучению. Это спокойная пауза — прогресс
+              сохранён. Когда согласие снова будет подтверждено, можно продолжить
+              с того же места.
+            </p>
+            <Link
+              href="/"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white"
+            >
+              На главный экран
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (loadError) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
@@ -303,7 +358,7 @@ export default function ThinkingSessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
@@ -313,8 +368,85 @@ export default function ThinkingSessionPage() {
   }
 
   if (done) {
+    const isCapstone = session.id === CAPSTONE_SESSION_ID;
+
+    if (isCapstone && formulationEcho) {
+      return (
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+          <Header />
+          <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
+        </div>
+      );
+    }
+
+    if (isCapstone) {
+      return (
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+          <Header />
+          <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
+            <MonsterAvatar mood="celebrating" size={120} />
+            <h1 className="text-3xl font-bold text-center">Итог: своими словами</h1>
+            <p className="text-gray-300 text-center">
+              Напиши главное правило мышления. Качество не мешает завершить путь — важно
+              подать формулировку.
+            </p>
+            <textarea
+              value={formulationText}
+              onChange={(e) => setFormulationText(e.target.value)}
+              rows={4}
+              className="w-full rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-base text-white"
+              placeholder="Моё главное правило мышления…"
+              data-testid="formulation-input"
+            />
+            {formulationError ? (
+              <p className="text-sm text-violet-200" role="alert">
+                {formulationError}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              disabled={formulationBusy}
+              data-testid="formulation-submit"
+              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
+              onClick={async () => {
+                setFormulationBusy(true);
+                setFormulationError(null);
+                try {
+                  const res = await fetch("/api/formulation/submit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      utterance: formulationText,
+                      sessionId: CAPSTONE_SESSION_ID,
+                    }),
+                  });
+                  const body = await res.json().catch(() => ({}));
+                  if (!res.ok) {
+                    setFormulationError(
+                      typeof body.error === "string"
+                        ? body.error
+                        : "Не удалось сохранить. Попробуй ещё раз."
+                    );
+                    return;
+                  }
+                  setFormulationEcho(
+                    typeof body.echo === "string" ? body.echo : formulationText
+                  );
+                  setCertificateReady(true);
+                } finally {
+                  setFormulationBusy(false);
+                }
+              }}
+            >
+              Подать формулировку
+            </button>
+          </main>
+        </div>
+      );
+    }
+
     return (
-      <div className="min-h-screen bg-[#090d16] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-8 text-center">
           <MonsterAvatar mood="happy" size={120} />
@@ -348,7 +480,7 @@ export default function ThinkingSessionPage() {
 
   if (pastLastWithoutComplete) {
     return (
-      <div className="min-h-screen bg-[#090d16] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-6 text-center">
           <MonsterAvatar mood="thinking" size={100} />
@@ -390,11 +522,11 @@ export default function ThinkingSessionPage() {
         : "Цель — совпасть с этой картинкой";
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-white flex flex-col">
+    <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
       <Header />
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <div className="flex items-center gap-3 text-sm text-gray-400">
-          <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-white">
+        <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+          <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] min-h-11">
             <ArrowLeft className="w-4 h-4" />
             Назад
           </Link>
@@ -405,8 +537,14 @@ export default function ThinkingSessionPage() {
         </div>
 
         <header className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-violet-300/70">{progressLabel}</p>
-          <h1 className="text-2xl sm:text-3xl font-bold">{session.titleRu}</h1>
+          <p
+            className="text-xs uppercase tracking-widest text-violet-300/70"
+            aria-live="polite"
+            data-testid="session-progress-live"
+          >
+            {progressLabel}
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold leading-normal">{session.titleRu}</h1>
           <ol className="flex flex-wrap gap-2" aria-label="Прогресс заданий">
             {session.tasks.map((task, i) => {
               const doneTask = results.some((r) => r.id === task.id && r.pass);
@@ -414,12 +552,12 @@ export default function ThinkingSessionPage() {
               return (
                 <li key={task.id}>
                   <span
-                    className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-xs font-bold border ${
+                    className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-xs font-bold border ${
                       doneTask
                         ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
                         : current
                           ? "bg-violet-500/20 border-violet-400/50 text-white"
-                          : "bg-white/5 border-white/10 text-gray-500"
+                          : "bg-white/5 border-white/10 text-[var(--text-muted)]"
                     }`}
                     aria-current={current ? "step" : undefined}
                     title={doneTask ? "Пройдено" : current ? "Сейчас" : `Задание ${i + 1}`}
@@ -453,7 +591,9 @@ export default function ThinkingSessionPage() {
         <section className="grid sm:grid-cols-[auto_1fr] gap-6 items-start">
           <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
           <div className="space-y-4">
-            <p className="text-lg leading-relaxed">{currentTask?.promptRu}</p>
+            <p className="text-lg leading-relaxed not-italic" data-testid="task-prompt-caption">
+              {currentTask?.promptRu}
+            </p>
 
             {currentTask?.family === "grid-draw" ? (
               <div className="space-y-2">
@@ -504,6 +644,29 @@ export default function ThinkingSessionPage() {
               </pre>
             ) : null}
 
+            {choices?.length ? (
+              <div
+                className="space-y-2"
+                data-testid="choice-mode"
+                role="group"
+                aria-label="Варианты без голоса монстра"
+              >
+                <p className="text-sm text-[var(--text-secondary)]">Выбери вариант:</p>
+                {choices.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    disabled={isSending}
+                    data-testid={`choice-${c.id}`}
+                    onClick={() => void runAttempt({ choiceId: c.id })}
+                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-violet-400/40 bg-violet-500/15 text-left font-semibold hover:bg-violet-500/25 disabled:opacity-50"
+                  >
+                    {c.labelRu}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
               <label className="sr-only" htmlFor="task-utterance">
                 Твоя инструкция монстру
@@ -515,14 +678,14 @@ export default function ThinkingSessionPage() {
                 onChange={(e) => setUtterance(e.target.value)}
                 disabled={isSending}
                 maxLength={500}
-                placeholder="Скажи монстру, что закрасить…"
-                className="flex-1 min-h-11 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:border-violet-400/50 outline-none"
+                placeholder="Скажи монстру, что сделать…"
+                className="flex-1 min-h-11 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:border-violet-400/50 outline-none text-base"
                 autoComplete="off"
               />
               <button
                 type="submit"
                 disabled={isSending || !utterance.trim()}
-                className="min-h-11 min-w-[44px] px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-cyan-500 font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                className="min-h-11 min-w-[44px] px-5 py-3 rounded-2xl bg-[var(--color-primary)] text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-300"
               >
                 {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 <span>Отправить</span>

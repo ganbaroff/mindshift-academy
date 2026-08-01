@@ -16,6 +16,8 @@ export async function restartChildData(clerkId: string): Promise<ChildDataMutati
     await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
     await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
     await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
+    await tx.sessionCost.deleteMany({ where: { userId: user.id } });
+    await tx.reportDeliveryLog.deleteMany({ where: { userId: user.id } });
     await tx.inventory.deleteMany({ where: { userId: user.id } });
     await tx.monster.deleteMany({ where: { userId: user.id } });
     await tx.lessonProgress.deleteMany({ where: { userId: user.id } });
@@ -36,6 +38,17 @@ export async function restartChildData(clerkId: string): Promise<ChildDataMutati
 export async function deleteChildData(clerkId: string): Promise<ChildDataMutationResult> {
   return prisma.$transaction(async (tx) => {
     const user = await tx.user.findUnique({ where: { clerkId } });
+
+    // Access codes carry PII (issuedForEmail) tied either to this account directly or to
+    // the parent email on record. Erasure must remove both, or a code survives account
+    // deletion and still resolves to the erased family's email on GET /access-code/activate.
+    const consentRow = await tx.parentalConsent.findUnique({ where: { clerkId } });
+    const accessCodes = await tx.accessCode.deleteMany({
+      where: consentRow?.parentEmail
+        ? { OR: [{ clerkId }, { issuedForEmail: consentRow.parentEmail }] }
+        : { clerkId },
+    });
+
     const [consent, verification] = await Promise.all([
       tx.parentalConsent.deleteMany({ where: { clerkId } }),
       tx.consentVerification.deleteMany({ where: { clerkId } }),
@@ -48,9 +61,19 @@ export async function deleteChildData(clerkId: string): Promise<ChildDataMutatio
       await tx.taskAttempt.deleteMany({ where: { userId: user.id } });
       await tx.conceptMastery.deleteMany({ where: { userId: user.id } });
       await tx.atlasLearningSession.deleteMany({ where: { userId: user.id } });
+      await tx.sessionCost.deleteMany({ where: { userId: user.id } });
+      await tx.reportDeliveryLog.deleteMany({ where: { OR: [{ userId: user.id }, { clerkId }] } });
       await tx.user.delete({ where: { id: user.id } });
+    } else {
+      await tx.reportDeliveryLog.deleteMany({ where: { clerkId } });
     }
 
-    return { found: Boolean(user) || consent.count > 0 || verification.count > 0 };
+    return {
+      found:
+        Boolean(user) ||
+        consent.count > 0 ||
+        verification.count > 0 ||
+        accessCodes.count > 0,
+    };
   });
 }

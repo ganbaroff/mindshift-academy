@@ -4,6 +4,7 @@ import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/
 // The deterministic, no-egress preview logic lives in @/lib/silhouette so it can be asserted
 // offline AND so this route stays provably free of any external-AI / moderation import.
 import { deterministicSilhouette } from "@/lib/silhouette";
+import { Errors } from "@/lib/errors";
 
 const requestSchema = z.object({
   words: z.array(z.string().trim().min(1).max(32)).length(3),
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
     // Keep the cheap public-funnel rate limit (abuse cap). It runs first so a 429 is cheap.
     // Fail-closed in prod if the limiter is misconfigured (documented in DEPLOY-CHECKLIST).
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
     }
     const clientKey = publicClientKey(req);
     if (!clientKey) {

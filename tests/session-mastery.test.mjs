@@ -4,9 +4,6 @@ import { masteryAfterTask, tierForMastery } from "../src/lib/tasks/mastery.ts";
 import { spacingAfterOutcome, pickReviewConcept, isDue } from "../src/lib/tasks/spacing.ts";
 import { sessionComplete } from "../src/lib/tasks/session.ts";
 import { loadCurriculum, validateSession } from "../src/content/curriculum/index.ts";
-import { week1Session1 } from "../src/content/curriculum/week-1/session-1.ts";
-import { week1Session2 } from "../src/content/curriculum/week-1/session-2.ts";
-import { week1Session3 } from "../src/content/curriculum/week-1/session-3.ts";
 
 let pass = 0;
 let fail = 0;
@@ -91,17 +88,22 @@ console.log("\n=== session completion ===");
 
 console.log("\n=== content ===");
 {
-  for (const [label, session] of [
-    ["week1 session1", week1Session1],
-    ["week1 session2", week1Session2],
-    ["week1 session3", week1Session3],
-  ]) {
-    const issues = validateSession(session);
-    check(`${label} valid`, issues.length === 0, JSON.stringify(issues));
-  }
   const all = loadCurriculum();
-  check("curriculum loads 3 sessions", all.length === 3 && all.map((s) => s.id).join(",") === "w1-s1,w1-s2,w1-s3");
-  check("has misconception", Boolean(all[0].misconception));
+  check("curriculum loads 15 sessions", all.length === 15);
+  check(
+    "session ids w1-s1…w5-s3",
+    all.map((s) => s.id).join(",") ===
+      "w1-s1,w1-s2,w1-s3,w2-s1,w2-s2,w2-s3,w3-s1,w3-s2,w3-s3,w4-s1,w4-s2,w4-s3,w5-s1,w5-s2,w5-s3"
+  );
+  let validCount = 0;
+  for (const session of all) {
+    const issues = validateSession(session);
+    const ok = issues.length === 0;
+    if (ok) validCount += 1;
+    check(`${session.id} valid`, ok, JSON.stringify(issues));
+  }
+  check("content validator 15/15", validCount === 15);
+  check("has misconception", all.every((s) => Boolean(s.misconception)));
   check("has transfer", all.every((s) => s.tasks.some((t) => t.role === "transfer")));
   check(
     "practice count meets required",

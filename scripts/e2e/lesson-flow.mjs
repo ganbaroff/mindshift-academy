@@ -14,6 +14,7 @@ const STARTUP_ONLY = process.env.E2E_STARTUP_ONLY === "1";
 const WRONG_ANSWER_ONLY = process.env.E2E_WRONG_ANSWER_ONLY === "1";
 const BROWSER_NAME = process.env.E2E_BROWSER || "chromium";
 const BROWSER_TYPES = { chromium, firefox, webkit };
+const API_RESPONSE_TIMEOUT_MS = 45_000;
 const INPUT_SEL = 'textarea[aria-label="Напиши промпт для питомца"]';
 const SEND_SEL = 'button:has-text("Отправить промпт")';
 const LOG_SEL = '[role="log"][aria-label="Чат с питомцем"]';
@@ -143,7 +144,11 @@ async function runLesson(page, lessonId, prompt, label) {
     // Send (retry once if the message doesn't register).
     async function sendOnce() {
       await page.fill(INPUT_SEL, prompt);
-      await page.click(SEND_SEL);
+      // The CTA's hover transform can keep Playwright's stability heuristic
+      // oscillating even though the visible, enabled button accepts a click.
+      // Force only bypasses that synthetic stability check; the real click
+      // handler, request and rendered response remain the E2E contract.
+      await page.click(SEND_SEL, { force: true });
     }
 
     // Register the authoritative response waiter *before* sending. An async
@@ -151,21 +156,30 @@ async function runLesson(page, lessonId, prompt, label) {
     // reply can arrive before `resp.json()` has resolved, producing a false E2E
     // failure despite a correct API response. This promise makes the response a
     // required, awaited part of the contract in every browser engine.
+    const requestStartedAt = Date.now();
+    let apiResponseError = null;
     const apiResponse = page.waitForResponse(
       (resp) => resp.url().includes("/api/chat") && resp.request().method() === "POST",
-      { timeout: 30000 }
-    );
+      { timeout: API_RESPONSE_TIMEOUT_MS }
+    ).then((response) => {
+      console.log(`[${label}] API response observed after ${Date.now() - requestStartedAt}ms`);
+      return response;
+    }).catch((error) => {
+      apiResponseError = error;
+      return null;
+    });
     await sendOnce();
 
     // Wait for a NEW monster reply (beyond the intro) to render, up to ~30s.
     let replied = false;
-    const deadline = Date.now() + 30000;
+    const deadline = Date.now() + API_RESPONSE_TIMEOUT_MS;
     let retried = false;
     while (Date.now() < deadline) {
       const replies = await monsterReplies(page);
       if (replies.length > introCount) {
         result.tutor_reply = replies[replies.length - 1];
         replied = true;
+        console.log(`[${label}] reply rendered after ${Date.now() - requestStartedAt}ms`);
         break;
       }
       // If ~6s passed with no user message even registered, retry the send once.
@@ -180,7 +194,9 @@ async function runLesson(page, lessonId, prompt, label) {
       await sleep(700);
     }
 
-    const apiBody = await (await apiResponse).json();
+    const observedResponse = await apiResponse;
+    if (!observedResponse) throw apiResponseError;
+    const apiBody = await observedResponse.json();
     result.chat_responded = replied;
     result.api = apiBody;
     result.lesson_relevant = LESSON_REPLY_SIGNALS[lessonId]?.test(result.tutor_reply) ?? false;

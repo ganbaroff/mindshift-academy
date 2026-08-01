@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { hasValidConsent } from "@/lib/consent";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import {
   atlasDecide,
   AtlasAdapterError,
 } from "@/lib/atlas-learning/adapter.server";
 import { energyLevelSchema } from "@/lib/atlas-learning/contracts";
+import { Errors } from "@/lib/errors";
 
 const decideBodySchema = z.object({
   concept: z.string().min(1).default("sigmoid"),
@@ -42,20 +45,35 @@ async function resolveUser(req: Request) {
 export async function POST(req: Request) {
   try {
     const user = await resolveUser(req);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user || !user.clerkId) {
+      return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
+    }
+    const clerkId = user.clerkId;
+
+    if (rateLimitMisconfiguredInProd()) {
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
+    }
+    const rl = await rateLimit("learning-decide", clerkId, 30, 60);
+    if (!rl.success) {
+      return NextResponse.json({ error: Errors.rateLimited }, { status: 429 });
+    }
+    if (!(await hasValidConsent(clerkId))) {
+      return NextResponse.json({ error: Errors.consentRequired }, { status: 403 });
     }
 
     const parsed = decideBodySchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
+        { error: Errors.badRequest, details: parsed.error.flatten() },
         { status: 400 },
       );
     }
 
     const body = parsed.data;
-    const learnerId = body.learnerId ?? user.id;
+    if (body.learnerId && body.learnerId !== user.id) {
+      return NextResponse.json({ error: Errors.forbidden }, { status: 403 });
+    }
+    const learnerId = user.id;
 
     const result = await atlasDecide({
       userId: user.id,
@@ -91,6 +109,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: err.message, code: err.code }, { status: 502 });
     }
     console.error("[learning/decide]", err);
-    return NextResponse.json({ error: "Decide failed" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

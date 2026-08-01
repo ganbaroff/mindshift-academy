@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSignIn } from "@clerk/nextjs";
+import { useAuth, useSignIn } from "@clerk/nextjs";
 import { ArrowRight } from "lucide-react";
 import { MascotCue } from "@/components/guide/MascotCue";
 import { TapHint } from "@/components/guide/TapHint";
+import { SignedInContinue } from "@/components/access/SignedInContinue";
 
 // Child code-entry screen (spec §2/§3). Kid-friendly segmented input: one big box per character,
 // auto-advance, paste-friendly, uppercase, ambiguous-char-free alphabet. On a valid code the
@@ -23,6 +24,7 @@ const clean = (s: string) =>
 
 export default function EnterCodePage() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
   // Installed Clerk exposes the futures/signals sign-in API: useSignIn() -> { signIn } where
   // signIn is a nullable SignInFutureResource with a dedicated ticket() method + finalize().
   const { signIn } = useSignIn();
@@ -78,6 +80,17 @@ export default function EnterCodePage() {
       setBusy(false);
     }
   };
+
+  if (isLoaded && isSignedIn) {
+    return (
+      <main className="grid min-h-screen place-items-center px-6 py-12">
+        <SignedInContinue variant="replace-form" />
+        <p className="mt-6 text-sm text-white/50" aria-live="polite">
+          Ищем, где ты остановился…
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="grid min-h-screen place-items-center px-6 py-12">

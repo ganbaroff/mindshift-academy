@@ -183,11 +183,15 @@ export async function verifyCode(
       return { ok: false, reason: "mismatch" };
     }
 
-    // Single-use: consume the code the instant it matches.
-    await prisma.consentVerification.update({
-      where: { clerkId },
+    // Single-use: consume the code atomically. A conditional updateMany (not a plain
+    // update) ensures two concurrent requests that both matched the hash can't both
+    // win — only the one that still sees consumedAt:null flips it. Closes the P0-02
+    // double-redeem race (a plain update let both concurrent requests "succeed").
+    const consumed = await prisma.consentVerification.updateMany({
+      where: { clerkId, consumedAt: null },
       data: { consumedAt: new Date() },
     });
+    if (consumed.count !== 1) return { ok: false, reason: "already_used" };
     return { ok: true, parentEmail: row.parentEmail };
   } catch (err) {
     console.error(

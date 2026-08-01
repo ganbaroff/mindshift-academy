@@ -8,6 +8,7 @@ const isProtectedPage = createRouteMatcher([
   "/lesson(.*)",
   "/consent(.*)",
   "/session(.*)",
+  "/certificate(.*)",
 ]);
 
 const isDemoPageBypass = (req: Request) =>

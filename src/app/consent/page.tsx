@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Mail, KeyRound, Loader2, CheckCircle2 } from "lucide-react";
+import { OperatorContactLine } from "@/components/support/OperatorContactLine";
 
 // Parental consent screen (docs/COPPA-CONSENT-SPEC.md §3 flow, RU-only release copy).
 // Flow: enter parent email (defaults to Clerk email) -> request 6-digit code -> enter code +
@@ -20,6 +21,7 @@ const COPY: {
   processing: string;
   never: string;
   rights: string;
+  additionalDisclosures: string;
   optA: string;
   optB: string;
   emailLabel: string;
@@ -46,6 +48,8 @@ const COPY: {
       "Чего мы не делаем: не продаём данные, не показываем рекламу, не используем данные ребёнка для маркетинга.",
     rights:
       "Ваши права: в любой момент посмотреть прогресс, удалить данные Academy и отозвать согласие — тогда чат отключится.",
+    additionalDisclosures:
+      "Срок хранения: прогресс и данные питомца хранятся, пока активен ваш аккаунт; при отзыве согласия мы удаляем данные ребёнка по вашему запросу. Отказаться от согласия или отозвать его можно в любой момент без каких-либо последствий для аккаунта — это ваше право. Если включена озвучка ответов питомца, текст обрабатывается сервисом синтеза речи (TTS); голос ребёнка мы не записываем.",
     optA:
       "Я родитель/опекун и даю согласие на сбор и использование данных моего ребёнка для обучения в MindShift Academy.",
     optB:
@@ -185,6 +189,11 @@ export default function ConsentPage() {
           <p>{t.processing}</p>
           <p>{t.never}</p>
           <p>{t.rights}</p>
+          <p>{t.additionalDisclosures}</p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+          <OperatorContactLine />
         </div>
 
         {/* Error region — purple per design system, never red. */}

@@ -5,6 +5,7 @@ import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { createVerificationCode } from "@/lib/consent";
 import { sendConsentCode } from "@/lib/consent-email";
 import { isEmailAllowed } from "@/lib/access";
+import { Errors } from "@/lib/errors";
 
 // POST /api/consent/request-code — parent requests a 6-digit verification code (spec §3 step 3).
 // Body: { locale? }. The code is sent only to the signed-in Clerk account's email. Generates +
@@ -18,13 +19,13 @@ export async function POST(req: Request) {
   try {
     const { userId: clerkId } = await auth();
     if (!clerkId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: Errors.unauthorized }, { status: 401 });
     }
 
     const user = await currentUser();
     const parentEmail = user?.primaryEmailAddress?.emailAddress?.trim().toLowerCase() ?? "";
     if (!parentEmail) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+      return NextResponse.json({ error: Errors.badRequest }, { status: 400 });
     }
     if (!isEmailAllowed(parentEmail)) {
       return NextResponse.json(
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     // Throttle: a code request sends a real email — cap it per account. Fail-closed in prod
     // without a distributed limiter (consistent with the other write endpoints).
     if (rateLimitMisconfiguredInProd()) {
-      return NextResponse.json({ error: "Service temporarily unavailable" }, { status: 503 });
+      return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
     }
     const rl = await rateLimit("consent-code", clerkId, 5, 60);
     if (!rl.success) {
@@ -48,7 +49,7 @@ export async function POST(req: Request) {
 
     const parsed = schema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+      return NextResponse.json({ error: Errors.badRequest }, { status: 400 });
     }
 
     const locale = parsed.data.locale ?? "ru";
@@ -69,6 +70,6 @@ export async function POST(req: Request) {
       "[consent/request-code] error:",
       (error as { name?: string })?.name ?? "Error"
     );
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: Errors.calmRetry }, { status: 500 });
   }
 }

@@ -1,0 +1,71 @@
+import type { SessionContent } from "../types";
+
+export const week5Session3: SessionContent = {
+  id: "w5-s3",
+  week: 5,
+  session: 3,
+  concept: "verification",
+  misconception: "если ИИ ответил уверенно, значит правильно",
+  titleRu: "Выпускной квест",
+  explanationRu: "Три акта без нового материала: точное условное правило на новой карте, поймать уверенную ложь, минимальная починка. Затем своими словами — главное правило мышления.",
+  dinnerQuestionRu: "Спросите: «Если кто-то ответил очень уверенно — как проверить, а не поверить?» Пусть ребёнок предложит одну проверку.",
+  practiceRequired: 2,
+  minTier: 1,
+  tasks: [
+    {
+      id: "w5s3-act1",
+      role: "collision",
+      family: "rule-runner",
+      tier: 2,
+      promptRu: "Акт 1: напиши точное условное правило для новой карты и скажи, что должно произойти.",
+      hintRu: "Что должно произойти, чтобы получилось именно так?",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w5s3-act1-practice",
+      role: "practice",
+      family: "rule-runner",
+      tier: 2,
+      promptRu: "Акт 1 (практика): уточни правило так, чтобы все четыре карты прошли.",
+      hintRu: "Что должно произойти, чтобы получилось именно так?",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    },
+    {
+      id: "w5s3-act2",
+      role: "practice",
+      family: "claim-check",
+      tier: 2,
+      promptRu: "Акт 2: монстр уверенно врёт про результат акта 1. Поймай ложное утверждение.",
+      hintRu: "Как проверить, а не поверить?",
+      claims: [
+        { id: "a", text: "Правило с проверкой впереди безопаснее слепого шага.", truth: true },
+        { id: "b", text: "На всех четырёх картах можно всегда только шагать.", truth: false },
+        { id: "c", text: "Скрытая карта тоже должна подчиняться тому же правилу.", truth: true },
+      ],
+    },
+    {
+      id: "w5s3-act3",
+      role: "transfer",
+      family: "rule-runner",
+      tier: 2,
+      promptRu: "Акт 3: в правиле спрятан дефект. Почини минимальной правкой и прогони все карты.",
+      hintRu: "Что самое маленькое можно изменить?",
+      ruleMaps: [
+        { id: "m-open", ahead: "open", successWhen: "goal" },
+        { id: "m-wall", ahead: "wall", successWhen: "wait_on_wall" },
+        { id: "m-trap", ahead: "trap", successWhen: "stop_on_trap" },
+        { id: "m-hidden-goal", ahead: "goal", successWhen: "goal" },
+      ],
+    }
+  ],
+};

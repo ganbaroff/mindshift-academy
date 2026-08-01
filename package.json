@@ -8,11 +8,16 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/deterministic.mjs",
+    "test": "node tests/deterministic.mjs && npx tsx tests/tasks.test.mjs && npx tsx tests/interpreter-fixtures.test.mjs && npx tsx tests/session-mastery.test.mjs && npx tsx tests/w2-learner-state.test.mjs && npx tsx tests/w3-engagement.test.mjs && npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs",
     "test:tasks": "npx tsx tests/tasks.test.mjs",
     "test:interpreter-contract": "npx tsx tests/interpreter-contract.test.mjs",
     "test:interpreter": "npx tsx tests/interpreter-literalness.test.mjs",
+    "test:interpreter-fixtures": "npx tsx tests/interpreter-fixtures.test.mjs",
     "test:session": "npx tsx tests/session-mastery.test.mjs",
+    "test:w2": "npx tsx tests/w2-learner-state.test.mjs",
+    "test:w3": "npx tsx tests/w3-engagement.test.mjs",
+    "test:w4": "npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs",
+    "test:e2e:sessions": "node scripts/e2e/w4-session-matrix.mjs",
     "test:attempt-trust": "npx tsx tests/attempt-server-trust.test.mjs",
     "test:dual-children": "npx tsx tests/dual-children.test.mjs",
     "test:crystals": "node scripts/test-crystals.mjs",
@@ -21,7 +26,7 @@
     "test:regression": "node scripts/regression.mjs",
     "test:live": "node tests/safety.test.mjs",
     "test:consent": "node scripts/test-consent.mjs",
-    "test:data-lifecycle": "node scripts/test-child-data-lifecycle.mjs",
+    "test:data-lifecycle": "node scripts/run-child-data-lifecycle.mjs",
     "test:config": "node tests/production-env-contract.test.mjs",
     "test:ui": "node tests/ui-accessibility.test.mjs",
     "check:prod-env": "node scripts/check-production-env.mjs",
@@ -42,7 +47,7 @@
     "@libsql/client": "^0.17.4",
     "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/adapter-libsql": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "7.9.1",
     "@react-email/components": "^1.0.12",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
@@ -52,7 +57,7 @@
     "framer-motion": "^12.41.0",
     "lottie-react": "^2.4.1",
     "lucide-react": "^1.21.0",
-    "next": "16.2.9",
+    "next": "16.2.12",
     "openai": "^6.44.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -70,7 +75,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "playwright": "^1.61.1",
-    "prisma": "^7.8.0",
+    "prisma": "7.9.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
@@ -80,6 +85,7 @@
     },
     "@prisma/dev": {
       "@hono/node-server": "1.19.14"
-    }
+    },
+    "sharp": "0.35.3"
   }
 }
