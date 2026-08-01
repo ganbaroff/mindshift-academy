@@ -71,7 +71,7 @@ async function prepareDatabase(databaseUrl, env) {
   const prismaCli = join(root, "node_modules/prisma/build/index.js");
   const result = await runCommand(
     process.execPath,
-    [prismaCli, "db", "push", "--skip-generate"],
+    [prismaCli, "db", "push"],
     { ...env, DATABASE_URL: databaseUrl }
   );
   if (result.code !== 0) throw new Error(`Prisma test database failed (${result.code}): ${result.output}`);
@@ -79,7 +79,7 @@ async function prepareDatabase(databaseUrl, env) {
 
 function startServer(port, databaseUrl) {
   const nextCli = join(root, "node_modules/next/dist/bin/next");
-  const child = spawn(process.execPath, [nextCli, "dev", "-p", String(port)], {
+  const child = spawn(process.execPath, [nextCli, "dev", "--webpack", "-p", String(port)], {
     cwd: root,
     env: {
       ...process.env,
@@ -116,6 +116,46 @@ async function stopServer(child) {
   const closed = new Promise((resolve) => child.once("close", resolve));
   child.kill("SIGTERM");
   await Promise.race([closed, new Promise((resolve) => setTimeout(resolve, 5000))]);
+}
+
+async function installAcademyBrowserRoutes(context) {
+  // Scope the development-only bypass to Academy API requests. Clerk's own
+  // requests must not receive this header.
+  await context.route("**/api/**", async (route) => {
+    await route.continue({
+      headers: { ...route.request().headers(), "x-test-bypass": "true" },
+    });
+  });
+
+  // The headless sandbox rejects Clerk CDN/FAPI CORS preflights when the
+  // provider redirects OPTIONS. Proxy through Playwright's node-side fetch and
+  // re-emit same-origin CORS headers; this keeps the real ClerkProvider tree.
+  await context.route(/clerk\.(accounts\.dev|com|dev)/i, async (route) => {
+    const request = route.request();
+    const origin = request.headers().origin || "http://127.0.0.1";
+    if (request.method() === "OPTIONS") {
+      await route.fulfill({
+        status: 204,
+        headers: {
+          "access-control-allow-origin": origin,
+          "access-control-allow-credentials": "true",
+          "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+          "access-control-allow-headers": request.headers()["access-control-request-headers"] || "*",
+        },
+        body: "",
+      });
+      return;
+    }
+    try {
+      const response = await route.fetch({ maxRedirects: 20 });
+      const headers = { ...response.headers() };
+      headers["access-control-allow-origin"] = origin;
+      headers["access-control-allow-credentials"] = "true";
+      await route.fulfill({ status: response.status(), headers, body: await response.body() });
+    } catch {
+      await route.abort();
+    }
+  });
 }
 
 function numericRule(expected) {
@@ -224,13 +264,69 @@ async function verifyMobile(browser, baseUrl, outDir) {
   const context = await browser.newContext({
     viewport: { width: 320, height: 780 },
     reducedMotion: "reduce",
-    extraHTTPHeaders: { "x-test-bypass": "true" },
   });
   try {
+    await installAcademyBrowserRoutes(context);
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
-    await page.getByTestId("task-workspace-grid-draw").waitFor();
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "320px viewport has no horizontal overflow");
+    const browserDiagnostics = [];
+    page.on("pageerror", (error) => browserDiagnostics.push(`pageerror: ${error.message}`));
+    page.on("console", (message) => {
+      if (message.type() === "error" || message.type() === "warning" || message.text().includes("academy-session-effect")) browserDiagnostics.push(`console-${message.type()}: ${message.text()}`);
+    });
+    page.on("response", (response) => {
+      if (response.url().includes("/api/")) browserDiagnostics.push(`api ${response.status()} ${response.url()}`);
+      if (response.url().endsWith("page.js")) browserDiagnostics.push(`page-script ${response.status()} ${response.headers()["content-type"] ?? "no-content-type"}`);
+      if (response.url().includes("/_next/static/") && response.status() >= 400) browserDiagnostics.push(`static ${response.status()} ${response.url()}`);
+    });
+    page.on("requestfailed", (request) => {
+      if (request.url().includes("/_next/") || request.url().includes("clerk.accounts")) browserDiagnostics.push(`failed ${request.url()} ${request.failure()?.errorText ?? "unknown"}`);
+    });
+    const navigation = await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+    try {
+      await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
+    } catch (error) {
+      await page.screenshot({ path: join(outDir, "mobile-320-failure.png"), fullPage: true }).catch(() => {});
+      writeFileSync(join(outDir, "mobile-320-failure.html"), await page.content(), "utf8");
+      const apiProbe = await page.evaluate(async () => {
+        const result = {};
+        for (const path of ["/api/tasks/session/w1-s1", "/api/user"]) {
+          try {
+            const response = await fetch(path);
+            const body = await response.text();
+            result[path] = { status: response.status, taskCount: path.includes("/session/") ? JSON.parse(body).session?.tasks?.length : undefined };
+          } catch (probeError) {
+            result[path] = { error: String(probeError) };
+          }
+        }
+        return result;
+      });
+      const runtimeProbe = await page.evaluate(async () => {
+        const pageScript = [...document.scripts].find((script) => script.src.includes("/session/") && script.src.endsWith("page.js"));
+        let pageScriptBody = "";
+        if (pageScript?.src) {
+          try { pageScriptBody = await fetch(pageScript.src).then((response) => response.text()); } catch { /* diagnostic only */ }
+        }
+        return {
+        readyState: document.readyState,
+        scriptCount: document.scripts.length,
+        scriptSources: [...document.scripts].map((script) => script.src).filter((src) => src.includes("session") || src.includes("page_tsx")),
+        loadedScripts: performance.getEntriesByType("resource").filter((entry) => entry.name.includes("/_next/static/chunks/")).length,
+        pageScriptBytes: pageScriptBody.length,
+        pageScriptHasEffectLog: pageScriptBody.includes("academy-session-effect:start"),
+        bodyText: document.body.innerText.slice(0, 300),
+        };
+      });
+      throw new Error(`mobile workspace unavailable: status=${navigation?.status() ?? "none"} url=${page.url()} title=${await page.title()} cause=${error instanceof Error ? error.message : String(error)} api=${JSON.stringify(apiProbe)} runtime=${JSON.stringify(runtimeProbe)} browser=${browserDiagnostics.join(" | ")}`);
+    }
+    const overflow = await page.evaluate(() => {
+      const width = window.innerWidth;
+      return [...document.querySelectorAll("*")]
+        .map((element) => ({ element, rect: element.getBoundingClientRect() }))
+        .filter(({ rect }) => rect.right > width + 1 || rect.left < -1)
+        .slice(0, 8)
+        .map(({ element, rect }) => ({ tag: element.tagName, testId: element.getAttribute("data-testid"), className: element.className, left: rect.left, right: rect.right, width: rect.width }));
+    });
+    assert.equal(overflow.length, 0, `320px viewport has horizontal overflow: ${JSON.stringify(overflow)}`);
     const firstCell = page.getByRole("button", { name: "Выбрать клетку 1, 1", exact: true });
     await firstCell.focus();
     await page.keyboard.press("Space");
@@ -246,13 +342,13 @@ async function verifyMobile(browser, baseUrl, outDir) {
 async function verifyAllSessions(browser, baseUrl, outDir) {
   const context = await browser.newContext({
     viewport: { width: 1280, height: 900 },
-    extraHTTPHeaders: { "x-test-bypass": "true" },
   });
   const pageErrors = [];
   let taskCount = 0;
   const families = new Set();
   await context.tracing.start({ screenshots: true, snapshots: true });
   try {
+    await installAcademyBrowserRoutes(context);
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(`pageerror: ${error.message}`));
     page.on("response", (response) => {
@@ -307,6 +403,7 @@ export async function runCurrentSessionUiSuite() {
   const databasePath = join(tempRoot, "academy.db").replaceAll("\\", "/");
   const databaseUrl = `file:${databasePath}`;
   let server = null;
+  let serverLog = () => "";
   let browser = null;
 
   try {
@@ -315,8 +412,9 @@ export async function runCurrentSessionUiSuite() {
     const port = await freePort();
     const running = startServer(port, databaseUrl);
     server = running.child;
+    serverLog = () => running.output().split("\n").filter((line) => /error|failed|exception|500/i.test(line)).slice(-12).join(" | ");
     await running.ready;
-    const baseUrl = `http://127.0.0.1:${port}`;
+    const baseUrl = `http://localhost:${port}`;
 
     try {
       browser = await chromium.launch({ headless: true });
@@ -357,6 +455,7 @@ export async function runCurrentSessionUiSuite() {
       startedAt,
       finishedAt: new Date().toISOString(),
       reason: error instanceof Error ? error.message : String(error),
+      serverDiagnostics: serverLog(),
     };
     persistReceipt(outDir, receipt);
     console.error(receipt.reason);

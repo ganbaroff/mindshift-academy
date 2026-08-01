@@ -9,6 +9,7 @@
 ## Allowed files
 
 - `src/app/session/[id]/page.tsx`
+- `src/components/layout/Header.tsx`
 - `src/components/curriculum/task-surfaces/TaskWorkspace.tsx`
 - `tests/session-task-integration.test.mjs`
 - `tests/w4-a11y-appendix.test.mjs`

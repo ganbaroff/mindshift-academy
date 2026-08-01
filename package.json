@@ -19,7 +19,7 @@
     "test:w3": "npx tsx tests/w3-engagement.test.mjs",
     "test:w4": "npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs",
     "test:e2e:sessions": "node scripts/e2e/w4-session-matrix.mjs",
-    "test:e2e:current-sessions": "node scripts/e2e/current-session-flow.mjs",
+    "test:e2e:current-sessions": "npx tsx scripts/e2e/current-session-flow.mjs",
     "test:attempt-trust": "npx tsx tests/attempt-server-trust.test.mjs",
     "test:structured-attempt": "node scripts/run-structured-attempt-contract.mjs",
     "test:task-surfaces": "npx tsx tests/session-task-surfaces.test.mjs",

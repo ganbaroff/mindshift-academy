@@ -172,7 +172,7 @@ export default function ThinkingSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, setCrystals, router]);
+  }, [sessionId, setCrystals]);
 
   const resetAttemptView = useCallback(() => {
     setFeedback(null);
