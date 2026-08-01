@@ -21,6 +21,26 @@ export type PatternVerdict = {
   ruleIssue?: "copied_output";
 };
 
+/**
+ * Text attempts must state a repeatable operation, not merely enumerate output.
+ * Structured deterministic UI programs do not use this text preflight.
+ */
+export function hasExplicitPatternRule(utterance: string): boolean {
+  const text = utterance.trim().toLowerCase();
+  if (!text) return false;
+  return [
+    /(?:^|\s)нач\p{L}*/u,
+    /(?:^|\s)старт\p{L}*/u,
+    /(?:^|\s)шаг\p{L}*/u,
+    /(?:^|\s)прибав\p{L}*/u,
+    /(?:^|\s)прыбав\p{L}*/u,
+    /(?:^|\s)(?:вычит|уменьш)\p{L}*/u,
+    /(?:^|\s)(?:повтор|цикл|черед)\p{L}*/u,
+    /(?:^|\s)кажд\p{L}*\s+раз/u,
+    /(?:^|\s)[+−-]\s*\d/u,
+  ].some((cue) => cue.test(text));
+}
+
 /** Expand rule to `count` terms (0-based generation). */
 export function executePattern(
   program: { rule: PatternRule },

@@ -13,7 +13,7 @@ import { getChatClient } from "@/lib/ai-provider";
 import { GRID_SIZE, GRID_WORLD_PROMPT } from "./grid-draw";
 import { SEQUENCE_ACTIONS, SEQUENCE_WORLD_PROMPT } from "./sequence-world";
 import { RULE_RUNNER_PROMPT } from "./rule-runner";
-import { PATTERN_EXPAND_PROMPT } from "./pattern-expand";
+import { hasExplicitPatternRule, PATTERN_EXPAND_PROMPT } from "./pattern-expand";
 import { CLAIM_CHECK_PROMPT } from "./claim-check";
 import {
   claimProgramSchema,
@@ -256,6 +256,14 @@ export async function interpretUtterance(
   utterance: string,
   conn: ChatConn | null = getChatClient()
 ): Promise<InterpretResult> {
+  if (family === "pattern-expand" && !hasExplicitPatternRule(utterance)) {
+    return {
+      family,
+      program: { status: "unclear", reasonCode: "copied_output" },
+      latencyMs: 0,
+      model: "deterministic-rule-form",
+    };
+  }
   if (!conn) {
     throw new Error("NO_CHAT_PROVIDER");
   }

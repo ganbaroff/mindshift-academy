@@ -45,6 +45,7 @@ export {
   PATTERN_EXPAND_PROMPT,
   checkPattern,
   executePattern,
+  hasExplicitPatternRule,
   renderPatternDiff,
   type PatternRule,
   type PatternProgram,

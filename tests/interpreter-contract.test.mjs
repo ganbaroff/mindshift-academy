@@ -5,6 +5,7 @@
  */
 import {
   coerceRawProgram,
+  interpretUtterance,
   parseGridProgram,
   parseSequenceProgram,
 } from "../src/lib/tasks/interpreter.ts";
@@ -24,6 +25,45 @@ function check(name, ok, detail = "") {
     fail += 1;
     console.log(`  FAIL  ${name}${detail ? ` — ${detail}` : ""}`);
   }
+}
+
+console.log("\n=== pattern rule-form preflight ===");
+{
+  let providerCalls = 0;
+  const conn = {
+    model: "test-model",
+    client: {
+      chat: {
+        completions: {
+          create: async () => {
+            providerCalls += 1;
+            return {
+              choices: [
+                { message: { content: '{"status":"ok","rule":{"kind":"arithmetic","start":1,"step":1}}' } },
+              ],
+            };
+          },
+        },
+      },
+    },
+  };
+  const copiedList = await interpretUtterance("pattern-expand", "1, 2, 3, 4", conn);
+  check(
+    "numeric output list is rejected before provider inference",
+    copiedList.program.status === "unclear" &&
+      copiedList.program.reasonCode === "copied_output" &&
+      providerCalls === 0
+  );
+
+  const explicitRule = await interpretUtterance(
+    "pattern-expand",
+    "начинай с 1 и каждый раз прибавляй 1",
+    conn
+  );
+  check(
+    "explicit arithmetic rule reaches literal interpreter",
+    explicitRule.program.status === "ok" && providerCalls === 1
+  );
 }
 
 console.log("\n=== empty / legacy coerce ===");

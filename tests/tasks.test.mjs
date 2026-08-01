@@ -18,6 +18,7 @@ import {
   renderClaimDiff,
   renderGridDiff,
   renderPatternDiff,
+  resolvePatternAttempt,
   renderRuleDiff,
   renderSequenceDiff,
 } from "../src/lib/tasks/index.ts";
@@ -150,6 +151,15 @@ console.log("\n=== 6. pattern-expand executor (edge cases) ===");
   check(
     "full expected output is not accepted as a cycle rule",
     !copiedVerdict.pass && copiedVerdict.ruleIssue === "copied_output"
+  );
+  const copiedOutcome = resolvePatternAttempt(
+    { status: "ok", rule: { kind: "cycle", items: ["а", "б", "а", "б"] } },
+    ["а", "б", "а", "б"],
+    4
+  );
+  check(
+    "copied-output reason reaches attempt outcome",
+    !copiedOutcome.pass && copiedOutcome.reasonCode === "copied_output"
   );
 
   const emptyItems = executePattern({ rule: { kind: "cycle", items: [] } }, 2);

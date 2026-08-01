@@ -126,6 +126,7 @@ export function resolvePatternAttempt(
     pass: verdict.pass,
     feedback: renderPatternDiff(result, expected, verdict),
     programStatus: "ok",
+    reasonCode: verdict.ruleIssue,
   };
 }
 
