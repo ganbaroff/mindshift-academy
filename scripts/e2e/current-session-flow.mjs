@@ -21,4 +21,5 @@ if (typeof suite.runCurrentSessionUiSuite !== "function") {
 }
 
 const result = await suite.runCurrentSessionUiSuite();
-process.exit(result === true ? 0 : 1);
+const verdict = result === true ? "PASS" : result?.verdict;
+process.exit(verdict === "PASS" ? 0 : verdict === "BLOCKED" ? 2 : 1);

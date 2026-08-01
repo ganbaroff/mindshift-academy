@@ -8,12 +8,15 @@ import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
+import { TaskWorkspace } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
 import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
+import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { effectiveTaskTier } from "@/lib/tasks/tier-select";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
@@ -53,6 +56,7 @@ export default function ThinkingSessionPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lockedPrereq, setLockedPrereq] = useState<string | null>(null);
   const [nextSessionId, setNextSessionId] = useState<string | null>(null);
+  const [offeredTier, setOfferedTier] = useState<1 | 2 | 3>(1);
   const [taskIndex, setTaskIndex] = useState(0);
   const [results, setResults] = useState<TaskResult[]>([]);
   const [utterance, setUtterance] = useState("");
@@ -128,10 +132,12 @@ export default function ThinkingSessionPage() {
           passedTaskIds?: string[];
           crystals?: number;
           nextSessionId?: string | null;
+          offeredTier?: 1 | 2 | 3;
         };
         if (!cancelled) {
           setSession(body.session);
           setNextSessionId(body.nextSessionId ?? null);
+          setOfferedTier(body.offeredTier ?? 1);
           if (Array.isArray(body.passedTaskIds) && body.passedTaskIds.length) {
             const byId = new Map(body.session.tasks.map((t) => [t.id, t]));
             setResults(
@@ -222,26 +228,31 @@ export default function ThinkingSessionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session || !currentTask || sendingRef.current) return;
-    if (!utterance.trim() && !choices) return;
+    if (!utterance.trim()) return;
 
     await runAttempt({ utterance: utterance.trim() });
   };
 
-  const runAttempt = async (opts: { utterance?: string; choiceId?: string }) => {
+  const runAttempt = async (opts: {
+    utterance?: string;
+    choiceId?: string;
+    program?: StructuredProgram;
+  }) => {
     if (!session || !currentTask || sendingRef.current) return;
-    if (!opts.choiceId && !opts.utterance?.trim()) return;
+    if (!opts.choiceId && !opts.program && !opts.utterance?.trim()) return;
 
     sendingRef.current = true;
     setIsSending(true);
     setFeedback(null);
     setFilledCells([]);
     setMismatchCells([]);
-    if (!opts.choiceId) setChoices(null);
+    setChoices(null);
 
     try {
       const payload = {
         utterance: opts.utterance ?? "",
         choiceId: opts.choiceId,
+        program: opts.program,
         eventId: crypto.randomUUID(),
         sessionId: session.id,
         taskId: currentTask.id,
@@ -267,7 +278,7 @@ export default function ThinkingSessionPage() {
       setFeedback(data.feedback);
       if (data.choiceMode && data.choices?.length) {
         setChoices(data.choices);
-      } else if (opts.choiceId || data.pass) {
+      } else if (opts.choiceId || opts.program || data.pass) {
         setChoices(null);
       }
       if (typeof data.crystals === "number") setCrystals(data.crystals);
@@ -280,7 +291,7 @@ export default function ThinkingSessionPage() {
         id: currentTask.id,
         role: currentTask.role,
         pass: data.pass,
-        tier: currentTask.tier,
+        tier: effectiveTaskTier(currentTask.tier, offeredTier, currentTask.role),
       };
       setResults((prev) => [...prev.filter((r) => r.id !== currentTask.id), result]);
 
@@ -593,22 +604,27 @@ export default function ThinkingSessionPage() {
         <section className="grid sm:grid-cols-[auto_1fr] gap-6 items-start">
           <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
           <div className="space-y-4">
-            <p className="text-lg leading-relaxed not-italic" data-testid="task-prompt-caption">
-              {currentTask?.promptRu}
-            </p>
-
-            {currentTask?.family === "grid-draw" ? (
-              <div className="space-y-2">
-                <DisplayGrid
-                  filled={filledCells}
-                  target={gridTarget}
-                  mismatch={mismatchCells}
-                  label={gridLabel}
-                />
-                <p className="text-xs text-white/45">
-                  Картинку смотри глазами — закрашивает монстр по твоим словам, не по клику.
-                </p>
-              </div>
+            {currentTask ? (
+              <TaskWorkspace
+                key={currentTask.id}
+                task={currentTask}
+                offeredTier={offeredTier}
+                disabled={isSending}
+                onSubmit={(program) => void runAttempt({ program })}
+                reference={currentTask.family === "grid-draw" ? (
+                  <div className="space-y-2" aria-label="Образец текущего задания">
+                    <DisplayGrid
+                      filled={filledCells}
+                      target={gridTarget}
+                      mismatch={mismatchCells}
+                      label={gridLabel}
+                    />
+                    <p className="text-sm text-slate-300">
+                      Сравни с образцом и собери свой точный набор клеток на поле ниже.
+                    </p>
+                  </div>
+                ) : undefined}
+              />
             ) : null}
 
             {currentTask?.hintAvailable && !revealedHint ? (
@@ -641,7 +657,12 @@ export default function ThinkingSessionPage() {
             ) : null}
 
             {feedback ? (
-              <pre className="whitespace-pre-wrap text-sm text-gray-200 bg-black/30 rounded-xl p-4 border border-white/5 font-mono leading-relaxed">
+              <pre
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="whitespace-pre-wrap text-sm text-gray-200 bg-black/30 rounded-xl p-4 border border-white/5 font-mono leading-relaxed"
+              >
                 {feedback}
               </pre>
             ) : null}
@@ -669,30 +690,38 @@ export default function ThinkingSessionPage() {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-              <label className="sr-only" htmlFor="task-utterance">
-                Твоя инструкция монстру
-              </label>
-              <input
-                id="task-utterance"
-                type="text"
-                value={utterance}
-                onChange={(e) => setUtterance(e.target.value)}
-                disabled={isSending}
-                maxLength={500}
-                placeholder="Скажи монстру, что сделать…"
-                className="flex-1 min-h-11 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:border-violet-400/50 outline-none text-base"
-                autoComplete="off"
-              />
-              <button
-                type="submit"
-                disabled={isSending || !utterance.trim()}
-                className="min-h-11 min-w-[44px] px-5 py-3 rounded-2xl bg-[var(--color-primary)] text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-300"
-              >
-                {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                <span>Отправить</span>
-              </button>
-            </form>
+            <details className="rounded-2xl border border-white/10 bg-white/5 p-3">
+              <summary className="min-h-11 cursor-pointer py-2 font-semibold text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300">
+                Сказать своими словами
+              </summary>
+              <p className="mb-3 text-sm leading-6 text-slate-400">
+                Это дополнительный способ. Основное задание можно выполнить в понятном поле выше.
+              </p>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+                <label className="sr-only" htmlFor="task-utterance">
+                  Твоя инструкция монстру
+                </label>
+                <input
+                  id="task-utterance"
+                  type="text"
+                  value={utterance}
+                  onChange={(e) => setUtterance(e.target.value)}
+                  disabled={isSending}
+                  maxLength={500}
+                  placeholder="Скажи монстру, что сделать…"
+                  className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none focus:border-violet-400/50"
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  disabled={isSending || !utterance.trim()}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-violet-400/50 px-5 py-3 font-semibold text-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                >
+                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  <span>Отправить текст</span>
+                </button>
+              </form>
+            </details>
 
             {feedback && currentTask && results.some((r) => r.id === currentTask.id) ? (
               <button

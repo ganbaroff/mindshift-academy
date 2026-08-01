@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { PublicContentTask } from "@/content/curriculum";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
 import { ClaimSurface } from "./ClaimSurface";
@@ -13,6 +14,7 @@ type Props = {
   task: PublicContentTask;
   offeredTier: 1 | 2 | 3;
   disabled: boolean;
+  reference?: ReactNode;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
 
@@ -32,7 +34,7 @@ const TIER_ONE_REMINDERS = {
   "claim-check": "Проверяй каждую фразу отдельно — уверенный голос не является доказательством.",
 } as const;
 
-export function TaskWorkspace({ task, offeredTier, disabled, onSubmit }: Props) {
+export function TaskWorkspace({ task, offeredTier, disabled, reference, onSubmit }: Props) {
   const surface = task.family === "grid-draw"
     ? <GridDrawSurface disabled={disabled} onSubmit={onSubmit} />
     : task.family === "sequence-world"
@@ -52,9 +54,10 @@ export function TaskWorkspace({ task, offeredTier, disabled, onSubmit }: Props) 
       <header className="space-y-2">
         <p className="text-sm font-bold uppercase tracking-wide text-violet-300">Уровень {offeredTier}</p>
         <h2 id="task-workspace-title" className="text-xl font-bold text-white sm:text-2xl">{FAMILY_TITLES[task.family]}</h2>
-        <p className="leading-7 text-slate-200">{task.promptRu}</p>
+        <p className="leading-7 text-slate-200" data-testid="task-prompt-caption">{task.promptRu}</p>
         {offeredTier === 1 ? <p className="rounded-xl bg-sky-400/10 p-3 text-sm text-sky-100"><strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}</p> : null}
       </header>
+      {reference}
       <WorkedExample family={task.family} initiallyOpen={task.role === "collision"} />
       {surface}
     </section>

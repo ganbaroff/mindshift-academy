@@ -12,6 +12,18 @@ const outDir = join(root, "docs", "release", "_w4_drill_workspace");
 mkdirSync(outDir, { recursive: true });
 
 const session = readFileSync(join(root, "src/app/session/[id]/page.tsx"), "utf8");
+const taskWorkspace = readFileSync(
+  join(root, "src/components/curriculum/task-surfaces/TaskWorkspace.tsx"),
+  "utf8"
+);
+const taskSurfaces = [
+  "GridDrawSurface.tsx",
+  "SequenceSurface.tsx",
+  "RuleSurface.tsx",
+  "PatternSurface.tsx",
+  "ClaimSurface.tsx",
+].map((file) => readFileSync(join(root, "src/components/curriculum/task-surfaces", file), "utf8")).join("\n");
+const learnerUi = session + taskWorkspace + taskSurfaces;
 const globals = readFileSync(join(root, "src/app/globals.css"), "utf8");
 const grid = readFileSync(join(root, "src/components/curriculum/DisplayGrid.tsx"), "utf8");
 const enter = readFileSync(join(root, "src/app/enter-code/page.tsx"), "utf8");
@@ -31,15 +43,15 @@ function receipt(id, title, pass, evidence) {
 }
 
 receipt(1, "grid tiles / hint buttons >=44px; primary tiles ~2cm", 
-  /min-h-11|w-11 h-11|min-w-\[44px\]|min-w-11/.test(session + grid) && globals.includes("min-height: 44px"),
+  /min-h-11|w-11 h-11|min-w-\[44px\]|min-w-11/.test(learnerUi + grid) && globals.includes("min-height: 44px"),
   "DisplayGrid cells w-11; session hints/send min-h-11; coarse pointer 44px");
 
 receipt(2, ">=24px spacing where hit area smaller",
-  session.includes("gap-2") || session.includes("gap-3") || session.includes("space-y"),
+  learnerUi.includes("gap-2") || learnerUi.includes("gap-3") || learnerUi.includes("space-y"),
   "session uses gap/space-y between controls");
 
 receipt(3, "inputs >=16px font on mobile (iOS zoom)",
-  globals.includes("textarea, input") && globals.includes("font-size: 16px") && session.includes("text-base"),
+  globals.includes("textarea, input") && globals.includes("font-size: 16px") && learnerUi.includes("text-base"),
   "globals coarse input 16px; session input text-base");
 
 receipt(4, "body >=16px, short sentences, no text walls",
@@ -47,12 +59,12 @@ receipt(4, "body >=16px, short sentences, no text walls",
   "body 16px / 1.5; curriculum prompts are short session cards");
 
 receipt(5, "plain sans-serif, line-height >=1.5, no italics in instruction",
-  globals.includes("--font-sans") && session.includes("not-italic") && globals.includes("line-height: 1.5"),
-  "Geist sans; task prompt not-italic; body line-height 1.5");
+  globals.includes("--font-sans") && !taskWorkspace.includes("italic") && taskWorkspace.includes("leading-7") && globals.includes("line-height: 1.5"),
+  "Geist sans; structured task prompt is plain text with leading-7; body line-height 1.5");
 
 receipt(6, "captions for every voiced instruction",
-  session.includes("task-prompt-caption") && session.includes("currentTask?.promptRu"),
-  "session always shows promptRu as visible caption alongside any SFX");
+  taskWorkspace.includes("task-prompt-caption") && taskWorkspace.includes("task.promptRu"),
+  "TaskWorkspace always shows task.promptRu as a visible caption alongside any SFX");
 
 receipt(7, "no pre-gesture sound; mute always instant",
   sound.includes("isMuted") && sound.includes("toggleMute") || sound.includes("isMuted:"),
@@ -67,12 +79,12 @@ receipt(9, "auto-motion >5s has pause/stop/hide",
   "session has no infinite auto-motion loops");
 
 receipt(10, "contrast 4.5:1 text, 3:1 UI/focus",
-  globals.includes("outline: 3px solid #a78bfa") && session.includes("bg-[var(--color-primary)]"),
-  "solid primary send (no cyan-end gradient); focus ring violet-300");
+  globals.includes("outline: 3px solid #a78bfa") && taskSurfaces.includes("bg-violet-500") && taskSurfaces.includes("focus-visible:outline-violet-300"),
+  "solid violet primary check action; focus outline violet-300");
 
 receipt(11, "no drag-only interactions",
-  !session.includes("onDrag") && !session.includes("draggable"),
-  "session tasks are speech/choice only");
+  !learnerUi.includes("onDrag") && !learnerUi.includes("draggable"),
+  "structured workspaces use native buttons, radios, selects and inputs; no drag-only path");
 
 receipt(12, "retry/undo always; no-shame copy",
   session.includes("Попробовать ещё") && !/неправильно|провал|ты ошиб/i.test(session),
@@ -99,7 +111,7 @@ receipt(17, "consent/onboarding nudge audit (no asymmetric yes/no)",
   "dual opt-in required; onboarding has explicit skip button not asymmetric dark-pattern");
 
 receipt(18, "profiling/personalization off by default",
-  !session.includes("fingerprint") && !onboarding.includes("personalization"),
+  !learnerUi.includes("fingerprint") && !onboarding.includes("personalization"),
   "no profiling hooks on session/onboarding");
 
 const failed = items.filter((i) => !i.pass);
