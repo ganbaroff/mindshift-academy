@@ -40,6 +40,7 @@ check("offline gate is deterministic and excludes provider/browser suites", () =
   assert.match(serialized, /test:task-surfaces/);
   assert.match(serialized, /test:session-integration/);
   assert.match(serialized, /test:display-grid-accessibility/);
+  assert.match(serialized, /test:onboarding-comprehension/);
   assert.match(serialized, /test:consent/);
   assert.match(serialized, /test:data-lifecycle/);
   assert.match(serialized, /build/);

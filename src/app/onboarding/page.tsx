@@ -128,6 +128,15 @@ function OnboardingContent() {
             transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
             className="space-y-8"
           >
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/60">
+                Шаг 1 из 3
+              </p>
+              <h1 className="text-2xl font-semibold text-white">
+                Питомец просыпается
+              </h1>
+            </div>
+
             <motion.div
               animate={{
                 scale: [1, 1.06, 1],
@@ -149,7 +158,7 @@ function OnboardingContent() {
               )}
             </motion.div>
 
-            <p className="text-lg font-medium text-white/90">
+            <p role="status" aria-live="polite" aria-atomic="true" className="text-lg font-medium text-white/90">
               {HATCH_MESSAGES[hatchStep]}
             </p>
 
@@ -204,7 +213,13 @@ function OnboardingContent() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="pet-name" className="block text-xl font-semibold text-white">
+              <p className="text-xs font-medium uppercase tracking-widest text-white/60">
+                Шаг 2 из 3
+              </p>
+              <h1 className="text-2xl font-semibold text-white">
+                Дай питомцу имя
+              </h1>
+              <label htmlFor="pet-name" className="block text-base font-medium text-white">
                 Как зовут твоего питомца?
               </label>
               <p id="pet-name-hint" className="text-sm text-white/60">
@@ -261,9 +276,12 @@ function OnboardingContent() {
             </motion.div>
 
             <div className="space-y-2">
-              <p className="text-2xl font-semibold text-white">
-                {petName} готов учиться!
+              <p className="text-xs font-medium uppercase tracking-widest text-white/60">
+                Шаг 3 из 3
               </p>
+              <h1 className="text-2xl font-semibold text-white">
+                {petName} готов учиться!
+              </h1>
               <p className="text-sm text-white/60">
                 Первая сессия: научи {petName} слышать только то, что сказано —
                 клетка за клеткой, без угадывания.
@@ -282,11 +300,34 @@ function OnboardingContent() {
               </p>
             </div>
 
+            <section
+              aria-labelledby="first-session-example-title"
+              className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left"
+            >
+              <h2 id="first-session-example-title" className="text-sm font-semibold text-white">
+                Перед стартом — маленький пример
+              </h2>
+              <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="font-medium text-primary-soft">Что сделаешь</p>
+                  <p className="mt-1 text-white/75">
+                    Скажешь питомцу короткую и точную команду.
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-primary-soft">Что получится</p>
+                  <p className="mt-1 text-white/75">
+                    Он закрасит только те клетки, которые назвала команда.
+                  </p>
+                </div>
+              </div>
+            </section>
+
             <button
               onClick={goToFirstLesson}
               className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
             >
-              Начать сессию
+              Начать сессию 1
               <ArrowRight className="h-4 w-4" />
             </button>
           </motion.div>
