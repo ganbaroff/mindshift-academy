@@ -469,7 +469,7 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
         reloadResume: milestone === "capstone",
         capstone: false,
       },
-      reason: crossBrowserFailureReason(browserName, milestone, error),
+      reason: `${crossBrowserFailureReason(browserName, milestone, error)}: ${error instanceof Error ? error.message : String(error)}`,
       artifacts: [],
     };
   } finally {
