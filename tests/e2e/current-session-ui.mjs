@@ -110,6 +110,24 @@ function seedUnlockedCapstone(databaseUrl) {
   }
 }
 
+function resetCrossBrowserFixture(databaseUrl) {
+  const databasePath = databaseUrl.replace(/^file:/, "");
+  const db = new SQLiteDatabase(databasePath);
+  try {
+    db.exec(`
+      PRAGMA foreign_keys = OFF;
+      DELETE FROM TaskAttempt;
+      DELETE FROM RewardEvent;
+      DELETE FROM SessionCost;
+      DELETE FROM ConceptMastery;
+      DELETE FROM User;
+      PRAGMA foreign_keys = ON;
+    `);
+  } finally {
+    db.close();
+  }
+}
+
 function startServer(port, databaseUrl) {
   const nextCli = join(root, "node_modules/next/dist/bin/next");
   const child = spawn(process.execPath, [nextCli, "dev", "--webpack", "-p", String(port)], {
@@ -512,39 +530,18 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
   }
 }
 
-async function verifyCrossBrowserSmokes(outDir) {
+async function verifyCrossBrowserSmokes(baseUrl, databaseUrl, outDir) {
   const checks = [
     ["firefox", firefox],
     ["webkit", webkit],
   ];
   const browsers = [];
   for (const [browserName, browserType] of checks) {
-    // Each engine receives a fresh database and Next process. The deterministic
-    // test user is intentionally shared by the app, so reusing Chromium's DB
-    // would let an earlier run make capstone appear complete without this
-    // engine exercising its visible controls.
-    const tempRoot = mkdtempSync(join(tmpdir(), `mindshift-${browserName}-`));
-    const databaseUrl = `file:${join(tempRoot, "academy.db").replaceAll("\\", "/")}`;
-    let server = null;
-    try {
-      await prepareDatabase(databaseUrl, process.env);
-      seedUnlockedCapstone(databaseUrl);
-      const port = await freePort();
-      const running = startServer(port, databaseUrl);
-      server = running.child;
-      await running.ready;
-      browsers.push(await verifyCrossBrowserSmoke(browserType, browserName, `http://localhost:${port}`, outDir));
-    } catch {
-      browsers.push({
-        browser: browserName,
-        verdict: "FAIL",
-        milestones: { entry: false, reloadResume: false, capstone: false },
-        reason: `${browserName} isolated smoke environment failed`,
-        artifacts: [],
-      });
-    } finally {
-      await stopServer(server);
-    }
+    // Reuse one Next process, but reset only the throwaway SQLite fixture. This
+    // prevents state leakage without concurrent dev servers touching `.next`.
+    resetCrossBrowserFixture(databaseUrl);
+    seedUnlockedCapstone(databaseUrl);
+    browsers.push(await verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir));
   }
   const verdict = browsers.some((item) => item.verdict === "FAIL")
     ? "FAIL"
@@ -597,13 +594,7 @@ export async function runCurrentSessionUiSuite(options = {}) {
     const coverage = await verifyAllSessions(browser, baseUrl, outDir);
     let crossBrowserEvidence = null;
     if (crossBrowser) {
-      // Stop Chromium before launching the isolated engines. Next dev uses the
-      // worktree's build cache; no two dev servers may touch it concurrently.
-      await browser.close();
-      browser = null;
-      await stopServer(server);
-      server = null;
-      crossBrowserEvidence = await verifyCrossBrowserSmokes(outDir);
+      crossBrowserEvidence = await verifyCrossBrowserSmokes(baseUrl, databaseUrl, outDir);
     }
     const receipt = {
       verdict: crossBrowserEvidence?.verdict ?? "PASS",
