@@ -183,6 +183,16 @@ async function installAcademyBrowserRoutes(context) {
   // re-emit same-origin CORS headers; this keeps the real ClerkProvider tree.
   await context.route(/clerk\.(accounts\.dev|com|dev)/i, async (route) => {
     const request = route.request();
+    const requestUrl = request.url();
+    const destination = request.headers()["sec-fetch-dest"];
+    // Clerk keyless handshakes are browser-owned document navigations. If the
+    // node-side proxy fulfills their redirect, WebKit can wait forever for a
+    // navigation commit during reload. Let the browser preserve the redirect
+    // and document origin; only proxy CORS-sensitive non-document requests.
+    if (destination === "document" || /\/v1\/client\/handshake/i.test(requestUrl)) {
+      await route.continue();
+      return;
+    }
     const origin = request.headers().origin || "http://127.0.0.1";
     if (request.method() === "OPTIONS") {
       await route.fulfill({
@@ -198,13 +208,17 @@ async function installAcademyBrowserRoutes(context) {
       return;
     }
     try {
-      const response = await route.fetch({ maxRedirects: 20 });
+      // Preserve provider redirects for the browser. Following Clerk's
+      // handshake redirect in Node and fulfilling its final HTML under the
+      // Clerk origin makes WebKit resolve the app's /_next assets on Clerk's
+      // domain, so reload loses the session workspace.
+      const response = await route.fetch({ maxRedirects: 0 });
       const headers = { ...response.headers() };
       headers["access-control-allow-origin"] = origin;
       headers["access-control-allow-credentials"] = "true";
       await route.fulfill({ status: response.status(), headers, body: await response.body() });
     } catch {
-      await route.abort();
+      await route.abort().catch(() => {});
     }
   });
 }
@@ -505,7 +519,7 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     await firstWorkspace.waitFor({ timeout: 30000 });
     const initialPrompt = await page.getByTestId("task-prompt-caption").innerText();
     milestone = "reloadResume";
-    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.reload({ waitUntil: "commit" });
     await page.getByTestId("task-workspace-rule-runner").waitFor({ timeout: 30000 });
     assert.equal(
       await page.getByTestId("task-prompt-caption").innerText(),
