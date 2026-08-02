@@ -43,6 +43,7 @@ export const GATE_DEFINITIONS = Object.freeze({
       ["npm", ["run", "test:task-ownership-isolation"]],
       ["npm", ["run", "test:mood-decay-privacy"]],
       ["npm", ["run", "test:release-packaging"]],
+      ["npm", ["run", "test:w4-legacy-receipt-write-guard"]],
       ["npm", ["run", "test:dual-children"]],
       ["npm", ["run", "test:w2"]],
       ["npm", ["run", "test:w3"]],

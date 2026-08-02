@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const outDir = join(root, "docs", "release", "_w4_drill_workspace");
-mkdirSync(outDir, { recursive: true });
+const shouldWriteLegacyReceipts = process.env.ACADEMY_WRITE_LEGACY_RECEIPTS === "1";
+if (shouldWriteLegacyReceipts) mkdirSync(outDir, { recursive: true });
 
 const session = readFileSync(join(root, "src/app/session/[id]/page.tsx"), "utf8");
 const taskWorkspace = readFileSync(
@@ -127,7 +128,9 @@ const md = [
   failed.length ? `\nFAILED: ${failed.length}` : "\nALL 18 GREEN",
 ].join("\n");
 
-writeFileSync(join(outDir, "a11y-appendix-a-receipt.md"), md);
-writeFileSync(join(root, "docs/release/W4-A11Y-APPENDIX-A-RECEIPT.md"), md);
+if (shouldWriteLegacyReceipts) {
+  writeFileSync(join(outDir, "a11y-appendix-a-receipt.md"), md);
+  writeFileSync(join(root, "docs/release/W4-A11Y-APPENDIX-A-RECEIPT.md"), md);
+}
 console.log(failed.length ? `FAILED ${failed.length}` : "ALL 18 A11Y RECEIPTS GREEN");
 process.exit(failed.length ? 1 : 0);

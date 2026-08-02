@@ -9,6 +9,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 
 const require = createRequire(import.meta.url);
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const shouldWriteLegacyReceipts = process.env.ACADEMY_WRITE_LEGACY_RECEIPTS === "1";
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const {
   resolveGridAttempt,
@@ -143,20 +144,22 @@ for (const session of sessions) {
 }
 
 const outDir = join(root, "docs", "release", "_w4_drill_workspace");
-mkdirSync(outDir, { recursive: true });
-writeFileSync(
-  join(outDir, "session-choice-matrix-receipt.md"),
-  [
-    "# W4 authored deterministic session matrix (all 15)",
-    "",
-    `Date: ${new Date().toISOString().slice(0, 10)}`,
-    "Provider: deterministic test programs (no live AI; not browser evidence)",
-    "",
-    ...lines,
-    "",
-    failed ? `FAILED: ${failed}` : "ALL GREEN",
-  ].join("\n")
-);
+if (shouldWriteLegacyReceipts) {
+  mkdirSync(outDir, { recursive: true });
+  writeFileSync(
+    join(outDir, "session-choice-matrix-receipt.md"),
+    [
+      "# W4 authored deterministic session matrix (all 15)",
+      "",
+      `Date: ${new Date().toISOString().slice(0, 10)}`,
+      "Provider: deterministic test programs (no live AI; not browser evidence)",
+      "",
+      ...lines,
+      "",
+      failed ? `FAILED: ${failed}` : "ALL GREEN",
+    ].join("\n")
+  );
+}
 
 console.log(`\nW4 session matrix: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
