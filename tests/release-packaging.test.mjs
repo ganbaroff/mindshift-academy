@@ -35,7 +35,7 @@ assert.match(readFileSync(join(root, "scripts", "qa", "prod-smoke.mjs"), "utf8")
 assert.match(readFileSync(join(root, "scripts", "qa", "prod-smoke.mjs"), "utf8"), /x-academy-release-sha/);
 assert.match(
   envExample,
-  /^NEXT_PUBLIC_CLERK_JS_URL=https:\/\/clerk\.volaura\.app\/npm\/@clerk\/clerk-js@6\/dist\/clerk\.browser\.js$/m,
+  /^NEXT_PUBLIC_CLERK_JS_URL=https:\/\/clerk\.academy\.volaura\.app\/npm\/@clerk\/clerk-js@6\/dist\/clerk\.browser\.js$/m,
 );
 assert.equal(packageJson.scripts["test:release-packaging"], "node tests/release-packaging.test.mjs");
 assert.match(packageJson.scripts["verify:release"], /node tests\/release-packaging\.test\.mjs/);

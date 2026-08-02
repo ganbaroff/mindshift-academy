@@ -17,7 +17,7 @@ const valid = {
     key === "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
       ? "pk_live_example"
       : key === "NEXT_PUBLIC_CLERK_JS_URL"
-        ? "https://clerk.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
+        ? "https://clerk.academy.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
       : key === "CLERK_SECRET_KEY"
         ? "sk_live_example"
         : "real-secret-987654",

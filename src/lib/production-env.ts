@@ -63,7 +63,7 @@ export function productionEnvProblems(env: Environment): string[] {
   }
   if (
     env.NEXT_PUBLIC_CLERK_JS_URL?.trim() !==
-    "https://clerk.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
+    "https://clerk.academy.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
   ) {
     problems.push("NEXT_PUBLIC_CLERK_JS_URL");
   }
