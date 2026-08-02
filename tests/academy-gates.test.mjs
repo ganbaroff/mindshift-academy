@@ -67,6 +67,13 @@ check("browser gate names the current session UI suite, not legacy lessons", () 
   ]);
 });
 
+check("production gate runs the production-env preflight before network smoke", () => {
+  assert.deepEqual(GATE_DEFINITIONS.prod.commands, [
+    ["npm", ["run", "check:prod-env"]],
+    ["node", ["scripts/qa/prod-smoke.mjs"]],
+  ]);
+});
+
 check("gate runner resolves npm command shims without enabling a shell", () => {
   assert.deepEqual(
     platformInvocation("npm", ["--version"], {

@@ -65,7 +65,10 @@ export const GATE_DEFINITIONS = Object.freeze({
   },
   prod: {
     description: "Read-only production boundary smoke for an explicit Academy origin",
-    commands: [["node", ["scripts/qa/prod-smoke.mjs"]]],
+    commands: [
+      ["npm", ["run", "check:prod-env"]],
+      ["node", ["scripts/qa/prod-smoke.mjs"]],
+    ],
   },
 });
 
