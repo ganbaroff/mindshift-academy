@@ -115,4 +115,7 @@ const hasText = Boolean(response.choices[0]?.message?.content?.trim());
 console.log(
   `provider=${selected.name} promptTokens=${promptTokens} completionTokens=${completionTokens} estimatedUsd=${actualUsd.toFixed(6)}`
 );
-process.exit(hasText ? 0 : 1);
+// Let the OpenAI client close its undici handles before Node exits. Calling
+// process.exit() here can trigger a Windows libuv assertion after a successful
+// response, which would turn a valid provider check into a false failure.
+process.exitCode = hasText ? 0 : 1;

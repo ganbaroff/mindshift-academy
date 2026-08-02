@@ -11,6 +11,7 @@ const vercelIgnore = readFileSync(join(root, ".vercelignore"), "utf8")
 const packageJson = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
 const proxySource = readFileSync(join(root, "src", "proxy.ts"), "utf8");
 const envExample = readFileSync(join(root, ".env.example"), "utf8");
+const liveSmoke = readFileSync(join(root, "scripts", "qa", "live-synthetic-smoke.mjs"), "utf8");
 
 assert.deepEqual(vercelIgnore, [
   ".env",
@@ -47,5 +48,6 @@ assert.match(
 assert.equal(packageJson.scripts["test:release-packaging"], "node tests/release-packaging.test.mjs");
 assert.match(packageJson.scripts["verify:release"], /node tests\/release-packaging\.test\.mjs/);
 assert.match(packageJson.scripts["verify:release"], /node tests\/release-copy\.test\.mjs/);
+assert.match(liveSmoke, /process\.exitCode = hasText \? 0 : 1/);
 
 console.log("Release packaging contract passed");
