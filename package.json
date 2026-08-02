@@ -30,6 +30,7 @@
     "test:crystals": "node scripts/test-crystals.mjs",
     "test:task-ownership-isolation": "node scripts/run-task-ownership-isolation.mjs",
     "test:mood-decay-privacy": "node tests/mood-decay-privacy.test.mjs",
+    "test:release-identity": "npx tsx tests/release-identity.test.mjs",
     "test:release-packaging": "node tests/release-packaging.test.mjs",
     "test:w4-legacy-receipt-write-guard": "node tests/w4-legacy-receipt-write-guard.test.mjs",
     "test:parent-journey": "node scripts/e2e/parent-journey.mjs",

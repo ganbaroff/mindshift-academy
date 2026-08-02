@@ -42,6 +42,7 @@ export const GATE_DEFINITIONS = Object.freeze({
       ["npm", ["run", "test:onboarding-comprehension"]],
       ["npm", ["run", "test:task-ownership-isolation"]],
       ["npm", ["run", "test:mood-decay-privacy"]],
+      ["npm", ["run", "test:release-identity"]],
       ["npm", ["run", "test:release-packaging"]],
       ["npm", ["run", "test:w4-legacy-receipt-write-guard"]],
       ["npm", ["run", "test:dual-children"]],
@@ -113,6 +114,10 @@ function validHttpsOrigin(raw) {
   }
 }
 
+function validReleaseSha(raw) {
+  return /^[0-9a-f]{7,40}$/i.test(String(raw ?? "").trim());
+}
+
 export function validateGateRequest(mode, env = process.env) {
   const errors = [];
   if (!GATE_MODES.includes(mode)) {
@@ -139,6 +144,9 @@ export function validateGateRequest(mode, env = process.env) {
 
   if (mode === "prod" && !validHttpsOrigin(env.ACADEMY_PROD_URL ?? "")) {
     errors.push("Production smoke requires ACADEMY_PROD_URL as a fixed HTTPS origin");
+  }
+  if (mode === "prod" && !validReleaseSha(env.ACADEMY_RELEASE_SHA)) {
+    errors.push("Production smoke requires ACADEMY_RELEASE_SHA for deployment identity");
   }
 
   return errors;

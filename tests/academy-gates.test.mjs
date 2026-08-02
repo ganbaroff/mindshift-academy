@@ -151,8 +151,26 @@ check("production gate accepts only a fixed HTTPS origin", () => {
     }).length > 0
   );
   assert.deepEqual(
-    validateGateRequest("prod", { ACADEMY_PROD_URL: "https://academy.volaura.app" }),
+    validateGateRequest("prod", {
+      ACADEMY_PROD_URL: "https://academy.volaura.app",
+      ACADEMY_RELEASE_SHA: "11bcae577decb5c9fe5e3194baeca679c7388c7d",
+    }),
     []
+  );
+});
+
+check("production gate requires the exact release SHA for identity proof", () => {
+  const origin = "https://academy.volaura.app";
+  assert.ok(
+    validateGateRequest("prod", { ACADEMY_PROD_URL: origin }).some((error) =>
+      error.includes("ACADEMY_RELEASE_SHA")
+    )
+  );
+  assert.ok(
+    validateGateRequest("prod", {
+      ACADEMY_PROD_URL: origin,
+      ACADEMY_RELEASE_SHA: "11bcae577decb5c9fe5e3194baeca679c7388c7d",
+    }).length === 0
   );
 });
 

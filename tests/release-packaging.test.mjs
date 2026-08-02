@@ -30,6 +30,9 @@ assert.equal(packageJson.overrides.sharp, "0.35.3");
 assert.equal(packageJson.dependencies["@clerk/localizations"], "4.13.6");
 assert.match(proxySource, /authorizedParties/);
 assert.match(proxySource, /https:\/\/academy\.volaura\.app/);
+assert.match(proxySource, /x-academy-release-sha/);
+assert.match(readFileSync(join(root, "scripts", "qa", "prod-smoke.mjs"), "utf8"), /ACADEMY_RELEASE_SHA/);
+assert.match(readFileSync(join(root, "scripts", "qa", "prod-smoke.mjs"), "utf8"), /x-academy-release-sha/);
 assert.match(
   envExample,
   /^NEXT_PUBLIC_CLERK_JS_URL=https:\/\/clerk\.volaura\.app\/npm\/@clerk\/clerk-js@6\/dist\/clerk\.browser\.js$/m,
