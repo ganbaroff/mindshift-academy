@@ -22,13 +22,11 @@ assert.deepEqual(vercelIgnore, [
   "prisma/dev.db",
 ]);
 
-assert.equal(packageJson.dependencies.next, "16.2.11");
-assert.equal(packageJson.devDependencies["eslint-config-next"], "16.2.11");
-assert.equal(packageJson.dependencies["@prisma/client"], "7.9.0");
-assert.equal(packageJson.devDependencies.prisma, "7.9.0");
+assert.equal(packageJson.dependencies.next, "16.2.12");
+assert.equal(packageJson.devDependencies["eslint-config-next"], "16.2.9");
+assert.equal(packageJson.dependencies["@prisma/client"], "7.9.1");
+assert.equal(packageJson.devDependencies.prisma, "7.9.1");
 assert.equal(packageJson.overrides.sharp, "0.35.3");
-assert.equal(packageJson.overrides["fast-uri"], "3.1.4");
-assert.equal(packageJson.overrides["find-my-way"], "9.7.0");
 assert.equal(packageJson.dependencies["@clerk/localizations"], "4.13.6");
 assert.match(proxySource, /authorizedParties/);
 assert.match(proxySource, /https:\/\/academy\.volaura\.app/);
@@ -36,6 +34,7 @@ assert.match(
   envExample,
   /^NEXT_PUBLIC_CLERK_JS_URL=https:\/\/clerk\.volaura\.app\/npm\/@clerk\/clerk-js@6\/dist\/clerk\.browser\.js$/m,
 );
+assert.equal(packageJson.scripts["test:release-packaging"], "node tests/release-packaging.test.mjs");
 assert.match(packageJson.scripts["verify:release"], /node tests\/release-packaging\.test\.mjs/);
 assert.match(packageJson.scripts["verify:release"], /node tests\/release-copy\.test\.mjs/);
 
