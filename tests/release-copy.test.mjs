@@ -21,6 +21,7 @@ const rootLayout = read("src", "app", "layout.tsx");
 const clerkRussianUi = read("src", "components", "auth", "ClerkRussianUi.tsx");
 const signIn = read("src", "app", "sign-in", "[[...sign-in]]", "page.tsx");
 const signUp = read("src", "app", "sign-up", "[[...sign-up]]", "page.tsx");
+const enterCode = read("src", "app", "enter-code", "page.tsx");
 const petPressurePattern =
   /питомец[^.]{0,100}(?:скучает|жд[её]т|грустит|расстроен)|без чувства вины|чувств(?:о|овать) вины|(?:^|[^\p{L}])(?:ты|реб[её]нок)\s+(?:обязан(?:а)?|долж(?:ен|на))(?!\p{L})|(?:вернись|возвращайся)[^.]{0,60}(?:ради питомца|питомец)/iu;
 const azerbaijaniLanguageTogglePattern = /(?:\bAZ\b|Azərbaycan dili|Азербайджанский)/iu;
@@ -36,6 +37,26 @@ function includesAll(source, values) {
 }
 
 const publicScreens = [landing, consent, activation, dashboard, lesson, promptInput, header, signIn, signUp];
+
+check(
+  "landing explains the two family entry paths and distinguishes code roles",
+  includesAll(landing, [
+    "Я взрослый — начать",
+    "У ребёнка уже есть код",
+    "8-символьный код ребёнка",
+    "6-значный код взрослого",
+  ]),
+);
+check(
+  "child code entry explains who provides the code and uses a mobile-safe layout",
+  includesAll(enterCode, [
+    "8-символьный код ребёнка",
+    "взрослый получает по приглашению",
+    "grid-cols-4",
+    "sm:flex",
+    'aria-describedby="child-code-help"',
+  ]),
+);
 
 check(
   "public Academy screens do not expose an Azerbaijani language toggle",
