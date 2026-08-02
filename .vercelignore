@@ -5,3 +5,11 @@
 *.db
 dev.db
 prisma/dev.db
+
+node_modules/
+.next/
+.git/
+.superpowers/
+.agents/
+.claude/
+memory/

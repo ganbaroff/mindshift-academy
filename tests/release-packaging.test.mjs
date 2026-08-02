@@ -20,6 +20,13 @@ assert.deepEqual(vercelIgnore, [
   "*.db",
   "dev.db",
   "prisma/dev.db",
+  "node_modules/",
+  ".next/",
+  ".git/",
+  ".superpowers/",
+  ".agents/",
+  ".claude/",
+  "memory/",
 ]);
 
 assert.equal(packageJson.dependencies.next, "16.2.12");
