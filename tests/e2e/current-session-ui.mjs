@@ -540,7 +540,13 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     await page.getByTestId("formulation-input").fill("Сначала проверить условие, затем проверить результат.");
     await page.getByTestId("formulation-submit").click();
     await page.getByTestId("capstone-calm-closure").waitFor({ timeout: 30000 });
-    await page.screenshot({ path: join(outDir, `current-session-${browserName}-capstone.png`), fullPage: true });
+    // WebKit's full-page screenshot waits indefinitely for a font-face that is
+    // already represented in the trace. Keep the functional capstone proof and
+    // trace screenshots for WebKit; capture the explicit full-page artifact in
+    // Chromium/Firefox where the engine completes deterministically.
+    if (browserName !== "webkit") {
+      await page.screenshot({ path: join(outDir, `current-session-${browserName}-capstone.png`), fullPage: true });
+    }
     return {
       browser: browserName,
       verdict: "PASS",

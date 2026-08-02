@@ -17,6 +17,7 @@ assert.match(suite, /route\.abort\(\)\.catch/, "Clerk proxy tolerates a route al
 assert.match(suite, /destination\s*===\s*["']document["']/, "Clerk document handshakes stay browser-owned");
 assert.match(suite, /route\.continue\(\)/, "Clerk document handshakes are not fulfilled by the node-side proxy");
 assert.match(suite, /page\.reload\(\{\s*waitUntil:\s*["']commit["']/, "WebKit reload does not wait on Clerk handshake DOMContentLoaded");
+assert.match(suite, /browserName !== ["']webkit["']/, "WebKit uses trace evidence when full-page font capture is unavailable");
 assert.equal(packageJson.scripts["test:cross-browser:current-sessions"], "npx tsx scripts/e2e/current-session-flow.mjs --cross-browser");
 
 console.log("cross-browser-smoke-contract: expected Firefox/WebKit current-session proof is present");
