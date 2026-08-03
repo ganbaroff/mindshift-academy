@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "academy-preview",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/dev-preview.mjs", "3007"],
+      "port": 3007
     }
   ]
 }

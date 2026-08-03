@@ -10,16 +10,12 @@ import { register } from "node:module";
 register("./alias-loader.mjs", import.meta.url);
 
 const { createAccessCode } = await import("@/lib/access-code");
-
-// Inline allowlist check (same rule as src/lib/access.ts isEmailAllowed) — imported directly here
-// instead of from access.ts, because that module pulls in @clerk/nextjs/server which can't load
-// under a plain node script. Empty list = open in dev, closed in prod.
-const allow = (process.env.ALLOWLIST_EMAILS ?? "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-const isEmailAllowed = (email) =>
-  allow.length === 0 ? process.env.NODE_ENV !== "production" : allow.includes(email.toLowerCase());
+// Same rule the app enforces, imported from the shared module (NOT re-implemented here — an
+// inline copy silently ignored the per-parent ACADEMY_ALLOW_EMAIL_<sha256> grants and skipped
+// families that the site had already been configured to admit). parent-allowlist.js is plain
+// JS on purpose: src/lib/access.ts pulls @clerk/nextjs/server, which cannot load under node.
+const { isParentEmailAllowed } = await import("@/lib/parent-allowlist");
+const isEmailAllowed = (email) => isParentEmailAllowed(email);
 
 const emails = process.argv
   .slice(2)
@@ -35,7 +31,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 for (const email of emails) {
   if (!isEmailAllowed(email)) {
-    console.log(`SKIP  ${email} — not in ALLOWLIST_EMAILS`);
+    console.log(`SKIP  ${email} — no allowlist grant (ALLOWLIST_EMAILS or ACADEMY_ALLOW_EMAIL_<sha256>)`);
     continue;
   }
   const { code, activationToken } = await createAccessCode(email);

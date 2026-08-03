@@ -6,6 +6,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/cron/weekly-report", // bearer-secret authenticated inside the route
   "/api/access-code/activate", // token-gated parent activation; no Clerk session yet
   "/api/access-code/redeem", // public child redemption; rate-limited, the code IS the credential
+  "/api/access-request", // public parent request inbox; rate-limited, grants nothing by itself
 ]);
 
 export function isPublicApiPath(pathname: string): boolean {

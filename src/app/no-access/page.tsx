@@ -15,13 +15,20 @@ export default function NoAccessPage() {
 
         <p className="mt-3 text-sm leading-6 text-white/64">
           MindShift Academy сейчас открыта только для приглашённых аккаунтов и бесплатна.
-          Если у вас есть реферальная ссылка — попросите администратора добавить вашу почту
-          в список доступа, и этот аккаунт сразу откроется.
+          Оставьте заявку — мы открываем доступ вручную, небольшими группами, и пришлём код
+          для ребёнка на вашу почту.
         </p>
 
         <Link
+          href="/request-access"
+          className="mt-7 inline-flex min-h-11 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        >
+          Оставить заявку
+        </Link>
+
+        <Link
           href="/"
-          className="mt-7 inline-flex h-11 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="mt-3 inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-white/12 px-6 text-sm font-medium text-white/78 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
           На главную
         </Link>

@@ -80,3 +80,6 @@ docs/release/_w4_drill_workspace/*.out.txt
 docs/release/_w4_drill_workspace/*.db
 docs/release/_w4_drill_workspace/drill-console.log
 
+/preview.db
+/preview.db-shm
+/preview.db-wal

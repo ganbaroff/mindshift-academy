@@ -56,6 +56,8 @@ const COPY = {
   signIn: "Войти",
   childCta: "У ребёнка есть код",
   childCtaHint: "Перейти к вводу кода",
+  requestPrefix: "Ещё нет доступа?",
+  requestCta: "Оставить заявку",
   badge: "Закрытый тест · мышление с ИИ",
   h1: "Неделя 1 мышления — точные команды для ИИ, старт для родителя",
   subtitle:
@@ -152,6 +154,17 @@ export default function HomePage() {
               <span className="text-center text-xs text-white/52">{t.childCtaHint}</span>
             </div>
           </div>
+
+          {/* Third door: no invite yet — ask for one instead of hitting a closed wall. */}
+          <p className="text-sm text-white/60">
+            {t.requestPrefix}{" "}
+            <Link
+              href="/request-access"
+              className="font-medium text-primary-soft underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            >
+              {t.requestCta}
+            </Link>
+          </p>
 
           <div className="grid gap-3 sm:grid-cols-3">
             {t.benefits.map((pillar) => {
