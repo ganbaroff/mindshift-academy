@@ -84,3 +84,5 @@ docs/release/_w4_drill_workspace/drill-console.log
 /preview.db-shm
 /preview.db-wal
 /family-codes-*.txt
+/invite-preview-*.html
+/public/_invite-preview.html

@@ -8,7 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/deterministic.mjs && node tests/access-request.test.mjs && npx tsx tests/tasks.test.mjs && npx tsx tests/interpreter-fixtures.test.mjs && npx tsx tests/session-mastery.test.mjs && npx tsx tests/w2-learner-state.test.mjs && npx tsx tests/w3-engagement.test.mjs && npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs",
+    "test": "node tests/deterministic.mjs && node tests/access-request.test.mjs && node tests/family-invite.test.mjs && npx tsx tests/tasks.test.mjs && npx tsx tests/interpreter-fixtures.test.mjs && npx tsx tests/session-mastery.test.mjs && npx tsx tests/w2-learner-state.test.mjs && npx tsx tests/w3-engagement.test.mjs && npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs",
     "test:tasks": "npx tsx tests/tasks.test.mjs",
     "test:interpreter-contract": "npx tsx tests/interpreter-contract.test.mjs",
     "test:interpreter": "npx tsx tests/interpreter-literalness.test.mjs",
@@ -39,7 +39,8 @@
     "test:falsepos": "node scripts/measure-falsepos.mjs",
     "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs",
     "verify:release": "npm audit --omit=dev --audit-level=high && npm run lint && npm run check:prod-env && npm run test:config && npm run test:ui && npm test && npm run test:tasks && npm run test:interpreter-contract && npm run test:session && npm run test:attempt-trust && npm run test:consent && npm run test:data-lifecycle && node tests/proxy-api-auth.test.mjs && node tests/live-safety-startup.test.mjs && npm run test:live && node tests/e2e-startup.test.mjs && npm run test:e2e-wrong && npm run test:e2e:firefox && npm run test:e2e:webkit && npm run test:falsepos && npm run test:regression && npm run test:e2e:matrix && npm run build",
-    "test:access-request": "node tests/access-request.test.mjs"
+    "test:access-request": "node tests/access-request.test.mjs",
+    "test:invite": "node tests/family-invite.test.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.8.2",
