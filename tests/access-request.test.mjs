@@ -62,7 +62,7 @@ check(
 // --- operator alert ----------------------------------------------------------------------
 const alert = operatorAlertText({ email: "parent@example.com", parentName: "Айгюн", note: "хотим попробовать" }, "https://academy.volaura.app");
 check("alert carries the address the operator needs", alert.includes("parent@example.com"));
-check("alert carries the one-command approval", alert.includes("scripts/approve-access-request.mjs parent@example.com"));
+check("alert carries the one-command approval", alert.includes('scripts/approve-access-request.mjs "parent@example.com"'));
 check("alert has no mojibake", findMojibake(alert).length === 0, findMojibake(alert).join(","));
 check("masked email hides the local part in logs", maskEmail("parent@example.com") === "pa***@example.com");
 
@@ -95,6 +95,41 @@ check("page copy avoids the banned lexicon", findBannedLexicon(pageSource).lengt
 check("page has no mojibake", findMojibake(pageSource).length === 0);
 check("closed-door page offers the request route", read("src/app/no-access/page.tsx").includes("/request-access"));
 check("home page offers the request route", read("src/app/page.tsx").includes("/request-access"));
+
+// --- audit hardening (2026-08-03) --------------------------------------------------------
+check(
+  "email validator rejects shell metacharacters in the local part",
+  normalizeRequestEmail("x;whoami@a.bc") === null && normalizeRequestEmail("a$(id)b@a.bc") === null
+);
+check("ordinary addresses still pass", normalizeRequestEmail("first.last+tag@sub-domain.co.uk") === "first.last+tag@sub-domain.co.uk");
+check(
+  "operator command quotes the address",
+  operatorAlertText({ email: "parent@example.com", parentName: null, note: null }).includes('approve-access-request.mjs "parent@example.com"')
+);
+check(
+  "operator alert runs after the response, so latency cannot leak who already asked",
+  routeSource.includes("after(") && routeSource.includes('from "next/server"')
+);
+const { requirePepper } = await import("../src/lib/access-code-crypto.ts");
+let pepperThrew = false;
+try {
+  requirePepper({ NODE_ENV: "production" });
+} catch {
+  pepperThrew = true;
+}
+check("missing pepper fails loudly in production instead of silently weakening hashes", pepperThrew);
+check("pepper is optional in development", requirePepper({ NODE_ENV: "development" }) === "");
+check("configured pepper is returned unchanged", requirePepper({ NODE_ENV: "production", CONSENT_CODE_PEPPER: "p" }) === "p");
+const formulationSource = read("src/app/api/formulation/submit/route.ts");
+check(
+  "formulation submit throttles its paid classifier call",
+  /rateLimit\("formulation-submit"/.test(formulationSource) && formulationSource.includes("rateLimitMisconfiguredInProd")
+);
+check("build provenance endpoint is public", isPublicApiPath("/api/version"));
+check(
+  "activation link cannot leak its token through the referrer",
+  read("next.config.ts").includes('source: "/activate"') && read("next.config.ts").includes("no-referrer")
+);
 
 // --- storage shape -----------------------------------------------------------------------
 const schema = read("prisma/schema.prisma");

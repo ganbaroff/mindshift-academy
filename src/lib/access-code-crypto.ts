@@ -32,8 +32,22 @@ export function normalizeCode(raw: string): string {
  * plus a process-wide pepper so a DB leak alone can't offline-crack the code space.
  */
 export function hashAccessValue(value: string, salt: string): string {
-  const pepper = process.env.CONSENT_CODE_PEPPER ?? "";
+  const pepper = requirePepper();
   return crypto.createHmac("sha256", salt + pepper).update(value).digest("hex");
+}
+
+/**
+ * The pepper is what makes a stolen database useless on its own. Defaulting it to "" turned a
+ * missing production variable into a silent downgrade — every digest still looked fine while the
+ * offline-cracking protection was gone, and existing rows (hashed WITH a pepper) would stop
+ * matching. Fail loudly in production instead; development stays usable without one.
+ */
+export function requirePepper(env: NodeJS.ProcessEnv = process.env): string {
+  const pepper = env.CONSENT_CODE_PEPPER ?? "";
+  if (!pepper && env.NODE_ENV === "production") {
+    throw new Error("CONSENT_CODE_PEPPER is not set in production — refusing to hash without it.");
+  }
+  return pepper;
 }
 
 /** Constant-time hash compare (timing-safe), false on any length mismatch. */

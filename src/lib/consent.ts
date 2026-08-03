@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { CONSENT_VERSION, isCurrentValidConsent } from "@/lib/consent-policy";
+import { requirePepper } from "@/lib/access-code-crypto";
 
 // COPPA parental-consent layer (docs/COPPA-CONSENT-SPEC.md).
 // This module owns: (1) the fail-closed consent resolver used by every child-data gate,
@@ -109,9 +110,9 @@ export async function getConsentStatus(clerkId: string): Promise<{
 
 function hashCode(code: string, salt: string): string {
   // HMAC-SHA256 with a per-row random salt as the key. The raw code is never stored;
-  // only this digest is. A pepper (CONSENT_CODE_PEPPER) is mixed in when present so a DB
-  // leak alone can't offline-crack the (small) 6-digit space.
-  const pepper = process.env.CONSENT_CODE_PEPPER ?? "";
+  // only this digest is. The pepper (CONSENT_CODE_PEPPER) is mixed in so a DB leak alone
+  // can't offline-crack the (small) 6-digit space — required in production, see requirePepper.
+  const pepper = requirePepper();
   return crypto
     .createHmac("sha256", salt + pepper)
     .update(code)

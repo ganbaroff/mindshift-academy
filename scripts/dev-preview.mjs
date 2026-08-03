@@ -15,6 +15,10 @@ const dbFile = "preview.db";
 process.env.TURSO_DATABASE_URL = `file:./${dbFile}`;
 process.env.TURSO_AUTH_TOKEN = "";
 process.env.NEXT_PUBLIC_APP_URL = `http://localhost:${port}`;
+// Local limiter too: sharing the production Upstash buckets means a few clicks in a preview
+// eat the real hourly allowance (and make the next preview run start throttled).
+process.env.UPSTASH_REDIS_REST_URL = "";
+process.env.UPSTASH_REDIS_REST_TOKEN = "";
 
 // Only the tables a signed-out preview needs; the rest of the app is Clerk-gated.
 const client = createClient({ url: `file:${join(root, dbFile)}` });

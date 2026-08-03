@@ -15,8 +15,13 @@ export const ACCESS_REQUEST_LIMITS = {
   note: 300,
 } as const;
 
-/** Deliberately boring: catches typos, not an RFC parser. */
-const EMAIL_RE = /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)+$/;
+/**
+ * Deliberately boring: catches typos, not an RFC parser. The character class is a whitelist
+ * rather than "anything but @ and space" because the address is rendered into an operator-facing
+ * alert next to a shell command — `x;whoami@a.b` is a valid-looking address and a paste-ready
+ * trap. Rare-but-legal local parts (quoted strings, exotic punctuation) are rejected on purpose.
+ */
+const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/;
 
 export function normalizeRequestEmail(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -83,7 +88,9 @@ export function operatorAlertText(input: AccessRequestInput, appUrl?: string): s
   if (input.parentName) lines.push(`Имя: ${input.parentName}`);
   if (input.note) lines.push(`Сообщение: ${input.note}`);
   lines.push("");
-  lines.push("Одобрить: node scripts/approve-access-request.mjs " + input.email);
+  // Quoted so a copy-pasted command can never be split by the address, even if the validator
+  // is ever loosened again.
+  lines.push(`Одобрить: node scripts/approve-access-request.mjs "${input.email}"`);
   if (appUrl) lines.push(appUrl);
   return lines.join("\n");
 }

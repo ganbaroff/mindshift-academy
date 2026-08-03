@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
 import { parseAccessRequest, operatorAlertText, maskEmail } from "@/lib/access-requests";
@@ -51,18 +51,23 @@ export async function POST(req: Request) {
       data: { email, parentName, note, source: "site", status: "new" },
     });
 
-    const alerted = await sendTelegramAlert(
-      operatorAlertText({ email, parentName, note }, process.env.NEXT_PUBLIC_APP_URL)
-    );
-    if (alerted) {
-      await prisma.accessRequest.update({
-        where: { id: created.id },
-        data: { notifiedAt: new Date() },
-      });
-    } else {
-      // Masked on purpose: the operator inbox is the DB, the log is only a breadcrumb.
-      console.warn("[access-request] stored without operator alert:", maskEmail(email));
-    }
+    // The alert runs AFTER the response. Awaiting a multi-second Telegram round-trip here made
+    // a new address measurably slower than a repeat one, which handed an outsider the very
+    // "has this parent asked?" oracle the uniform {ok:true} body is meant to deny.
+    after(async () => {
+      const alerted = await sendTelegramAlert(
+        operatorAlertText({ email, parentName, note }, process.env.NEXT_PUBLIC_APP_URL)
+      );
+      if (alerted) {
+        await prisma.accessRequest.update({
+          where: { id: created.id },
+          data: { notifiedAt: new Date() },
+        });
+      } else {
+        // Masked on purpose: the operator inbox is the DB, the log is only a breadcrumb.
+        console.warn("[access-request] stored without operator alert:", maskEmail(email));
+      }
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
