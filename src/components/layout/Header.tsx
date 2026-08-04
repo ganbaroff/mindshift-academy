@@ -9,23 +9,23 @@ export const Header = () => {
   const crystals = useGameStore((state) => state.crystals);
 
   return (
-    <header className="sticky top-0 z-50 bg-[var(--color-bg-base)]/80 backdrop-blur-xl border-b border-white/5 px-8 py-4 flex justify-between items-center">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-white/5 bg-[var(--color-bg-base)]/80 px-4 py-4 backdrop-blur-xl sm:px-8">
+      <div className="flex min-w-0 items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center font-extrabold text-white text-xl shadow-[0_0_20px_rgba(139,92,246,0.3)]">
           M
         </div>
-        <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white to-violet-300 bg-clip-text text-transparent">
+        <span className="max-w-[130px] truncate bg-gradient-to-r from-white to-violet-300 bg-clip-text text-base font-bold tracking-tight text-transparent sm:max-w-none sm:text-xl">
           MindShift Academy
         </span>
       </div>
       
-      <div className="flex items-center gap-5">
-        <div className="flex items-center gap-2 bg-white/5 border border-white/5 rounded-full px-4 py-2 text-sm font-semibold">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-5">
+        <div className="hidden items-center gap-2 rounded-full border border-white/5 bg-white/5 px-4 py-2 text-sm font-semibold sm:flex">
           <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
           <span>Серия</span>
         </div>
         
-        <div className="flex flex-col gap-1 w-[150px]">
+        <div className="hidden w-[150px] flex-col gap-1 sm:flex">
           <div className="flex justify-between text-[11px] font-bold text-gray-400">
             <span>Уровень 2</span>
             <span className="tabular-nums">{totalXp} / 1000 XP</span>
@@ -45,7 +45,7 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/5 border border-amber-500/20 rounded-full px-4 py-2 text-sm font-semibold text-amber-400">
+        <div className="flex items-center gap-2 rounded-full border border-amber-500/20 bg-white/5 px-2 py-2 text-sm font-semibold text-amber-400 sm:px-4">
           <span aria-hidden="true">💎</span>
           <span className="tabular-nums" suppressHydrationWarning>
             {crystals}

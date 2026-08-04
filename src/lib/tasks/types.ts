@@ -11,7 +11,8 @@ export type UnclearReasonCode =
   | "ambiguous_steps"
   | "out_of_vocabulary"
   | "not_an_instruction"
-  | "do_nothing";
+  | "do_nothing"
+  | "copied_output";
 
 export type GridProgram =
   | { status: "ok"; cells: Cell[] }

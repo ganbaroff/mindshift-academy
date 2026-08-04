@@ -20,11 +20,11 @@ Date: 2026-08-04
 
 ## A5. plain sans-serif, line-height >=1.5, no italics in instruction
 - Result: **PASS**
-- Evidence: Geist sans; task prompt not-italic; body line-height 1.5
+- Evidence: Geist sans; structured task prompt is plain text with leading-7; body line-height 1.5
 
 ## A6. captions for every voiced instruction
 - Result: **PASS**
-- Evidence: session always shows promptRu as visible caption alongside any SFX
+- Evidence: TaskWorkspace always shows task.promptRu as a visible caption alongside any SFX
 
 ## A7. no pre-gesture sound; mute always instant
 - Result: **PASS**
@@ -40,11 +40,11 @@ Date: 2026-08-04
 
 ## A10. contrast 4.5:1 text, 3:1 UI/focus
 - Result: **PASS**
-- Evidence: solid primary send (no cyan-end gradient); focus ring violet-300
+- Evidence: solid violet primary check action; focus outline violet-300
 
 ## A11. no drag-only interactions
 - Result: **PASS**
-- Evidence: session tasks are speech/choice only
+- Evidence: structured workspaces use native buttons, radios, selects and inputs; no drag-only path
 
 ## A12. retry/undo always; no-shame copy
 - Result: **PASS**

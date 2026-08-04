@@ -62,6 +62,9 @@ scripts/e2e/*.png
 # Isolated Codex implementation worktrees
 /.worktrees/
 
+# Local subagent ledgers and unpublished gate receipts
+/.superpowers/sdd/
+
 # Local CI crystal harness DB
 ci-crystals*.db
 

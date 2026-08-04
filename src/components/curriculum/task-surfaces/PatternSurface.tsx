@@ -1,0 +1,74 @@
+"use client";
+
+import { useState } from "react";
+import type { StructuredProgram } from "@/lib/tasks/schemas";
+
+type Props = {
+  expandCount?: number;
+  disabled: boolean;
+  onSubmit: (program: StructuredProgram) => void | Promise<void>;
+};
+
+export function PatternSurface({ expandCount = 5, disabled, onSubmit }: Props) {
+  const [kind, setKind] = useState<"arithmetic" | "cycle">("arithmetic");
+  const [start, setStart] = useState("");
+  const [step, setStep] = useState("");
+  const [cycle, setCycle] = useState("");
+  const cycleItems = cycle.split(",").map((item) => item.trim()).filter(Boolean);
+  const arithmeticReady = start.trim() !== "" && step.trim() !== "" && Number.isFinite(Number(start)) && Number.isFinite(Number(step));
+  const complete = kind === "arithmetic" ? arithmeticReady : cycleItems.length > 0 && cycleItems.length < expandCount;
+
+  return (
+    <form
+      aria-label="Редактор короткого правила узора"
+      className="space-y-4"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!complete) return;
+        void onSubmit({
+          status: "ok",
+          rule: kind === "arithmetic"
+            ? { kind, start: Number(start), step: Number(step) }
+            : { kind, items: cycleItems },
+        });
+      }}
+    >
+      <fieldset disabled={disabled}>
+        <legend className="mb-3 font-medium text-white">Какое правило повторяется?</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-3">
+            <input type="radio" name="pattern-kind" value="arithmetic" checked={kind === "arithmetic"} onChange={() => setKind("arithmetic")} />
+            Числа с одинаковым шагом
+          </label>
+          <label className="flex min-h-11 items-center gap-3 rounded-xl border border-slate-700 bg-slate-900/70 px-3">
+            <input type="radio" name="pattern-kind" value="cycle" checked={kind === "cycle"} onChange={() => setKind("cycle")} />
+            Короткий повторяющийся цикл
+          </label>
+        </div>
+      </fieldset>
+      {kind === "arithmetic" ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-2 font-medium">Начальное число
+            <input aria-label="Начальное число" inputMode="decimal" value={start} onChange={(event) => setStart(event.target.value)} disabled={disabled} className="min-h-11 rounded-xl border border-slate-600 bg-slate-800 px-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300" />
+          </label>
+          <label className="grid gap-2 font-medium">Шаг
+            <input aria-label="Шаг последовательности" inputMode="decimal" value={step} onChange={(event) => setStep(event.target.value)} disabled={disabled} className="min-h-11 rounded-xl border border-slate-600 bg-slate-800 px-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300" />
+          </label>
+        </div>
+      ) : (
+        <label className="grid gap-2 font-medium">Элементы короткого цикла через запятую
+          <input aria-label="Элементы короткого цикла" value={cycle} onChange={(event) => setCycle(event.target.value)} disabled={disabled} placeholder="красный, синий" className="min-h-11 rounded-xl border border-slate-600 bg-slate-800 px-3 text-white placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300" />
+          <span className="text-sm font-normal text-slate-400">Монстр повторит правило {expandCount} раз. Не перечисляй готовый ответ целиком.</span>
+        </label>
+      )}
+      <button
+        type="submit"
+        data-primary-action="true"
+        disabled={disabled || !complete}
+        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Проверить
+      </button>
+    </form>
+  );
+}

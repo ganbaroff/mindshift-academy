@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { UNCLEAR_REASON_CODES } from "./unclear-copy";
+import type { TaskFamilyId } from "./types";
 
 export const unclearReasonSchema = z.enum(
   UNCLEAR_REASON_CODES as [string, ...string[]]
@@ -86,6 +87,39 @@ export const claimProgramSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
+export const structuredProgramSchema = z.union([
+  gridProgramSchema,
+  sequenceProgramSchema,
+  ruleProgramSchema,
+  patternProgramSchema,
+  claimProgramSchema,
+]);
+
+export type StructuredProgram = Extract<
+  z.infer<typeof structuredProgramSchema>,
+  { status: "ok" }
+>;
+
+/** Validate client-built actions against the server-resolved task family. */
+export function parseStructuredProgram(
+  family: TaskFamilyId,
+  raw: unknown
+): StructuredProgram | null {
+  const schema =
+    family === "grid-draw"
+      ? gridProgramSchema
+      : family === "sequence-world"
+        ? sequenceProgramSchema
+        : family === "rule-runner"
+          ? ruleProgramSchema
+          : family === "pattern-expand"
+            ? patternProgramSchema
+            : claimProgramSchema;
+  const parsed = schema.safeParse(raw);
+  if (!parsed.success || parsed.data.status !== "ok") return null;
+  return parsed.data as StructuredProgram;
+}
+
 /**
  * Thinking-curriculum attempt. sessionId+taskId required — server loads target/family/tier.
  * Client `target` / `family` / `concept` / `tier` are ignored if present (compat).
@@ -94,6 +128,8 @@ export const attemptRequestSchema = z.object({
   utterance: z.string().trim().max(500).optional().default(""),
   /** Choice-mode fallback id when interpreter is down (deterministic tiles). */
   choiceId: z.string().trim().min(1).max(64).optional(),
+  /** Closed learner-built program from a visible deterministic workspace. */
+  program: structuredProgramSchema.optional(),
   sessionId: z.string().min(1).max(64),
   taskId: z.string().min(1).max(64),
   /** Idempotency for TaskAttempt — never stores utterance. */
@@ -104,8 +140,15 @@ export const attemptRequestSchema = z.object({
   target: z.array(cellSchema).optional(),
   concept: z.string().min(1).max(64).optional(),
   tier: z.union([z.literal(1), z.literal(2), z.literal(3)]).optional(),
-}).refine((v) => Boolean(v.choiceId) || (v.utterance && v.utterance.length > 0), {
-  message: "utterance_or_choice_required",
+}).superRefine((value, context) => {
+  const modes = [Boolean(value.choiceId), Boolean(value.utterance), Boolean(value.program)].filter(Boolean);
+  if (modes.length !== 1) {
+    context.addIssue({
+      code: "custom",
+      message: "exactly_one_attempt_mode_required",
+      path: ["utterance"],
+    });
+  }
 });
 
 export type AttemptRequest = z.infer<typeof attemptRequestSchema>;

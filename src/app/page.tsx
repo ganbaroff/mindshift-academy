@@ -34,28 +34,28 @@ const benefitsRu = [
 
 const journey = [
   {
-    title: "Откройте доступ",
-    copy: "Войдите с email, который заранее добавлен в закрытый тест.",
+    title: "Взрослый открывает доступ",
+    copy: "Войдите или зарегистрируйтесь — это шаг для родителя.",
     icon: UserRound,
   },
   {
-    title: "Подтвердите согласие",
-    copy: "Код придёт на email родительского аккаунта.",
+    title: "Подтвердите email взрослого",
+    copy: "6-значный код взрослого приходит на email. Это не код ребёнка.",
     icon: ShieldCheck,
   },
   {
-    title: "Передайте ребёнку код",
-    copy: "Ребёнок вводит код и проходит сессии недели мышления в игровом темпе.",
+    title: "Ребёнок вводит код приглашения",
+    copy: "Взрослый получает 8-символьный код ребёнка по приглашению и передаёт его ему.",
     icon: KeyRound,
   },
 ] as const;
 
 const COPY = {
-  parentCta: "Я родитель — открыть доступ",
-  parentCtaHint: "Для заранее добавленного email",
+  parentCta: "Я взрослый — начать",
+  parentCtaHint: "Создать доступ для семьи",
   signIn: "Войти",
-  childCta: "У ребёнка есть код",
-  childCtaHint: "Перейти к вводу кода",
+  childCta: "У ребёнка уже есть код",
+  childCtaHint: "8-символьный код ребёнка",
   requestPrefix: "Ещё нет доступа?",
   requestCta: "Оставить заявку",
   badge: "Закрытый тест · мышление с ИИ",
@@ -214,7 +214,7 @@ export default function HomePage() {
           </ol>
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-primary/20 bg-primary/[0.08] p-4 text-sm leading-6 text-white/76">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary-soft" aria-hidden="true" />
-            <p>Основной следующий шаг всегда виден сверху: родитель открывает доступ или ребёнок вводит уже полученный код.</p>
+            <p>Выберите путь своей семьи: взрослый начинает доступ или ребёнок вводит уже полученный код приглашения.</p>
           </div>
         </aside>
       </section>

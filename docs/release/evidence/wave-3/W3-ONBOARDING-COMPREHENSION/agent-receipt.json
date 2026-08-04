@@ -1,0 +1,67 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "64159c0",
+  "headSha": "8fcf7dffb913e4728e8c77c8dba79bbb96108fc9",
+  "commits": [
+    "8fcf7dffb913e4728e8c77c8dba79bbb96108fc9"
+  ],
+  "changedFiles": [
+    "docs/release/evidence/wave-3/W3-ONBOARDING-COMPREHENSION/task-brief.md",
+    "package.json",
+    "scripts/qa/academy-gates.mjs",
+    "src/app/onboarding/page.tsx",
+    "tests/academy-gates.test.mjs",
+    "tests/onboarding-comprehension.test.mjs"
+  ],
+  "red": {
+    "command": "node tests/onboarding-comprehension.test.mjs",
+    "expectedFailure": "Missing accessible phase headings, polite hatching status, explicit primary CTA, and ready-phase worked example.",
+    "exitCode": 1,
+    "checks": 5
+  },
+  "green": [
+    {
+      "command": "npm run test:onboarding-comprehension",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 5
+    },
+    {
+      "command": "npm run test:task-surfaces",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 5
+    },
+    {
+      "command": "npm run test:w2",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 38
+    },
+    {
+      "command": "npm run test:gate-contract",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 9
+    },
+    {
+      "command": "npm run lint",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    },
+    {
+      "command": "npm run build",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    }
+  ],
+  "concerns": [
+    "Build reports existing Turbopack workspace-root and non-distributed rate-limit warnings; these are not changed by this ticket and remain release gates.",
+    "This ticket adds a deterministic comprehension contract but does not replace real child testing or browser accessibility verification."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}

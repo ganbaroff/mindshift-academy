@@ -96,13 +96,16 @@ export default function EnterCodePage() {
     <main className="grid min-h-screen place-items-center px-6 py-12">
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="space-y-3">
-          <h1 className="text-2xl font-semibold text-white">Впиши секретный код</h1>
+          <h1 className="text-2xl font-semibold text-white">Введи 8-символьный код ребёнка</h1>
           {/* Voiced instruction in the pet's voice + a caption — reading optional (spec §3). */}
           <MascotCue beat="code" />
+          <p id="child-code-help" className="text-sm leading-6 text-white/60">
+            Этот код взрослый получает по приглашению и передаёт тебе. Если кода нет, попроси взрослого проверить приглашение.
+          </p>
         </div>
 
         <div
-          className="flex justify-center gap-1.5"
+          className="mx-auto grid w-fit grid-cols-4 gap-2 sm:flex sm:justify-center sm:gap-1.5"
           onPaste={(e) => {
             e.preventDefault();
             setAt(0, e.clipboardData.getData("text"));
@@ -120,11 +123,12 @@ export default function EnterCodePage() {
               autoComplete="off"
               maxLength={1}
               aria-label={`Символ ${i + 1}`}
+              aria-describedby="child-code-help"
               onChange={(e) => setAt(i, e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !chars[i] && i > 0) boxes.current[i - 1]?.focus();
               }}
-              className="h-14 w-9 rounded-xl border border-white/15 bg-surface-strong/90 text-center text-xl font-bold uppercase text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="h-12 w-8 rounded-xl border border-white/15 bg-surface-strong/90 text-center text-xl font-bold uppercase text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-14 sm:w-9"
             />
           ))}
         </div>

@@ -15,7 +15,7 @@ build configuration; Academy runtime data uses Turso. A failing preflight is a l
 For production at `https://academy.volaura.app`, set:
 
 ```env
-NEXT_PUBLIC_CLERK_JS_URL=https://clerk.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js
+NEXT_PUBLIC_CLERK_JS_URL=https://clerk.academy.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js
 ```
 
 This avoids the Vercel preview proxy and loads Clerk JS from the verified Clerk Frontend API domain.

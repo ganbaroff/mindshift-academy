@@ -12,12 +12,39 @@ import {
 
 export { HINT_CRYSTAL_COST, TASK_PASS_CRYSTAL_REWARD, STARTER_CRYSTALS };
 
-export function hintEventId(sessionId: string, taskId: string): string {
+const TASK_EVENT_VERSION = "v2";
+
+function eventPart(value: string): string {
+  return encodeURIComponent(value);
+}
+
+export function hintEventId(userId: string, sessionId: string, taskId: string): string {
+  return `hint:${TASK_EVENT_VERSION}:${eventPart(userId)}:${eventPart(sessionId)}:${eventPart(taskId)}`;
+}
+
+export function taskPassEventId(userId: string, sessionId: string, taskId: string): string {
+  return `taskpass:${TASK_EVENT_VERSION}:${eventPart(userId)}:${eventPart(sessionId)}:${eventPart(taskId)}`;
+}
+
+function legacyHintEventId(sessionId: string, taskId: string): string {
   return `hint:${sessionId}:${taskId}`;
 }
 
-export function taskPassEventId(sessionId: string, taskId: string): string {
-  return `taskpass:${sessionId}:${taskId}`;
+function legacyTaskPassPrefix(sessionId: string): string {
+  return `taskpass:${sessionId}:`;
+}
+
+function taskPassPrefix(userId: string, sessionId: string): string {
+  return `taskpass:${TASK_EVENT_VERSION}:${eventPart(userId)}:${eventPart(sessionId)}:`;
+}
+
+async function isEventOwnedByUser(
+  tx: Pick<typeof prisma, "rewardEvent">,
+  eventId: string,
+  userId: string
+): Promise<boolean> {
+  const row = await tx.rewardEvent.findUnique({ where: { eventId }, select: { userId: true } });
+  return row?.userId === userId;
 }
 
 function isUniqueConflict(err: unknown): boolean {
@@ -78,11 +105,14 @@ export async function spendCrystalsForHint(params: {
   | { ok: false; reason: "insufficient"; crystals: number }
 > {
   const cost = params.cost ?? HINT_CRYSTAL_COST;
-  const eventId = hintEventId(params.sessionId, params.taskId);
+  const eventId = hintEventId(params.userId, params.sessionId, params.taskId);
+  const legacyEventId = legacyHintEventId(params.sessionId, params.taskId);
 
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.rewardEvent.findUnique({ where: { eventId } });
-    if (existing) {
+    if (
+      (await isEventOwnedByUser(tx, eventId, params.userId)) ||
+      (await isEventOwnedByUser(tx, legacyEventId, params.userId))
+    ) {
       const cur = await tx.user.findUnique({
         where: { id: params.userId },
         select: { crystals: true },
@@ -119,11 +149,14 @@ export async function awardTaskPassCrystals(params: {
   amount?: number;
 }): Promise<{ awarded: boolean; crystals: number }> {
   const amount = params.amount ?? TASK_PASS_CRYSTAL_REWARD;
-  const eventId = taskPassEventId(params.sessionId, params.taskId);
+  const eventId = taskPassEventId(params.userId, params.sessionId, params.taskId);
+  const legacyEventId = legacyTaskPassPrefix(params.sessionId) + params.taskId;
 
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.rewardEvent.findUnique({ where: { eventId } });
-    if (existing) {
+    if (
+      (await isEventOwnedByUser(tx, eventId, params.userId)) ||
+      (await isEventOwnedByUser(tx, legacyEventId, params.userId))
+    ) {
       const cur = await tx.user.findUnique({
         where: { id: params.userId },
         select: { crystals: true },
@@ -158,10 +191,10 @@ export async function hasHintUnlocked(
   sessionId: string,
   taskId: string
 ): Promise<boolean> {
-  const row = await prisma.rewardEvent.findUnique({
-    where: { eventId: hintEventId(sessionId, taskId) },
-  });
-  return Boolean(row);
+  return (
+    (await isEventOwnedByUser(prisma, hintEventId(userId, sessionId, taskId), userId)) ||
+    (await isEventOwnedByUser(prisma, legacyHintEventId(sessionId, taskId), userId))
+  );
 }
 
 /** Task ids already passed for a session — prefer TaskAttempt (contract), fall back to RewardEvent. */
@@ -187,12 +220,24 @@ export async function listPassedTaskIds(userId: string, sessionId: string): Prom
   }
 
   // Legacy fallback: crystal award ledger (pre-W2 rows without sessionId/taskId).
-  const prefix = `taskpass:${sessionId}:`;
+  const prefix = taskPassPrefix(userId, sessionId);
+  const legacyPrefix = legacyTaskPassPrefix(sessionId);
   const rows = await prisma.rewardEvent.findMany({
-    where: { userId, eventId: { startsWith: prefix } },
+    where: {
+      userId,
+      OR: [
+        { eventId: { startsWith: prefix } },
+        { eventId: { startsWith: legacyPrefix } },
+      ],
+    },
     select: { eventId: true },
   });
-  return rows.map((r) => r.eventId.slice(prefix.length)).filter(Boolean);
+  return rows
+    .map((r) => {
+      if (r.eventId.startsWith(prefix)) return decodeURIComponent(r.eventId.slice(prefix.length));
+      return r.eventId.slice(legacyPrefix.length);
+    })
+    .filter(Boolean);
 }
 
 /** Whether a curriculum session meets sessionComplete from recorded pass awards. */
@@ -210,7 +255,7 @@ export async function isCurriculumSessionComplete(
     .filter((t) => passedSet.has(t.id))
     .map((t) => ({
       id: t.id,
-      role: t.role === "collision" ? ("collision" as const) : t.role,
+      role: t.role,
       pass: true,
       tier: t.tier,
     }));
@@ -220,6 +265,8 @@ export async function isCurriculumSessionComplete(
       concept: session.concept,
       practiceRequired: session.practiceRequired,
       requireTransfer: true,
+      requireCollision: session.requireCollision,
+      requirePrediction: session.requirePrediction,
       minTier: session.minTier,
     },
     results

@@ -81,8 +81,8 @@ async function main() {
   // --- Step 0: Landing ---
   await page.goto(`${BASE}/`, { waitUntil: "networkidle" });
   const landing = await pageText(page);
-  record("landing: parent CTA visible", landing.includes("Я родитель"));
-  record("landing: child code CTA visible", landing.includes("У ребёнка есть код"));
+  record("landing: parent CTA visible", landing.includes("Я взрослый — начать"));
+  record("landing: child code CTA visible", landing.includes("У ребёнка уже есть код"));
   record("landing: link to sign-up", (await page.locator('a[href="/sign-up"]').count()) > 0);
   record("landing: link to enter-code", (await page.locator('a[href="/enter-code"]').count()) > 0);
 

@@ -15,13 +15,36 @@ type Props = {
 
 const key = ([r, c]: Cell) => `${r},${c}`;
 
+/** Keep the spoken state deterministic and concise even if callers repeat a cell. */
+function describeCells(cells: Cell[]) {
+  const unique = Array.from(
+    new Map(cells.map((cell) => [key(cell), cell])).values(),
+  ).sort(([rowA, colA], [rowB, colB]) => rowA - rowB || colA - colB);
+
+  if (unique.length === 0) return "нет";
+  return unique
+    .map(([row, col]) => `строка ${row + 1}, столбец ${col + 1}`)
+    .join("; ");
+}
+
+function buildAccessibleSummary(
+  filled: Cell[],
+  target: Cell[],
+  mismatch: Cell[],
+  label?: string,
+) {
+  const prefix = label ? `${label}. ` : "";
+  return `${prefix}Закрашены клетки: ${describeCells(filled)}. Целевые клетки: ${describeCells(target)}. Несовпадения: ${describeCells(mismatch)}.`;
+}
+
 export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: Props) {
   const filledSet = new Set(filled.map(key));
   const targetSet = new Set(target.map(key));
   const mismatchSet = new Set(mismatch.map(key));
+  const accessibleSummary = buildAccessibleSummary(filled, target, mismatch, label);
 
   return (
-    <div className="flex flex-col gap-2" aria-label={label ?? "Поле для рисунка монстра"}>
+    <div className="flex flex-col gap-2">
       {label ? (
         <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">{label}</p>
       ) : null}
@@ -29,7 +52,7 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
         className="inline-grid gap-1 p-3 rounded-2xl bg-white/5 border border-white/10 w-fit"
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
         role="img"
-        aria-hidden="true"
+        aria-label={accessibleSummary}
       >
         {Array.from({ length: GRID_SIZE * GRID_SIZE }, (_, i) => {
           const row = Math.floor(i / GRID_SIZE);
@@ -51,7 +74,7 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
             cellClass += "border-white/10 bg-white/[0.03]";
           }
 
-          return <div key={k} className={cellClass} />;
+          return <div key={k} className={cellClass} aria-hidden="true" tabIndex={-1} />;
         })}
       </div>
     </div>

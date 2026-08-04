@@ -10,7 +10,7 @@ import { CLAIM_FIXTURES } from "./fixtures/claim-check";
 import { parseGridProgram, parseSequenceProgram } from "./interpreter";
 import type { TaskFamilyId } from "./types";
 import type { ChildRule } from "./rule-runner";
-import type { PatternRule } from "./pattern-expand";
+import { hasExplicitPatternRule, type PatternRule } from "./pattern-expand";
 
 function norm(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
@@ -64,6 +64,9 @@ export function fakeInterpretUtterance(
   }
 
   if (family === "pattern-expand") {
+    if (!hasExplicitPatternRule(utterance)) {
+      return { status: "unclear", reasonCode: "copied_output" };
+    }
     const fx = PATTERN_FIXTURES.find((f) => norm(f.utterance) === key);
     if (!fx) return { status: "unclear", reasonCode: "not_an_instruction" };
     if (fx.expect.status === "not-ok") {

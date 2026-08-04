@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Academy Agent Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "baseSha",
+    "headSha",
+    "commits",
+    "changedFiles",
+    "red",
+    "green",
+    "concerns",
+    "browserEvidence",
+    "productionActions",
+    "secretAccess"
+  ],
+  "properties": {
+    "status": {
+      "enum": ["DONE", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "BLOCKED"]
+    },
+    "baseSha": { "type": "string", "minLength": 7 },
+    "headSha": { "type": "string", "minLength": 7 },
+    "commits": { "type": "array", "items": { "type": "string" } },
+    "changedFiles": { "type": "array", "items": { "type": "string" } },
+    "red": { "$ref": "#/$defs/commandEvidence" },
+    "green": { "type": "array", "items": { "$ref": "#/$defs/commandEvidence" } },
+    "concerns": { "type": "array", "items": { "type": "string" } },
+    "browserEvidence": { "type": "array", "items": { "type": "string" } },
+    "productionActions": { "const": false },
+    "secretAccess": { "const": false }
+  },
+  "$defs": {
+    "commandEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command", "exitCode"],
+      "properties": {
+        "command": { "type": "string", "minLength": 1 },
+        "expectedFailure": { "type": ["string", "null"] },
+        "exitCode": { "type": "integer" },
+        "checks": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

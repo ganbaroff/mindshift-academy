@@ -45,9 +45,9 @@ check(
 check(
   "landing makes the parent start and child-code routes visible as distinct first-screen actions",
   landing.includes('href="/sign-up"') &&
-    landing.includes("Я родитель — открыть доступ") &&
+    landing.includes("Я взрослый — начать") &&
     landing.includes('href="/enter-code"') &&
-    landing.includes("У ребёнка есть код"),
+    landing.includes("У ребёнка уже есть код"),
   "the parent path cannot be hidden in a quiet header link"
 );
 check(
