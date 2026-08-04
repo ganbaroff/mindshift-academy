@@ -542,19 +542,12 @@ export default function ThinkingSessionPage() {
   }
 
   const progressLabel = `Задание ${safeIndex + 1} из ${session.tasks.length}`;
-  // C3: collision target hidden until first attempt / explanation.
-  const revealCollisionTarget =
-    currentTask?.role !== "collision" || Boolean(feedback) || showExplanation;
+  // Always show the goal picture — hiding it on collision made "what do I paint?" impossible for kids.
   const gridTarget =
-    currentTask?.family === "grid-draw" && revealCollisionTarget
-      ? (currentTask.target ?? [])
-      : [];
-  const gridLabel =
-    currentTask?.role === "collision" && !revealCollisionTarget
-      ? "Пустое поле — выбери клетки на поле ниже"
-      : filledCells.length
-        ? "Монстр закрасил так"
-        : "Цель — совпасть с этой картинкой";
+    currentTask?.family === "grid-draw" ? (currentTask.target ?? []) : [];
+  const gridLabel = filledCells.length
+    ? "Монстр закрасил так"
+    : "Цель — совпасть с этой картинкой";
 
   const showAdvance =
     Boolean(feedback) &&
