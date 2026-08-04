@@ -105,8 +105,23 @@ body {
    classes only). Delete this block the moment Google is configured. */
 .cl-socialButtonsRoot,
 .cl-socialButtons,
-.cl-dividerRow {
+.cl-socialButtonsBlockButton,
+.cl-socialButtonsIconButton,
+.cl-dividerRow,
+.cl-dividerLine,
+.cl-dividerText,
+button[data-provider*="google"],
+a[data-provider*="google"] {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
 }
 
 /* Safe area for notched devices */
