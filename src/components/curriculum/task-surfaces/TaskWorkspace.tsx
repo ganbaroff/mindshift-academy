@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useId } from "react";
 import type { ReactNode } from "react";
 import type { PublicContentTask } from "@/content/curriculum";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
@@ -10,11 +11,18 @@ import { RuleSurface } from "./RuleSurface";
 import { SequenceSurface } from "./SequenceSurface";
 import { WorkedExample } from "./WorkedExample";
 
+export type TaskPrimaryActionState = {
+  formId: string;
+  ready: boolean;
+};
+
 type Props = {
   task: PublicContentTask;
   offeredTier: 1 | 2 | 3;
   disabled: boolean;
   reference?: ReactNode;
+  externalPrimaryAction?: boolean;
+  onPrimaryActionChange?: (state: TaskPrimaryActionState | null) => void;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
 
@@ -34,16 +42,41 @@ const TIER_ONE_REMINDERS = {
   "claim-check": "Проверяй каждую фразу отдельно — уверенный голос не является доказательством.",
 } as const;
 
-export function TaskWorkspace({ task, offeredTier, disabled, reference, onSubmit }: Props) {
+export function TaskWorkspace({
+  task,
+  offeredTier,
+  disabled,
+  reference,
+  externalPrimaryAction = false,
+  onPrimaryActionChange,
+  onSubmit,
+}: Props) {
+  const formId = useId();
+
+  const handleSubmitReadyChange = useCallback(
+    (ready: boolean) => {
+      onPrimaryActionChange?.({ formId, ready });
+    },
+    [formId, onPrimaryActionChange]
+  );
+
+  const surfaceProps = {
+    formId,
+    hidePrimaryAction: externalPrimaryAction,
+    onSubmitReadyChange: handleSubmitReadyChange,
+    disabled,
+    onSubmit,
+  };
+
   const surface = task.family === "grid-draw"
-    ? <GridDrawSurface disabled={disabled} onSubmit={onSubmit} />
+    ? <GridDrawSurface {...surfaceProps} />
     : task.family === "sequence-world"
-      ? <SequenceSurface disabled={disabled} onSubmit={onSubmit} />
+      ? <SequenceSurface {...surfaceProps} />
       : task.family === "rule-runner"
-        ? <RuleSurface maps={task.ruleMaps ?? []} disabled={disabled} onSubmit={onSubmit} />
+        ? <RuleSurface {...surfaceProps} maps={task.ruleMaps ?? []} />
         : task.family === "pattern-expand"
-          ? <PatternSurface expandCount={task.patternExpandCount} disabled={disabled} onSubmit={onSubmit} />
-          : <ClaimSurface claims={task.claims ?? []} disabled={disabled} onSubmit={onSubmit} />;
+          ? <PatternSurface {...surfaceProps} expandCount={task.patternExpandCount} />
+          : <ClaimSurface {...surfaceProps} claims={task.claims ?? []} />;
 
   return (
     <section

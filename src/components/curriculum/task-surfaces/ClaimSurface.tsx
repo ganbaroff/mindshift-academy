@@ -1,21 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PublicClaim } from "@/content/curriculum/types";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
-type Props = {
+type Props = TaskPrimaryActionProps & {
   claims: PublicClaim[];
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
 
-export function ClaimSurface({ claims, disabled, onSubmit }: Props) {
+export function ClaimSurface({
+  formId,
+  hidePrimaryAction,
+  onSubmitReadyChange,
+  claims,
+  disabled,
+  onSubmit,
+}: Props) {
   const [labels, setLabels] = useState<Record<string, boolean>>({});
   const complete = claims.length > 0 && claims.every((claim) => Object.hasOwn(labels, claim.id));
 
+  useEffect(() => {
+    onSubmitReadyChange?.(complete);
+  }, [complete, onSubmitReadyChange]);
+
   return (
     <form
+      id={formId}
       aria-label="Проверка утверждений"
       className="space-y-4"
       onSubmit={(event) => {
@@ -45,7 +58,7 @@ export function ClaimSurface({ claims, disabled, onSubmit }: Props) {
         type="submit"
         data-primary-action="true"
         disabled={disabled || !complete}
-        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

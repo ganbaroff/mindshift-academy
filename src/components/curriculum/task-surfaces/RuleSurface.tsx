@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { PublicRuleMap } from "@/content/curriculum/types";
 import type { RuleAction, RuleMapCell } from "@/lib/tasks/rule-runner";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
-type Props = {
+type Props = TaskPrimaryActionProps & {
   maps: PublicRuleMap[];
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
@@ -44,7 +45,14 @@ export function buildRuleProgram(
   };
 }
 
-export function RuleSurface({ maps, disabled, onSubmit }: Props) {
+export function RuleSurface({
+  formId,
+  hidePrimaryAction,
+  onSubmitReadyChange,
+  maps,
+  disabled,
+  onSubmit,
+}: Props) {
   const tiles = [...new Set(maps.map((map) => map.ahead))];
   const [actions, setActions] = useState<Partial<Record<RuleMapCell, RuleChoice>>>({});
   const [fallback, setFallback] = useState<RuleAction | "">("");
@@ -55,8 +63,13 @@ export function RuleSurface({ maps, disabled, onSubmit }: Props) {
     tiles.some((tile) => actions[tile] === "otherwise") &&
     tiles.some((tile) => actions[tile] !== "otherwise");
 
+  useEffect(() => {
+    onSubmitReadyChange?.(complete);
+  }, [complete, onSubmitReadyChange]);
+
   return (
     <form
+      id={formId}
       aria-label="Редактор правил если — то"
       className="space-y-4"
       onSubmit={(event) => {
@@ -101,7 +114,7 @@ export function RuleSurface({ maps, disabled, onSubmit }: Props) {
         type="submit"
         data-primary-action="true"
         disabled={disabled || !complete}
-        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

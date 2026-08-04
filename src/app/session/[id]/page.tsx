@@ -8,7 +8,7 @@ import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
-import { TaskWorkspace } from "@/components/curriculum/task-surfaces/TaskWorkspace";
+import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
@@ -75,6 +75,7 @@ export default function ThinkingSessionPage() {
   const [formulationError, setFormulationError] = useState<string | null>(null);
   const [certificateReady, setCertificateReady] = useState(false);
   const [choices, setChoices] = useState<{ id: string; labelRu: string }[] | null>(null);
+  const [primaryAction, setPrimaryAction] = useState<TaskPrimaryActionState | null>(null);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -534,38 +535,48 @@ export default function ThinkingSessionPage() {
         ? "Монстр закрасил так"
         : "Цель — совпасть с этой картинкой";
 
+  const showAdvance =
+    Boolean(feedback) &&
+    Boolean(currentTask) &&
+    results.some((r) => r.id === currentTask!.id);
+  const showStructuredCheck = !showAdvance && !choices?.length;
+  const checkDisabled =
+    isSending || !primaryAction?.ready || !primaryAction?.formId;
+  const advanceLabel = results.find((r) => r.id === currentTask?.id)?.pass
+    ? "Дальше"
+    : "Попробовать ещё или дальше";
+
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
       <Header />
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
-          <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] min-h-11">
-            <ArrowLeft className="w-4 h-4" />
+
+      <div
+        className="sticky top-[4.5rem] z-40 border-b border-white/5 bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none"
+        data-testid="session-sticky-top"
+      >
+        <div className="mx-auto flex w-full max-w-lg items-center gap-3 px-4 py-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Назад
           </Link>
-          <span aria-hidden="true">·</span>
-          <span>
-            Неделя {session.week}, сессия {session.session}
-          </span>
-        </div>
-
-        <header className="space-y-2">
           <p
-            className="text-xs uppercase tracking-widest text-violet-300/70"
+            className="min-w-0 flex-1 truncate text-xs uppercase tracking-widest text-violet-300/70"
             aria-live="polite"
             data-testid="session-progress-live"
           >
             {progressLabel}
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold leading-normal">{session.titleRu}</h1>
-          <ol className="flex flex-wrap gap-2" aria-label="Прогресс заданий">
+          <ol className="flex shrink-0 gap-1.5" aria-label="Прогресс заданий">
             {session.tasks.map((task, i) => {
               const doneTask = results.some((r) => r.id === task.id && r.pass);
               const current = i === safeIndex;
               return (
                 <li key={task.id}>
                   <span
-                    className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-xs font-bold border ${
+                    className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-[11px] font-bold border ${
                       doneTask
                         ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
                         : current
@@ -581,6 +592,18 @@ export default function ThinkingSessionPage() {
               );
             })}
           </ol>
+        </div>
+      </div>
+
+      <main
+        className="mx-auto w-full max-w-lg flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-4 space-y-5"
+        data-testid="session-scroll-main"
+      >
+        <header className="space-y-2">
+          <p className="text-sm text-[var(--text-muted)]">
+            Неделя {session.week}, сессия {session.session}
+          </p>
+          <h1 className="text-2xl font-bold leading-normal sm:text-3xl">{session.titleRu}</h1>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
             <p
               role="status"
@@ -594,22 +617,24 @@ export default function ThinkingSessionPage() {
             <motion.p
               initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-gray-300 leading-relaxed bg-white/5 border border-white/10 rounded-2xl p-4"
+              className="text-gray-300 leading-relaxed bg-white/5 border border-white/10 rounded-2xl p-4 motion-reduce:transform-none motion-reduce:transition-none"
             >
               {session.explanationRu}
             </motion.p>
           ) : null}
         </header>
 
-        <section className="grid sm:grid-cols-[auto_1fr] gap-6 items-start">
+        <section className="grid items-start gap-5 sm:grid-cols-[auto_1fr]">
           <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {currentTask ? (
               <TaskWorkspace
                 key={currentTask.id}
                 task={currentTask}
                 offeredTier={offeredTier}
                 disabled={isSending}
+                externalPrimaryAction
+                onPrimaryActionChange={setPrimaryAction}
                 onSubmit={(program) => void runAttempt({ program })}
                 reference={currentTask.family === "grid-draw" ? (
                   <div className="space-y-2" aria-label="Образец текущего задания">
@@ -625,23 +650,6 @@ export default function ThinkingSessionPage() {
                   </div>
                 ) : undefined}
               />
-            ) : null}
-
-            {currentTask?.hintAvailable && !revealedHint ? (
-              <button
-                type="button"
-                onClick={revealHint}
-                disabled={hintBusy}
-                className="min-h-11 px-4 py-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-200 font-semibold inline-flex items-center gap-2 disabled:opacity-50"
-              >
-                {hintBusy ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Lightbulb className="w-4 h-4" />
-                )}
-                Подсказка · {HINT_CRYSTAL_COST}💎
-                <span className="text-xs text-amber-200/70">(у тебя {crystals})</span>
-              </button>
             ) : null}
 
             {revealedHint ? (
@@ -682,7 +690,7 @@ export default function ThinkingSessionPage() {
                     disabled={isSending}
                     data-testid={`choice-${c.id}`}
                     onClick={() => void runAttempt({ choiceId: c.id })}
-                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-violet-400/40 bg-violet-500/15 text-left font-semibold hover:bg-violet-500/25 disabled:opacity-50"
+                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-violet-400/40 bg-violet-500/15 text-left font-semibold hover:bg-violet-500/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
                   >
                     {c.labelRu}
                   </button>
@@ -709,7 +717,7 @@ export default function ThinkingSessionPage() {
                   disabled={isSending}
                   maxLength={500}
                   placeholder="Скажи монстру, что сделать…"
-                  className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none focus:border-violet-400/50"
+                  className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none focus:border-violet-400/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
                   autoComplete="off"
                 />
                 <button
@@ -717,26 +725,66 @@ export default function ThinkingSessionPage() {
                   disabled={isSending || !utterance.trim()}
                   className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-violet-400/50 px-5 py-3 font-semibold text-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
                 >
-                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
                   <span>Отправить текст</span>
                 </button>
               </form>
             </details>
-
-            {feedback && currentTask && results.some((r) => r.id === currentTask.id) ? (
-              <button
-                type="button"
-                onClick={advanceTask}
-                className="min-h-11 px-5 py-3 rounded-2xl border border-white/15 hover:bg-white/5 font-semibold"
-              >
-                {results.find((r) => r.id === currentTask.id)?.pass
-                  ? "Дальше"
-                  : "Попробовать ещё или дальше"}
-              </button>
-            ) : null}
           </div>
         </section>
       </main>
+
+      <footer
+        className="sticky bottom-0 z-40 border-t border-white/10 bg-[var(--color-bg-base)]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] motion-reduce:transition-none"
+        data-testid="session-action-bar"
+      >
+        <div className="mx-auto flex w-full max-w-lg items-stretch gap-2 px-4 py-3">
+          {currentTask?.hintAvailable && !revealedHint ? (
+            <button
+              type="button"
+              onClick={revealHint}
+              disabled={hintBusy}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-semibold text-amber-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50 sm:px-4"
+            >
+              {hintBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Lightbulb className="h-4 w-4" aria-hidden="true" />
+              )}
+              <span className="sr-only sm:not-sr-only">Подсказка ·</span>
+              <span>{HINT_CRYSTAL_COST}💎</span>
+              <span className="text-xs text-amber-200/70">({crystals})</span>
+            </button>
+          ) : null}
+
+          {showAdvance ? (
+            <button
+              type="button"
+              onClick={advanceTask}
+              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+            >
+              {advanceLabel}
+            </button>
+          ) : showStructuredCheck ? (
+            <button
+              type="submit"
+              form={primaryAction?.formId}
+              disabled={checkDisabled}
+              data-testid="session-primary-check"
+              className="min-h-11 flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSending ? (
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  Проверяем…
+                </span>
+              ) : (
+                "Проверить"
+              )}
+            </button>
+          ) : null}
+        </div>
+      </footer>
     </div>
   );
 }

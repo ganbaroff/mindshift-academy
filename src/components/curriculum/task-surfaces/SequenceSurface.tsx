@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SEQUENCE_ACTIONS } from "@/lib/tasks/sequence-world";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
-type Props = {
+type Props = TaskPrimaryActionProps & {
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
@@ -18,11 +19,23 @@ const ACTION_LABELS: Record<(typeof SEQUENCE_ACTIONS)[number], string> = {
   подать: "Подать",
 };
 
-export function SequenceSurface({ disabled, onSubmit }: Props) {
+export function SequenceSurface({
+  formId,
+  hidePrimaryAction,
+  onSubmitReadyChange,
+  disabled,
+  onSubmit,
+}: Props) {
   const [steps, setSteps] = useState<string[]>([]);
+  const ready = steps.length > 0;
+
+  useEffect(() => {
+    onSubmitReadyChange?.(ready);
+  }, [onSubmitReadyChange, ready]);
 
   return (
     <form
+      id={formId}
       aria-label="Редактор порядка действий"
       className="space-y-4"
       onSubmit={(event) => {
@@ -78,8 +91,8 @@ export function SequenceSurface({ disabled, onSubmit }: Props) {
       <button
         type="submit"
         data-primary-action="true"
-        disabled={disabled || steps.length === 0}
-        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled || !ready}
+        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

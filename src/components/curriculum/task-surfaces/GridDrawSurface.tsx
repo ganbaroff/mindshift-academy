@@ -1,17 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
-type Props = {
+type Props = TaskPrimaryActionProps & {
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
 
 const keyOf = (row: number, column: number) => `${row}:${column}`;
 
-export function GridDrawSurface({ disabled, onSubmit }: Props) {
+export function GridDrawSurface({
+  formId,
+  hidePrimaryAction,
+  onSubmitReadyChange,
+  disabled,
+  onSubmit,
+}: Props) {
   const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const ready = selected.size > 0;
+
+  useEffect(() => {
+    onSubmitReadyChange?.(ready);
+  }, [onSubmitReadyChange, ready]);
 
   const toggle = (row: number, column: number) => {
     setSelected((current) => {
@@ -27,6 +39,7 @@ export function GridDrawSurface({ disabled, onSubmit }: Props) {
 
   return (
     <form
+      id={formId}
       aria-label="Поле для выбора клеток"
       className="space-y-4"
       onSubmit={(event) => {
@@ -70,8 +83,8 @@ export function GridDrawSurface({ disabled, onSubmit }: Props) {
       <button
         type="submit"
         data-primary-action="true"
-        disabled={disabled || selected.size === 0}
-        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+        disabled={disabled || !ready}
+        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

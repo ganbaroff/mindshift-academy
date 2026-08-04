@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
-type Props = {
+type Props = TaskPrimaryActionProps & {
   expandCount?: number;
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
 };
 
-export function PatternSurface({ expandCount = 5, disabled, onSubmit }: Props) {
+export function PatternSurface({
+  formId,
+  hidePrimaryAction,
+  onSubmitReadyChange,
+  expandCount = 5,
+  disabled,
+  onSubmit,
+}: Props) {
   const [kind, setKind] = useState<"arithmetic" | "cycle">("arithmetic");
   const [start, setStart] = useState("");
   const [step, setStep] = useState("");
@@ -18,8 +26,13 @@ export function PatternSurface({ expandCount = 5, disabled, onSubmit }: Props) {
   const arithmeticReady = start.trim() !== "" && step.trim() !== "" && Number.isFinite(Number(start)) && Number.isFinite(Number(step));
   const complete = kind === "arithmetic" ? arithmeticReady : cycleItems.length > 0 && cycleItems.length < expandCount;
 
+  useEffect(() => {
+    onSubmitReadyChange?.(complete);
+  }, [complete, onSubmitReadyChange]);
+
   return (
     <form
+      id={formId}
       aria-label="Редактор короткого правила узора"
       className="space-y-4"
       onSubmit={(event) => {
@@ -65,7 +78,7 @@ export function PatternSurface({ expandCount = 5, disabled, onSubmit }: Props) {
         type="submit"
         data-primary-action="true"
         disabled={disabled || !complete}
-        className="min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>
