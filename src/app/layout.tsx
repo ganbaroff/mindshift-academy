@@ -43,6 +43,25 @@ export default function RootLayout({
       localization={{
         ...ruRU,
         formFieldInputPlaceholder__signUpPassword: "Придумайте пароль",
+        // Clerk fills {{applicationName}} from the dashboard, where it is still the default
+        // "My Application" — the first thing a parent read on the login screen was the name of
+        // someone else's app. Name it here, where the product owns its own copy.
+        signIn: {
+          ...ruRU.signIn,
+          start: {
+            ...ruRU.signIn?.start,
+            title: "Вход для родителя",
+            subtitle: "чтобы открыть кабинет MindShift Academy",
+          },
+        },
+        signUp: {
+          ...ruRU.signUp,
+          start: {
+            ...ruRU.signUp?.start,
+            title: "Регистрация родителя",
+            subtitle: "чтобы открыть доступ ребёнку в MindShift Academy",
+          },
+        },
       }}
     >
       <html
