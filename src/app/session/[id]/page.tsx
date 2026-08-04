@@ -590,7 +590,10 @@ export default function ThinkingSessionPage() {
           >
             {progressLabel}
           </p>
-          <ol className="flex shrink-0 gap-1.5" aria-label="Прогресс заданий">
+          <ol
+            className="hidden shrink-0 gap-1.5 sm:flex"
+            aria-label="Прогресс заданий"
+          >
             {session.tasks.map((task, i) => {
               const doneTask = results.some((r) => r.id === task.id && r.pass);
               const current = i === safeIndex;
