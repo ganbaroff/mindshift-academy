@@ -10,6 +10,10 @@ import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
 import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { SessionCoach } from "@/components/guide/SessionCoach";
+import { TapHint } from "@/components/guide/TapHint";
+import { useIdleNudge } from "@/components/guide/useIdleNudge";
+import { MascotCue } from "@/components/guide/MascotCue";
 import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
@@ -20,6 +24,7 @@ import { effectiveTaskTier } from "@/lib/tasks/tier-select";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
+import { DEFAULT_NUDGE } from "@/lib/guide";
 
 type TaskResult = {
   id: string;
@@ -76,6 +81,7 @@ export default function ThinkingSessionPage() {
   const [certificateReady, setCertificateReady] = useState(false);
   const [choices, setChoices] = useState<{ id: string; labelRu: string }[] | null>(null);
   const [primaryAction, setPrimaryAction] = useState<TaskPrimaryActionState | null>(null);
+  const [coachDismissed, setCoachDismissed] = useState(false);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -316,6 +322,21 @@ export default function ThinkingSessionPage() {
     }
   };
 
+  const showAdvancePreview =
+    Boolean(feedback) &&
+    Boolean(currentTask) &&
+    results.some((r) => r.id === currentTask!.id);
+  const idleNudgeEnabled =
+    Boolean(session) &&
+    Boolean(currentTask) &&
+    !done &&
+    !pastLastWithoutComplete &&
+    !consentEnded &&
+    !showAdvancePreview &&
+    !(choices?.length) &&
+    !isSending;
+  const idleNudge = useIdleNudge(DEFAULT_NUDGE, idleNudgeEnabled);
+
   if (consentEnded) {
     return (
       <div
@@ -530,7 +551,7 @@ export default function ThinkingSessionPage() {
       : [];
   const gridLabel =
     currentTask?.role === "collision" && !revealCollisionTarget
-      ? "Пустое поле — скажи, что закрасить"
+      ? "Пустое поле — выбери клетки на поле ниже"
       : filledCells.length
         ? "Монстр закрасил так"
         : "Цель — совпасть с этой картинкой";
@@ -627,6 +648,24 @@ export default function ThinkingSessionPage() {
         <section className="grid items-start gap-5 sm:grid-cols-[auto_1fr]">
           <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
           <div className="space-y-4 min-w-0">
+            {currentTask && !showAdvance ? (
+              <SessionCoach
+                family={currentTask.family}
+                forceHide={coachDismissed || Boolean(feedback)}
+                onDismissed={() => setCoachDismissed(true)}
+              />
+            ) : null}
+            {idleNudge >= 2 && showStructuredCheck ? (
+              <MascotCue beat="sessionIdle" className="justify-start" />
+            ) : null}
+            {idleNudge >= 3 && showStructuredCheck && primaryAction?.ready ? (
+              <p
+                role="status"
+                className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary-soft"
+              >
+                Нажми «Проверить» внизу экрана.
+              </p>
+            ) : null}
             {currentTask ? (
               <TaskWorkspace
                 key={currentTask.id}
@@ -635,7 +674,10 @@ export default function ThinkingSessionPage() {
                 disabled={isSending}
                 externalPrimaryAction
                 onPrimaryActionChange={setPrimaryAction}
-                onSubmit={(program) => void runAttempt({ program })}
+                onSubmit={(program) => {
+                  setCoachDismissed(true);
+                  void runAttempt({ program });
+                }}
                 reference={currentTask.family === "grid-draw" ? (
                   <div className="space-y-2" aria-label="Образец текущего задания">
                     <DisplayGrid
@@ -766,22 +808,31 @@ export default function ThinkingSessionPage() {
               {advanceLabel}
             </button>
           ) : showStructuredCheck ? (
-            <button
-              type="submit"
-              form={primaryAction?.formId}
-              disabled={checkDisabled}
-              data-testid="session-primary-check"
-              className="min-h-11 flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSending ? (
-                <span className="inline-flex items-center justify-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                  Проверяем…
-                </span>
-              ) : (
-                "Проверить"
-              )}
-            </button>
+            <span className="relative inline-flex min-w-0 flex-1">
+              <TapHint
+                show={
+                  idleNudge >= 1 &&
+                  Boolean(primaryAction?.ready) &&
+                  !checkDisabled
+                }
+              />
+              <button
+                type="submit"
+                form={primaryAction?.formId}
+                disabled={checkDisabled}
+                data-testid="session-primary-check"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSending ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                    Проверяем…
+                  </span>
+                ) : (
+                  "Проверить"
+                )}
+              </button>
+            </span>
           ) : null}
         </div>
       </footer>

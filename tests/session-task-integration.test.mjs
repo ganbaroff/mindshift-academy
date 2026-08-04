@@ -10,14 +10,21 @@ const workspace = readFileSync(
 );
 const browserSuite = readFileSync(join(root, "tests/e2e/current-session-ui.mjs"), "utf8");
 
-assert.match(page, /import \{ TaskWorkspace \}/, "current session imports TaskWorkspace");
+assert.match(page, /import \{ TaskWorkspace/, "current session imports TaskWorkspace");
+assert.match(page, /SessionCoach/, "current session wires first-run SessionCoach");
+assert.match(page, /useIdleNudge/, "current session wires idle nudge");
+assert.match(page, /TapHint/, "current session pulses sticky Check via TapHint");
 assert.match(page, /type \{ StructuredProgram \}/, "current session uses the closed program type");
 assert.match(page, /const \[offeredTier, setOfferedTier\]/, "route tier is stored");
 assert.match(page, /offeredTier\?: 1 \| 2 \| 3/, "session response types offeredTier");
 assert.match(page, /setOfferedTier\(body\.offeredTier \?\? 1\)/, "route tier reaches state");
 assert.match(page, /program\?: StructuredProgram/, "runAttempt accepts a structured program");
 assert.match(page, /program: opts\.program/, "structured program crosses the normal attempt boundary");
-assert.match(page, /<TaskWorkspace[\s\S]*onSubmit=\{\(program\) => void runAttempt\(\{ program \}\)\}/, "workspace submits through runAttempt");
+assert.match(
+  page,
+  /<TaskWorkspace[\s\S]*onSubmit=\{\(program\) => \{[\s\S]*runAttempt\(\{ program \}\)/,
+  "workspace submits through runAttempt"
+);
 assert.match(page, /<details[\s\S]*Сказать своими словами[\s\S]*task-utterance/, "free text is a secondary disclosure");
 assert.match(page, /role="status"[\s\S]*aria-live="polite"[\s\S]*aria-atomic="true"/, "feedback is announced atomically");
 assert.match(workspace, /reference\?: ReactNode/, "workspace accepts visible task reference data");

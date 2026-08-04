@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { MascotCue } from "@/components/guide/MascotCue";
+import { TapHint } from "@/components/guide/TapHint";
 
 type Phase = "hatching" | "naming" | "ready";
 
@@ -135,6 +137,7 @@ function OnboardingContent() {
               <h1 className="text-2xl font-semibold text-white">
                 Питомец просыпается
               </h1>
+              <MascotCue beat="hatch" />
             </div>
 
             <motion.div
@@ -175,13 +178,16 @@ function OnboardingContent() {
             </div>
 
             {isHatched ? (
-              <button
-                onClick={() => setPhase("naming")}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-              >
-                <Sparkles className="h-4 w-4" />
-                Познакомиться!
-              </button>
+              <span className="relative inline-flex">
+                <TapHint show />
+                <button
+                  onClick={() => setPhase("naming")}
+                  className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Познакомиться!
+                </button>
+              </span>
             ) : (
               <button
                 type="button"
@@ -219,6 +225,7 @@ function OnboardingContent() {
               <h1 className="text-2xl font-semibold text-white">
                 Дай питомцу имя
               </h1>
+              <MascotCue beat="name" />
               <label htmlFor="pet-name" className="block text-base font-medium text-white">
                 Как зовут твоего питомца?
               </label>
@@ -238,14 +245,17 @@ function OnboardingContent() {
               className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
             />
 
-            <button
-              onClick={confirmName}
-              disabled={saving || petName.trim().length === 0}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving ? "Сохраняем…" : `Это ${petName}!`}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <span className="relative inline-flex">
+              <TapHint show={petName.trim().length > 0 && !saving} />
+              <button
+                onClick={confirmName}
+                disabled={saving || petName.trim().length === 0}
+                className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? "Сохраняем…" : `Это ${petName}!`}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </span>
 
             {saveError && (
               <p role="alert" className="text-sm font-medium text-error">
@@ -282,6 +292,7 @@ function OnboardingContent() {
               <h1 className="text-2xl font-semibold text-white">
                 {petName} готов учиться!
               </h1>
+              <MascotCue beat="lessonStart" />
               <p className="text-sm text-white/60">
                 Первая сессия: научи {petName} слышать только то, что сказано —
                 клетка за клеткой, без угадывания.
@@ -311,25 +322,28 @@ function OnboardingContent() {
                 <div>
                   <p className="font-medium text-primary-soft">Что сделаешь</p>
                   <p className="mt-1 text-white/75">
-                    Скажешь питомцу короткую и точную команду.
+                    Выберешь на поле клетки, которые нужно закрасить, и нажмёшь «Проверить».
                   </p>
                 </div>
                 <div>
                   <p className="font-medium text-primary-soft">Что получится</p>
                   <p className="mt-1 text-white/75">
-                    Он закрасит только те клетки, которые назвала команда.
+                    Питомец закрасит только выбранные клетки — без угадывания.
                   </p>
                 </div>
               </div>
             </section>
 
-            <button
-              onClick={goToFirstLesson}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-            >
-              Начать сессию 1
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <span className="relative inline-flex">
+              <TapHint show />
+              <button
+                onClick={goToFirstLesson}
+                className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+              >
+                Начать сессию 1
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </span>
           </motion.div>
         )}
       </div>
