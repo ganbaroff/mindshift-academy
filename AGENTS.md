@@ -24,8 +24,10 @@ dependency).
 
 ## 3. Doc map — canonical vs superseded
 
-Root has 8 planning `.md` files plus a much larger `docs/` tree. **Do not treat the root files as
-current state** — they are mostly June/early-July planning artifacts overtaken by `docs/`:
+The root now holds only `AGENTS.md`, `CLAUDE.md` and `README.md`. The eight June/early-July
+planning files that used to sit there moved to `docs/archive/planning-2026-06-07/` on 2026-08-04
+(see that folder's README): they described a product that no longer exists and were read first
+precisely because they were in the root. **Nothing in that archive states current fact.**
 
 **Canonical (read these for current state):**
 - `docs/canon/MINDSHIFT-PRODUCT-CANON-V1.md` — product canon, source of truth for intended behavior.
@@ -37,7 +39,7 @@ current state** — they are mostly June/early-July planning artifacts overtaken
 - `docs/release/W0..W5-RECEIPT-2026-07-31.md` — wave-by-wave execution receipts for pilot hardening.
 - `docs/COPPA-CONSENT-SPEC.md` — consent design; now implemented in code (see §5).
 
-**Superseded — historical only, do not cite as current fact:**
+**Superseded — all under `docs/archive/planning-2026-06-07/`, historical only, never cite as current fact:**
 - `task.md`, `HANDOFF.md` (2026-06-23, Antigravity handoff) — obsolete pivot narrative, pre-dates the
   current curriculum/session model.
 - `LAUNCH-PLAN.md` (2026-06-26) — "no-payment, 5-module referral launch" plan; the 5-lesson path it
