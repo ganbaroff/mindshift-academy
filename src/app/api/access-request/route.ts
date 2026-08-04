@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, rateLimitMisconfiguredInProd, publicClientKey } from "@/lib/ratelimit";
 import { parseAccessRequest, operatorAlertText, maskEmail } from "@/lib/access-requests";
-import { sendTelegramAlert } from "@/lib/notify-telegram";
+import { notifyOperator } from "@/lib/notify-operator";
 import { Errors } from "@/lib/errors";
 
 /**
@@ -55,10 +55,10 @@ export async function POST(req: Request) {
     // a new address measurably slower than a repeat one, which handed an outsider the very
     // "has this parent asked?" oracle the uniform {ok:true} body is meant to deny.
     after(async () => {
-      const alerted = await sendTelegramAlert(
+      const channel = await notifyOperator(
         operatorAlertText({ email, parentName, note }, process.env.NEXT_PUBLIC_APP_URL)
       );
-      if (alerted) {
+      if (channel !== "none") {
         await prisma.accessRequest.update({
           where: { id: created.id },
           data: { notifiedAt: new Date() },

@@ -110,6 +110,16 @@ check(
   "operator alert runs after the response, so latency cannot leak who already asked",
   routeSource.includes("after(") && routeSource.includes('from "next/server"')
 );
+const notifySource2 = read("src/lib/notify-operator.ts");
+check(
+  "alert falls back to email while Telegram has no chat id",
+  notifySource2.includes("telegramAlertConfigured") && notifySource2.includes("resend.emails.send")
+);
+check("alert never throws into the request path", notifySource2.includes("catch"));
+check(
+  "route asks the operator notifier, not one hardcoded channel",
+  routeSource.includes("notifyOperator") && !routeSource.includes("sendTelegramAlert")
+);
 const { requirePepper } = await import("../src/lib/access-code-crypto.ts");
 let pepperThrew = false;
 try {
