@@ -118,10 +118,10 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
   ].join("\n");
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="relative isolate min-h-screen bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(139,92,246,0.18),transparent_32%),radial-gradient(circle_at_82%_16%,rgba(34,211,238,0.14),transparent_28%),radial-gradient(circle_at_48%_100%,rgba(233,196,0,0.1),transparent_26%)]" />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-6 lg:px-8">
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:gap-4 sm:px-6 sm:py-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-[0.24em] text-white/80 uppercase">
           <span className="grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-white/5 text-base text-white">
             M
@@ -129,7 +129,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
           MindShift
         </Link>
 
-        <div className="flex items-center gap-2 text-sm text-white/68">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-white/68">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
             {isDemo ? "Демо-режим" : "Панель родителя"}
           </span>
@@ -143,15 +143,15 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-16 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:pb-20 lg:pt-8">
-        <div className="space-y-8">
+      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-4 pb-16 pt-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:pb-20 lg:pt-8">
+        <div className="min-w-0 space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white/68">
             <UserRound className="h-4 w-4 text-primary-soft" />
             Доказательство обучения
           </div>
 
-          <div className="space-y-4">
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[0.96] text-white sm:text-5xl lg:text-6xl">
+          <div className="min-w-0 space-y-4">
+            <h1 className="max-w-3xl text-balance break-words text-3xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
               Панель родителей, где видно реальное обучение.
             </h1>
             <p className="max-w-2xl text-base leading-7 text-white/68 sm:text-lg">

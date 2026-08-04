@@ -92,11 +92,11 @@ export default function HomePage() {
   const t = COPY;
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="relative isolate min-h-screen bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.18),transparent_35%),radial-gradient(circle_at_80%_15%,rgba(34,211,238,0.14),transparent_30%),radial-gradient(circle_at_50%_110%,rgba(233,196,0,0.1),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-white/10" />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-6 lg:px-8">
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:gap-4 sm:px-6 sm:py-6 lg:px-8">
         <Link
           href="/"
           className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.24em] text-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
@@ -117,15 +117,15 @@ export default function HomePage() {
 
       <SignedInContinue />
 
-      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-12 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12 lg:px-8 lg:pb-16 lg:pt-10">
-        <div className="flex flex-col justify-center space-y-7">
+      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:gap-12 lg:px-8 lg:pb-16 lg:pt-10">
+        <div className="flex min-w-0 flex-col justify-center space-y-7">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-warning">
             <Star className="h-4 w-4 fill-warning/20 text-warning" aria-hidden="true" />
             {t.badge}
           </div>
 
-          <div className="space-y-5">
-            <h1 className="max-w-3xl text-balance text-4xl font-semibold leading-[1.04] text-white sm:text-5xl lg:text-6xl">
+          <div className="min-w-0 space-y-5">
+            <h1 className="max-w-3xl text-balance break-words text-3xl font-semibold leading-[1.05] text-white sm:text-5xl lg:text-6xl">
               {t.h1}
             </h1>
             <p className="max-w-2xl text-base leading-7 text-white/72 sm:text-lg">{t.subtitle}</p>

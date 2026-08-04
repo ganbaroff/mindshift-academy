@@ -160,11 +160,15 @@ console.log("\n=== W4 mojibake scan ===");
     "src/app/onboarding",
     "src/app/enter-code",
     "src/app/certificate",
+    "src/app/dashboard",
+    "src/app/consent",
     "src/app/api",
     "src/lib/errors.ts",
+    "src/lib/operator-contact.ts",
     "src/lib/tasks/unclear-copy.ts",
     "src/components/capstone",
     "src/components/chat",
+    "src/components/support",
   ];
   function walk(dir, acc = []) {
     if (!existsSync(dir)) return acc;
