@@ -9,12 +9,12 @@ export const Header = () => {
   const crystals = useGameStore((state) => state.crystals);
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-white/5 bg-[var(--color-bg-base)]/80 px-4 py-4 backdrop-blur-xl sm:px-8">
-      <div className="flex min-w-0 items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center font-extrabold text-white text-xl shadow-[0_0_20px_rgba(139,92,246,0.3)]">
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-white/5 bg-[var(--color-bg-base)]/80 px-4 py-2.5 backdrop-blur-xl sm:px-8 sm:py-4">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-400 text-lg font-extrabold text-white shadow-[0_0_20px_rgba(139,92,246,0.3)] sm:h-10 sm:w-10 sm:text-xl">
           M
         </div>
-        <span className="max-w-[130px] truncate bg-gradient-to-r from-white to-violet-300 bg-clip-text text-base font-bold tracking-tight text-transparent sm:max-w-none sm:text-xl">
+        <span className="max-w-[110px] truncate bg-gradient-to-r from-white to-violet-300 bg-clip-text text-sm font-bold tracking-tight text-transparent sm:max-w-none sm:text-xl">
           MindShift Academy
         </span>
       </div>

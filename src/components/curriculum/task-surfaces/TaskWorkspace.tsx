@@ -82,17 +82,31 @@ export function TaskWorkspace({
     <section
       data-testid={`task-workspace-${task.family}`}
       aria-labelledby="task-workspace-title"
-      className="space-y-5 rounded-3xl border border-slate-700 bg-slate-950/60 p-4 sm:p-6"
+      className="space-y-3 rounded-3xl border border-slate-700 bg-slate-950/60 p-3 sm:space-y-4 sm:p-6"
     >
-      <header className="space-y-2">
-        <p className="text-sm font-bold uppercase tracking-wide text-violet-300">Уровень {offeredTier}</p>
-        <h2 id="task-workspace-title" className="text-xl font-bold text-white sm:text-2xl">{FAMILY_TITLES[task.family]}</h2>
-        <p className="leading-7 text-slate-200" data-testid="task-prompt-caption">{task.promptRu}</p>
-        {offeredTier === 1 ? <p className="rounded-xl bg-sky-400/10 p-3 text-sm text-sky-100"><strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}</p> : null}
-      </header>
+      {/* Task-first: goal + controls before long copy so phones see the board above the fold. */}
       {reference}
-      <WorkedExample family={task.family} initiallyOpen={task.role === "collision"} />
       {surface}
+
+      <header className="space-y-1.5 border-t border-white/5 pt-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-violet-300">
+          Уровень {offeredTier}
+          <span className="text-white/30"> · </span>
+          <span id="task-workspace-title" className="text-violet-200/90">
+            {FAMILY_TITLES[task.family]}
+          </span>
+        </p>
+        <p className="text-sm leading-6 text-slate-200" data-testid="task-prompt-caption">
+          {task.promptRu}
+        </p>
+        {offeredTier === 1 ? (
+          <p className="rounded-xl bg-sky-400/10 p-2.5 text-xs leading-5 text-sky-100 sm:text-sm">
+            <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
+          </p>
+        ) : null}
+      </header>
+
+      <WorkedExample family={task.family} initiallyOpen={false} />
     </section>
   );
 }

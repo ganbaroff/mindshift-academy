@@ -572,7 +572,7 @@ export default function ThinkingSessionPage() {
       <Header />
 
       <div
-        className="sticky top-[4.5rem] z-40 border-b border-white/5 bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none"
+        className="sticky top-12 z-40 border-b border-white/5 bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none sm:top-[4.5rem]"
         data-testid="session-sticky-top"
       >
         <div className="mx-auto flex w-full max-w-lg items-center gap-3 px-4 py-2">
@@ -620,44 +620,45 @@ export default function ThinkingSessionPage() {
       </div>
 
       <main
-        className="mx-auto w-full max-w-lg flex-1 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-4 space-y-5"
+        className="mx-auto w-full max-w-lg flex-1 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-2 sm:space-y-5 sm:pt-4"
         data-testid="session-scroll-main"
       >
-        <header className="space-y-2">
-          <p className="text-sm text-[var(--text-muted)]">
+        <header className="min-w-0">
+          <p className="truncate text-xs text-[var(--text-muted)]">
             Неделя {session.week}, сессия {session.session}
+            <span className="text-white/30"> · </span>
+            <span className="text-white/70">{session.titleRu}</span>
           </p>
-          <h1 className="text-2xl font-bold leading-normal sm:text-3xl">{session.titleRu}</h1>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
             <p
               role="status"
-              className="text-sm text-emerald-200/90 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl px-4 py-3"
+              className="mt-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200/90"
             >
-              Это задание уже пройдено ✓. Повтор без новой награды — можно потренироваться или нажать
-              «Дальше».
+              Это задание уже пройдено ✓. Можно потренироваться или нажать «Дальше».
             </p>
           ) : null}
           {showExplanation ? (
             <motion.p
               initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-gray-300 leading-relaxed bg-white/5 border border-white/10 rounded-2xl p-4 motion-reduce:transform-none motion-reduce:transition-none"
+              className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-gray-300 motion-reduce:transform-none motion-reduce:transition-none"
             >
               {session.explanationRu}
             </motion.p>
           ) : null}
         </header>
 
-        <section className="grid items-start gap-5 sm:grid-cols-[auto_1fr]">
-          <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
-          <div className="space-y-4 min-w-0">
-            {currentTask && !showAdvance ? (
-              <SessionCoach
-                family={currentTask.family}
-                forceHide={coachDismissed || Boolean(feedback)}
-                onDismissed={() => setCoachDismissed(true)}
-              />
-            ) : null}
+        <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">
+          <div className="hidden sm:block">
+            <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
+          </div>
+          <div className="min-w-0 space-y-3 sm:space-y-4">
+            <div className="flex items-start gap-3 sm:hidden">
+              <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
+              <p className="pt-1 text-sm leading-5 text-slate-300">
+                Смотри цель и собирай поле ниже — «Проверить» внизу.
+              </p>
+            </div>
             {idleNudge >= 2 && showStructuredCheck ? (
               <MascotCue beat="sessionIdle" className="justify-start" />
             ) : null}
@@ -682,18 +683,22 @@ export default function ThinkingSessionPage() {
                   void runAttempt({ program });
                 }}
                 reference={currentTask.family === "grid-draw" ? (
-                  <div className="space-y-2" aria-label="Образец текущего задания">
+                  <div className="space-y-1.5" aria-label="Образец текущего задания">
                     <DisplayGrid
                       filled={filledCells}
                       target={gridTarget}
                       mismatch={mismatchCells}
                       label={gridLabel}
                     />
-                    <p className="text-sm text-slate-300">
-                      Сравни с образцом и собери свой точный набор клеток на поле ниже.
-                    </p>
                   </div>
                 ) : undefined}
+              />
+            ) : null}
+            {currentTask && !showAdvance ? (
+              <SessionCoach
+                family={currentTask.family}
+                forceHide={coachDismissed || Boolean(feedback)}
+                onDismissed={() => setCoachDismissed(true)}
               />
             ) : null}
 

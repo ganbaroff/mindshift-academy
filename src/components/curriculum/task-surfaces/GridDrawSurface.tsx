@@ -51,8 +51,8 @@ export function GridDrawSurface({
       }}
     >
       <fieldset disabled={disabled}>
-        <legend className="mb-3 font-medium text-white">Выбери клетки на поле 4 на 4</legend>
-        <div className="grid w-fit grid-cols-4 gap-2" role="group" aria-label="Клетки поля">
+        <legend className="mb-2 text-sm font-medium text-white">Выбери клетки на поле 4×4</legend>
+        <div className="grid w-fit grid-cols-4 gap-1.5 sm:gap-2" role="group" aria-label="Клетки поля">
           {Array.from({ length: 16 }, (_, index) => {
             const row = Math.floor(index / 4);
             const column = index % 4;
@@ -64,7 +64,7 @@ export function GridDrawSurface({
                 aria-label={`Выбрать клетку ${row + 1}, ${column + 1}`}
                 aria-pressed={active}
                 onClick={() => toggle(row, column)}
-                className={`h-12 w-12 rounded-xl border text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
+                className={`h-10 w-10 rounded-xl border text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
               >
                 {row + 1},{column + 1}
               </button>
