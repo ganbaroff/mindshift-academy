@@ -97,6 +97,18 @@ body {
   }
 }
 
+/* The Clerk instance advertises Google sign-in, but production has no Google OAuth client of
+   its own, so the button lands the parent on Google's "Ошибка 400: invalid_request — Missing
+   required parameter: client_id". Hide the dead door until real credentials exist; email and
+   password both work. Done in CSS rather than the appearance prop because the prop did not
+   reach the rendered element (verified in the live DOM: cl-socialButtonsRoot kept its own
+   classes only). Delete this block the moment Google is configured. */
+.cl-socialButtonsRoot,
+.cl-socialButtons,
+.cl-dividerRow {
+  display: none !important;
+}
+
 /* Safe area for notched devices */
 @supports (padding: env(safe-area-inset-bottom)) {
   .min-h-screen {

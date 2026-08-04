@@ -40,16 +40,6 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-      appearance={{
-        elements: {
-          // The instance advertises Google sign-in, but the production instance has no Google
-          // OAuth client of its own, so the button sends the parent to Google's
-          // "Ошибка 400: invalid_request — Missing required parameter: client_id" wall.
-          // Hide the dead door until real credentials exist; email + password works today.
-          socialButtonsRoot: "hidden",
-          dividerRow: "hidden",
-        },
-      }}
       localization={{
         ...ruRU,
         formFieldInputPlaceholder__signUpPassword: "Придумайте пароль",
