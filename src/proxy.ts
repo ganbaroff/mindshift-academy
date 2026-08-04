@@ -20,8 +20,22 @@ const isDemoPageBypass = (req: Request) =>
  * explicitly side-effect-free public route or a cron route with its own bearer
  * secret. Individual route handlers still authorize their resource operations.
  */
+// Clerk's Frontend API is bound to the canonical host, so the SAME build served from the raw
+// *.vercel.app deployment URL loads clerk.js and then fails with "unable to attribute this
+// request to an instance" — the sign-in form silently never renders. Anyone who reaches that
+// address (an old link, a shared preview URL) sees a broken login. Send them home instead.
+const CANONICAL_HOST = "academy.volaura.app";
+
 export default clerkMiddleware(async (auth, req) => {
   const pathname = req.nextUrl.pathname;
+
+  if (process.env.NODE_ENV === "production" && req.nextUrl.hostname.endsWith(".vercel.app")) {
+    const canonical = new URL(req.nextUrl.toString());
+    canonical.hostname = CANONICAL_HOST;
+    canonical.port = "";
+    canonical.protocol = "https:";
+    return NextResponse.redirect(canonical, 308);
+  }
 
   // Thinking curriculum is default; legacy Module 1 URLs bounce before auth gates.
   const allowLegacy =

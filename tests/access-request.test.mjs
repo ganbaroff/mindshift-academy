@@ -136,6 +136,15 @@ check(
   /rateLimit\("formulation-submit"/.test(formulationSource) && formulationSource.includes("rateLimitMisconfiguredInProd")
 );
 check("build provenance endpoint is public", isPublicApiPath("/api/version"));
+const proxySource = read("src/proxy.ts");
+check(
+  "raw vercel.app host redirects to the canonical domain (Clerk cannot attribute it otherwise)",
+  proxySource.includes('endsWith(".vercel.app")') && proxySource.includes("CANONICAL_HOST") && proxySource.includes("308")
+);
+check(
+  "the redirect only applies in production, so local development keeps working",
+  /NODE_ENV === "production" && req\.nextUrl\.hostname/.test(proxySource)
+);
 check(
   "activation link cannot leak its token through the referrer",
   read("next.config.ts").includes('source: "/activate"') && read("next.config.ts").includes("no-referrer")
