@@ -28,13 +28,16 @@ if (!file) {
 
 const mask = (email) => `${email.slice(0, 3)}***@${email.split("@")[1] ?? ""}`;
 
-// Blocks look like: "Родитель: <email>" / "...activate?t=<token>" / "Код для ребёнка: XXXX YYYY"
+// Two block shapes are accepted, so the file `approve-access-request.mjs` writes can be fed
+// straight in without hand-editing it into the older hand-written layout:
+//   "Родитель: <email>" / "...activate?t=<token>" / "Код для ребёнка: XXXX YYYY"
+//   "EMAIL: <email>"    / "ACTIVATE: ...?t=<token>" / "CODE: XXXX YYYY"
 const text = readFileSync(file, "utf8");
 const invites = [];
 for (const block of text.split(/\n\s*\n/)) {
-  const to = block.match(/Родитель:\s*(\S+@\S+)/)?.[1]?.trim().toLowerCase();
+  const to = block.match(/(?:Родитель|EMAIL):\s*(\S+@\S+)/i)?.[1]?.trim().toLowerCase();
   const activationToken = block.match(/activate\?t=([A-Za-z0-9_-]+)/)?.[1];
-  const code = block.match(/Код для ребёнка:\s*([A-Z0-9]{4})\s*([A-Z0-9]{4})/);
+  const code = block.match(/(?:Код для ребёнка|CODE):\s*([A-Z0-9]{4})[\s-]*([A-Z0-9]{4})/i);
   if (to && activationToken && code) {
     invites.push({ to, activationToken, code: `${code[1]}${code[2]}` });
   }

@@ -46,9 +46,44 @@ try {
     console.log(`  ${label}: ${row?.n ?? row?.error}`);
   }
 
+  // Per-family detail: the operator's real question is "who is actually doing lessons",
+  // which the aggregate counts above cannot answer. One row per issued access code.
+  console.log("\nper family (code -> child progress):");
+  const families = await q(`
+    SELECT c.issuedForEmail AS email, c.status, c.createdAt, c.activatedAt, c.redeemedAt,
+           u.id AS userId, u.username, u.xp, u.activeStep, u.lastActive,
+           (SELECT COUNT(*) FROM TaskAttempt t WHERE t.userId = u.id) AS attempts,
+           (SELECT COUNT(*) FROM TaskAttempt t WHERE t.userId = u.id AND t.pass = 1) AS passed
+    FROM AccessCode c
+    LEFT JOIN User u ON u.clerkId = c.clerkId
+    ORDER BY c.createdAt DESC
+  `);
+  const day = (v) => (v ? String(v).slice(0, 16) : "—");
+  for (const f of families) {
+    if (f.error) {
+      console.log(`  ${f.error}`);
+      continue;
+    }
+    const entered = f.redeemedAt ? "вошли" : f.activatedAt ? "активировали, ребёнок не заходил" : "ещё не открывали письмо";
+    console.log(`  ${f.email}`);
+    console.log(`    код: ${f.status} · выдан ${day(f.createdAt)} · ${entered}`);
+    if (f.userId) {
+      console.log(
+        `    ребёнок: ${f.username ?? "?"} · шаг ${f.activeStep ?? "?"} · ${f.xp ?? 0} XP · ` +
+          `задач ${f.passed ?? 0}/${f.attempts ?? 0} · был ${day(f.lastActive)}`
+      );
+    }
+  }
+
   console.log("\ninbound requests:");
   for (const row of await q(`SELECT status, COUNT(*) AS n FROM AccessRequest GROUP BY status`)) {
     console.log(`  ${row.status ?? row.error}: ${row.n ?? ""}`);
+  }
+  for (const row of await q(
+    `SELECT email, status, createdAt FROM AccessRequest ORDER BY createdAt DESC LIMIT 20`
+  )) {
+    if (row.error) console.log(`  ${row.error}`);
+    else console.log(`  ${row.status}  ${row.email}  ${day(row.createdAt)}`);
   }
 } finally {
   client.close();

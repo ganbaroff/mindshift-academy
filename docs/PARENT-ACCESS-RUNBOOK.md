@@ -75,3 +75,38 @@ immediately and records the consent revocation.
   local-development behaviour.
 - The parent email belongs to the adult Clerk account. Do not use a child's email or child name
   as the access identifier.
+
+## Planned: operator panel at `/admin` (2026-08-04, NOT BUILT YET)
+
+Everything above is CLI-only, so the owner cannot approve a family from a phone and has nowhere to
+put an address a parent sent him privately. The fix, in order — do not skip step 1, the button is
+impossible without it:
+
+1. **Move the allowlist out of environment variables into the database.** This is the real blocker:
+   `ACADEMY_ALLOW_EMAIL_<digest>` only takes effect on the NEXT deployment, so no web button can
+   grant access today. Add an additive migration `0004_operator_grants` with a `ParentGrant` model
+   (`emailHash` unique = the same sha256 used by the env keys, `email`, `grantedBy` = operator Clerk
+   id, `createdAt`, `revokedAt`, `note`). Then `isParentEmailAllowed` (`src/lib/parent-allowlist.js`)
+   checks, in order: live `ParentGrant` → existing `ACADEMY_ALLOW_EMAIL_*` → legacy
+   `ALLOWLIST_EMAILS`. The three families already granted by env keep working untouched, and
+   production stays fail-closed.
+2. **Define the operator.** New `OPERATOR_CLERK_IDS` (comma-separated) production variable;
+   `isOperator()` returns false when it is unset in production. Clerk ids, not emails — a user can
+   edit their own email, not their id.
+3. **Build `/admin`,** server-rendered, operator-gated, mobile-first:
+   - *Заявки* — every `AccessRequest` with **Одобрить** / **Отклонить**. Approve does all four
+     existing steps in one action: create the `ParentGrant`, issue the code (`src/lib/access-code.ts`),
+     send the invite (`src/lib/family-invite-email.ts`), mark the request approved.
+   - *Семьи* — per family: code status (issued / active / redeemed), invite delivery, whether the
+     child ever signed in, last session, lessons finished.
+   - *Добавить вручную* — one email field, for parents who wrote to the owner directly instead of
+     using the form. This replaces "send the address to the agent".
+   - *Действия* — resend invite, re-issue code, revoke.
+   API under `/api/admin/*`: operator-gated, rate-limited, every action writes an audit row.
+4. **Only after step 3 works:** an inline **Одобрить** button on the Telegram alert, hitting
+   `/api/admin/approve` with a signed one-time token, so the whole flow is one tap from the phone
+   notification.
+
+Guardrails: real parent emails become visible on a web page, so that route is operator-gated, never
+indexed and carries no analytics; approving mutates production data, so every action is attributed;
+and the CLI scripts above stay as the fallback when the panel is broken.
