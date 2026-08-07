@@ -59,9 +59,20 @@ receipt(4, "body >=16px, short sentences, no text walls",
   globals.includes("font-size: 16px") && globals.includes("line-height: 1.5"),
   "body 16px / 1.5; curriculum prompts are short session cards");
 
+// The requirement is a RATIO (line-height >= 1.5x the font size), not one Tailwind class.
+// The task-first viewport work (2a2646f) moved the prompt from text-base/leading-7 to
+// text-sm/leading-6 so the board clears the fold; that is 1.5rem over 0.875rem = 1.71x,
+// which still satisfies the rule. Asserting the literal string "leading-7" made this test
+// fail on a change that never violated the requirement. So: check that instruction text
+// carries an explicit leading-* class whose ratio is >= 1.5 for the size it is paired with,
+// and that nothing is italic.
+const PROMPT_LEADING_OK =
+  /text-sm[^"]*leading-(6|7|8|relaxed|loose)|text-base[^"]*leading-(7|8|relaxed|loose)/.test(
+    taskWorkspace
+  );
 receipt(5, "plain sans-serif, line-height >=1.5, no italics in instruction",
-  globals.includes("--font-sans") && !taskWorkspace.includes("italic") && taskWorkspace.includes("leading-7") && globals.includes("line-height: 1.5"),
-  "Geist sans; structured task prompt is plain text with leading-7; body line-height 1.5");
+  globals.includes("--font-sans") && !taskWorkspace.includes("italic") && PROMPT_LEADING_OK && globals.includes("line-height: 1.5"),
+  "Geist sans; task prompt text-sm/leading-6 = 1.71x; body line-height 1.5");
 
 receipt(6, "captions for every voiced instruction",
   taskWorkspace.includes("task-prompt-caption") && taskWorkspace.includes("task.promptRu"),
