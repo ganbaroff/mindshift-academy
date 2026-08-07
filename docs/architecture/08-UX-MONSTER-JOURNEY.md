@@ -1,7 +1,12 @@
-# 08 — UX v1.1 «Рация»: mission control for the whole course
+# 08 — UX: the monster's journey (v1.2)
 
-> Chosen by the CEO on 2026-08-07 out of three options. Extends `02-PRODUCT-AND-UX.md`;
-> does not replace it. Scope is all 15 sessions of weeks 1-5, not one screen.
+> **Read §10 first.** An external design review on 2026-08-07 rejected the "mission control"
+> frame this document was written around, and we accepted the rejection. §10 is the current
+> decision and overrides §4's mission verbs, §4.4's ranks and §5's brief card wherever they
+> disagree. Everything else — the three-field rigor, the re-ask mechanic, the sticky-bar law,
+> the six implementation steps — survives unchanged.
+>
+> Extends `02-PRODUCT-AND-UX.md`; does not replace it. Scope is all 15 sessions of weeks 1-5.
 > Nothing here changes the task engine's verdicts, moderation, consent or reward rules.
 
 ## 1. The two defects this exists to fix
@@ -222,3 +227,97 @@ copy can be swapped without touching markup.
 - Rank names: the five above are a proposal, not canon. Azerbaijani-Russian bilingual families
   may read «Связист» as unfamiliar — worth testing on one real child before it is baked in.
 - Whether the map replaces the dashboard's session pills for the parent too, or only for the child.
+
+---
+
+## 10. Design review, 2026-08-07 — accepted, with one pushback
+
+An external designer read the handoff package and argued against the frame. We accept most of
+it. This section is the current decision.
+
+### 10.1 Accepted without change
+
+**The frame is the monster, not a job title.** Mission control and duel are both dropped. The map
+becomes stops on the monster's route. Their argument, which we could not counter: a robot/mission
+metaphor reads as babyish at 13 and as unfamiliar vocabulary at 8, while a creature you are
+raising works at both ends because the relationship *is* the metaphor. It is also cheaper — the
+monster already exists in code and in the child's head; a second fiction was pure overhead.
+
+**A growing monster instead of ranks.** «Штурман» is a label with no felt weight at either age.
+A monster that visibly gains a part is legible without reading, and it cannot be gamed by
+comparison — which matters, because our consent regime forbids every social surface anyway.
+Decisive point we had missed: ranks plus growth is two currencies for one feeling. Gems keep
+their single job (hints). No rank system is built.
+
+**Re-ask lands as a new message under the existing feedback, never replacing it.** The child
+never watches their own answer disappear. Their text stays editable in place — retyping from
+scratch punishes a child who was 90% right. Two free re-asks, not three. And the difference from
+failure is carried by voice register, not colour: the monster is curious, speaks in first person,
+and gets none of the visual treatment the fail state uses.
+
+**The map reveals the current cluster only,** plus a compressed trail of what is done. Twelve
+visible locked dots is the size-of-the-mountain problem. A child needs proof of what is behind
+and one clear next step.
+
+**The stuck child is never interrupted.** After two failures the monster does not switch modes,
+open a modal, or ask if you are struggling — all of which say *you are being watched*. It simply
+names what it noticed and offers the hint unprompted, in a message structurally identical to
+normal feedback: «тут ты уже дважды пробовал — хочешь подсказку?». The hint is free by then.
+
+### 10.2 Where we push back: «готово, когда» must be visible before the first attempt
+
+They proposed folding the goal into the one-line prompt, showing the materials inline in the
+workspace, and revealing "done when" progressively — in full only after a first miss.
+
+We accept the first two. We do not accept hiding the success condition until after a failure,
+and the reason is the defect that started this whole thread: *«Скажи шаги для сэндвича в любом
+порядке»* failed precisely because the child could not tell what a finished answer looked like.
+Revealing that only after they get it wrong makes the first attempt a guess by design, and the
+child most hurt by a guess is the careful one who quits after two failures.
+
+**The compromise, which we believe answers their real objection (a reading gate):**
+
+- the goal lives inside the prompt line — accepted;
+- what is given is visible in the workspace, not stated in prose — accepted;
+- **«готово, когда» is always present, but as one short line in the monster's voice, not a
+  labelled field** — e.g. «получится, когда назовёшь 4 шага по порядку». One line, no label, no
+  third row to read;
+- the full condition, with the reasoning, expands after a miss — accepted, as the *expansion*
+  rather than the first appearance.
+
+That is one extra line of reading, not three labelled rows, and it keeps the rigor exactly where
+the ambiguity actually lived.
+
+### 10.3 The three things they said we had not specified
+
+**Skip's exit state.** A skip never closes a task. It records no verdict, marks nothing red, and
+the task stays revisitable from the trail. On the map, a stop with a skipped task shows as
+*partial*, visually distinct from both done and untouched — the honest state, without a penalty
+reading. A session with a skipped required task simply does not read as complete, which is
+already how `sessionComplete` behaves in code, so no engine change.
+
+**Free text versus an open re-ask.** One rule: **while a re-ask is open, the next submission —
+from the structured workspace or the free-text box — answers the re-ask.** It is not a fresh
+attempt, nothing is recorded, no gem moves. The re-ask closes on that submission. This removes
+the ambiguity without adding UI.
+
+**The 8pm, 11%-battery child.** Agreed, and no new UI: the map is the exit. Progress is already
+saved per task, the resume fix (step 1) makes returning land on the right stop, so leaving needs
+no confirmation and no framing — the back-to-map link *is* the judgment-free stop. We will make
+sure nothing on that path uses loss language ("ты потеряешь прогресс") because there is nothing
+to lose.
+
+### 10.4 What this changes in the implementation steps (§7)
+
+Steps 1, 3, 4 and 6 are unaffected. Step 2 changes shape: the three fields stay in the content
+type as the authoring contract, but render as prompt-line + workspace + one monster line rather
+than three labelled rows. Step 5 becomes "map with current-cluster reveal + monster growth"
+instead of "map and ranks", and it now needs a small addition to the `Monster` model for the
+parts the child has earned — additive, one migration, no change to existing rows.
+
+### 10.5 Still open, and it is the CEO's call
+
+The designer is building the mockup on this basis. Before it is implemented, one real child
+should see the growing monster and say what the new part means to them. If a part does not
+read as a reward without explanation, the growth idea has the same problem the ranks had — it
+just fails more expensively, because growth is drawn art and a rank is a word.
