@@ -802,15 +802,12 @@ export default function ThinkingSessionPage() {
             </button>
           ) : null}
 
-          {showAdvance ? (
-            <button
-              type="button"
-              onClick={advanceTask}
-              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
-            >
-              {advanceLabel}
-            </button>
-          ) : showStructuredCheck ? (
+          {/* Two independent slots, not one either/or ternary. The ternary was why the
+              previous attempt at this fix did nothing: showAdvance is true after ANY
+              verdict, so it always won the branch and the Check button below was
+              unreachable. Unanswered -> Check. Failed -> Check AND Пропустить. Passed ->
+              Дальше alone. */}
+          {showStructuredCheck ? (
             <span className="relative inline-flex min-w-0 flex-1">
               <TapHint
                 show={
@@ -836,6 +833,16 @@ export default function ThinkingSessionPage() {
                 )}
               </button>
             </span>
+          ) : null}
+
+          {showAdvance ? (
+            <button
+              type="button"
+              onClick={advanceTask}
+              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+            >
+              {advanceLabel}
+            </button>
           ) : null}
         </div>
       </footer>

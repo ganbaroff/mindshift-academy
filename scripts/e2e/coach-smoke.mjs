@@ -247,9 +247,15 @@ async function main() {
     const formId = await stickyCheck.getAttribute("form");
     assert.ok(formId, "sticky Check is bound to workspace form");
     await stickyCheck.click({ force: true });
-    await page.getByRole("button", { name: /Попробовать ещё или дальше/ }).waitFor({
+    // A failed attempt must leave BOTH controls up: Check to answer again in place,
+    // Пропустить to move on. Waiting on Пропустить alone would pass even if Check
+    // vanished, which is exactly the bug this flow exists to catch.
+    await page.getByRole("button", { name: "Пропустить", exact: true }).waitFor({
       timeout: 20000,
     });
+    await page
+      .locator('[data-testid="session-primary-check"]')
+      .waitFor({ state: "visible", timeout: 20000 });
 
     // Retry same collision via form.requestSubmit (sticky swaps to advance after first attempt)
     await page.getByRole("button", { name: "Очистить поле", exact: true }).click();

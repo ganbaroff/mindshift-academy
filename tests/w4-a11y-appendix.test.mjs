@@ -98,9 +98,20 @@ receipt(11, "no drag-only interactions",
   !learnerUi.includes("onDrag") && !learnerUi.includes("draggable"),
   "structured workspaces use native buttons, radios, selects and inputs; no drag-only path");
 
+// This receipt used to be `session.includes("Попробовать ещё")` — a label that was
+// deleted from the UI while the substring survived inside a code comment describing the
+// old bug, so the gate stayed green over a broken retry path. Assert the STRUCTURE
+// instead: the footer must render the Check button and the advance button in two
+// independent slots. The old `showAdvance ? advance : showStructuredCheck ? check` chain
+// is mutually exclusive, so Check could never appear next to Пропустить after a failure.
+const RETRY_SLOTS_INDEPENDENT =
+  session.includes("{showStructuredCheck ? (") &&
+  session.includes("{showAdvance ? (") &&
+  !session.includes(") : showStructuredCheck ? (") &&
+  session.includes("!passedCurrent");
 receipt(12, "retry/undo always; no-shame copy",
-  session.includes("Попробовать ещё") && !/неправильно|провал|ты ошиб/i.test(session),
-  "advance allows retry; banned lexicon absent on session page");
+  RETRY_SLOTS_INDEPENDENT && !/неправильно|провал|ты ошиб/i.test(session),
+  "failed task keeps its Check button beside Пропустить; banned lexicon absent");
 
 receipt(13, "counters in aria-live present initially",
   session.includes('aria-live="polite"') && session.includes("session-progress-live"),

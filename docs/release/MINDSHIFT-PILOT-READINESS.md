@@ -192,3 +192,76 @@
 - **БД**: только аддитивные изменения на время пилота — старый код всегда безопасен.
 - **Прод-деплой и любая прод-миграция**: только явное слово CEO (постоянная граница; два независимых отказа агентов зафиксированы как доказательство, что guard работает).
 - **Реакция на инцидент**: выключить флаг ИИ → детерминированный режим деградации (уже свойство продукта) → затем оценка, связь с родителем, лог.
+
+---
+
+## Appendix — nine-reviewer sweep, 2026-08-06
+
+Nine independent reviewers (5 project personas, 3 child personas, 1 competitor study).
+Two items were fixed the same day and are closed; the rest are open and unprioritised.
+
+RETRY WALL — first attempt FAILED, fixed on the second (2026-08-07):
+- A failed task could not be answered again in place: the Check button was replaced by
+  "Попробовать ещё или дальше", wired only to advance. Found independently by two child
+  reviewers.
+- Commit 1e1d4fc claimed to fix it and did not. It changed the booleans but left the
+  footer as one either/or ternary (`showAdvance ? advance : showStructuredCheck ? check`),
+  and `showAdvance` is true after ANY verdict — so the Check branch stayed unreachable and
+  the label got strictly worse ("Пропустить" alone). A code review caught it; a11y receipt
+  A12 had gone green only because the deleted label survived inside a code comment.
+- The real fix renders the two controls in independent slots: unanswered -> Check;
+  failed -> Check AND Пропустить; passed -> Дальше. A12 now asserts that structure instead
+  of a label substring, and the two e2e suites that waited on the deleted label were
+  repointed at `[data-testid="session-primary-check"]` staying visible after a failure.
+- Still unverified in a real browser: the e2e suites covering this path
+  (`test:e2e:current-sessions`, `scripts/e2e/coach-smoke.mjs`) are not in CI or in
+  `verify:release`, which only exercises the legacy `/lesson` route. Wiring them in is the
+  open follow-up — without it this same regression can ship green again.
+- `html { font-size: 15px }` on the mobile breakpoint scaled every rem down (text-sm
+  13.1px, text-xs 11.25px; 41 nodes under the 16px floor on the home page). Now 16px.
+
+OPEN — trust, blocks recruitment:
+- `/privacy` states it is a draft with no legal force ("ЧЕРНОВИК — требует подтверждения
+  юриста"). A parent reviewer stopped at that line. Owner decision: finish it or unlink it.
+- The landing screen never says the pilot is free; "бесплатно" appears only on `/start`
+  and `/request-access`. Same for the operator's name.
+- `/start` explains the real 7-action path but nothing on the home page links to it, and
+  the manual-approval wait has no stated duration.
+
+OPEN — content defect:
+- `src/content/curriculum/week-2/session-2.ts` — 3 of 4 required tasks ("вставь
+  недостающий шаг", "найди дыру в почти готовом плане", "восстанови полный порядок")
+  presuppose a plan already on the board, but `SequenceSurface.tsx:29` starts empty.
+  `practiceRequired: 3` makes all three unavoidable.
+
+OPEN — child-facing UI:
+- `/enter-code` boxes are 30x45px at 320px wide — the one control an unsupervised child
+  must use, 14px under the 44px minimum. Hint audio button is 30x30px.
+- No mechanism reacts to repeated failure: hints are static, priced from the first
+  attempt, and hidden behind a footer icon the child must find.
+
+OPEN — privacy:
+- `minimizeChildText` (`src/lib/privacy.ts:21-27`) strips email/phone before the judge and
+  tutor calls but NOT before moderation, so raw child text — including volunteered PII —
+  reaches the classifier providers. kidNet's PII rule targets requests for data, not
+  self-disclosure.
+- `tasks/attempt/route.ts:288` and `chat/route.ts:99` log raw provider errors whose
+  message can carry child-derived text; sibling catches in the same files log `err.name`.
+- Prompt-injection defence is one probabilistic classifier rule with no backstop in the
+  tutor's own system prompt.
+
+OPEN — engineering:
+- CI never runs `verify:release`, `test:consent`, `test:live`, `test:falsepos`, `test:ui`.
+  A consent or safety regression can merge on the fast subset alone.
+- Clerk's three auth scripts (235KB) load on `/` and `/request-access`, where no sign-in
+  form renders — 38-42% of page weight for a first-time visitor.
+- The legacy lesson island (`app/lesson/[id]`, `components/chat/*`, `api/chat`, plus
+  `progression.ts` and `rewards.ts` exports) is still referenced by four tests inside
+  `verify:release`. Retire the tests before the code, or commit to keeping it.
+
+COMPETITOR FINDING (10 products reviewed): none of them gate first access behind human
+approval. The three frictions unique to us are the unbounded manual wait, the email
+round-trip that breaks the session, and the parent hand-retyping an 8-character code on
+the child's device. Cheapest fixes, in order: state the expected wait; keep consent and
+code issuance in the same browser tab; end consent on a "hand this device to your child"
+screen with the code already filled in.

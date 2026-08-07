@@ -257,7 +257,13 @@ async function driveGrid(page, task) {
     assert.ok(wrong, "collision has a non-target probe cell");
     await workspace.getByRole("button", { name: `Выбрать клетку ${wrong[0] + 1}, ${wrong[1] + 1}`, exact: true }).click();
     await workspace.getByRole("button", { name: "Проверить", exact: true }).click();
-    await page.getByRole("button", { name: /Попробовать ещё или дальше/ }).waitFor();
+    // After a FAILED attempt the footer must offer both: the same Check button (answer
+    // again in place) and Пропустить (give up). A single button here means the retry
+    // wall is back — that regression shipped once already behind a green unit gate.
+    await page.getByRole("button", { name: "Пропустить", exact: true }).waitFor();
+    await page
+      .locator('[data-testid="session-primary-check"]')
+      .waitFor({ state: "visible" });
     await workspace.getByRole("button", { name: "Очистить поле", exact: true }).click();
   }
   for (const [row, column] of task.target) {
