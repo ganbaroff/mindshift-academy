@@ -76,8 +76,12 @@ body {
 }
 
 @media (max-width: 768px) {
+  /* Was 15px, which silently shrank every rem-based size on phones: text-sm rendered
+     13.1px and text-xs 11.25px, so 41 text nodes on the home page alone fell under the
+     16px floor this product promises. The base stays 16px; shrink individual elements
+     deliberately instead of scaling the whole document down. */
   html {
-    font-size: 15px;
+    font-size: 16px;
   }
   
   .sm\:grid-cols-3 {

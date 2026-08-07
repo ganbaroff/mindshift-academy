@@ -549,16 +549,18 @@ export default function ThinkingSessionPage() {
     ? "Монстр закрасил так"
     : "Цель — совпасть с этой картинкой";
 
-  const showAdvance =
-    Boolean(feedback) &&
-    Boolean(currentTask) &&
-    results.some((r) => r.id === currentTask!.id);
-  const showStructuredCheck = !showAdvance && !choices?.length;
+  // A FAILED task must keep its own Check button. Before this, any verdict — pass or
+  // fail — replaced Check with a single button labelled "Попробовать ещё или дальше"
+  // that only ever called advanceTask, so "попробовать ещё" silently meant "give up and
+  // move on". A child had to walk the rest of the session and loop back to answer again.
+  // Now: passed -> Дальше only; failed -> Check stays, with Пропустить beside it.
+  const currentResult = results.find((r) => r.id === currentTask?.id);
+  const passedCurrent = currentResult?.pass === true;
+  const showAdvance = Boolean(feedback) && Boolean(currentTask) && Boolean(currentResult);
+  const showStructuredCheck = !choices?.length && (!showAdvance || !passedCurrent);
   const checkDisabled =
     isSending || !primaryAction?.ready || !primaryAction?.formId;
-  const advanceLabel = results.find((r) => r.id === currentTask?.id)?.pass
-    ? "Дальше"
-    : "Попробовать ещё или дальше";
+  const advanceLabel = passedCurrent ? "Дальше" : "Пропустить";
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
