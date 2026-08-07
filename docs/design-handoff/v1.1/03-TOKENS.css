@@ -1,0 +1,62 @@
+/* Production tokens, copied from src/app/globals.css on 2026-08-07.
+   Use these exact values so the mockup can be compared to the real app pixel for pixel. */
+
+:root {
+  --background: #070b14;        /* page background */
+  --color-bg-base: #070b14;
+  --foreground: #f5f7ff;        /* primary text */
+  --text-primary: #f5f7ff;
+  --text-secondary: rgba(245, 247, 255, 0.8);
+  --text-muted: rgba(245, 247, 255, 0.55);
+  --surface: rgba(13, 18, 31, 0.84);
+  --surface-strong: #11182a;    /* cards */
+  --border-color: rgba(255, 255, 255, 0.08);
+
+  --color-primary-violet: #8b5cf6;   /* primary action */
+  --color-primary: #7c3aed;
+  --color-primary-soft: #a78bfa;     /* focus ring, labels */
+  --color-secondary-cyan: #06b6d4;
+  --color-secondary: #22d3ee;        /* the monster's voice */
+  --color-accent-amber: #f59e0b;     /* links, gems */
+  --color-warning: #e9c400;
+  --color-success-emerald: #10b981;  /* success only */
+  --color-error: #d4b4ff;            /* deliberately soft, not red */
+}
+
+/* The page background is three soft radial washes over the flat base. */
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(139, 92, 246, 0.18) 0%, transparent 34%),
+    radial-gradient(circle at 82% 16%, rgba(34, 211, 238, 0.14) 0%, transparent 28%),
+    radial-gradient(circle at 50% 110%, rgba(233, 196, 0, 0.1) 0%, transparent 26%),
+    linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-base) 100%);
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Non-negotiable accessibility rules already shipped. Keep all of them. */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+*:focus-visible {
+  outline: 3px solid #a78bfa;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (pointer: coarse) {
+  button, a, [role='button'] { min-height: 44px; min-width: 44px; }
+  textarea, input { font-size: 16px; }   /* stops iOS zooming on focus */
+}
+
+/* Type: system sans. Instruction text must keep a line-height of at least 1.5x its font size —
+   this is an audited requirement, not a preference. Body 16px. Nothing below 12px. */
