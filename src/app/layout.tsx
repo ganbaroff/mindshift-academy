@@ -16,6 +16,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { ruRU } from "@clerk/localizations";
 import { ClerkRussianUi } from "@/components/auth/ClerkRussianUi";
 import { MotionProvider } from "@/components/providers/MotionProvider";
+import { ReportProblemButton } from "@/components/support/ReportProblemButton";
 
 export const metadata: Metadata = {
   title: {
@@ -71,6 +72,10 @@ export default function RootLayout({
         <body className="min-h-full flex flex-col">
           <ClerkRussianUi />
           <MotionProvider>{children}</MotionProvider>
+          {/* On every page, for anyone with an account — the pilot's only feedback path.
+              The component hides itself for signed-out visitors, who get the landing
+              page's contact line instead: a report from nobody has no one to answer. */}
+          <ReportProblemButton />
         </body>
       </html>
     </ClerkProvider>

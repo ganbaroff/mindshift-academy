@@ -409,6 +409,19 @@ async function assertReaskFlow(browser, baseUrl, outDir) {
 
   await page.screenshot({ path: join(outDir, "desktop-w1-s1-reask.png"), fullPage: true });
 
+  // The pilot's feedback loop, on the screen a child is actually on. One tap, and no
+  // text box anywhere — the COPPA rule is the server's, but the button must not even
+  // offer typing here.
+  const report = page.getByTestId("report-problem");
+  await report.waitFor({ timeout: 15000 });
+  await report.click();
+  await page.getByTestId("report-problem-thanks").waitFor({ timeout: 15000 });
+  assert.equal(
+    await page.getByTestId("report-problem-form").count(),
+    0,
+    "a child screen must never offer a free-text feedback box"
+  );
+
   // A re-ask writes nothing server-side, so closing the context leaves no trace at all.
   // That the re-ask *closes* on the next submission is asserted in
   // tests/ux-v11-monster-journey.test.mjs, where it records no attempt and costs no browser.
