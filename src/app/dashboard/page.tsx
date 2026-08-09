@@ -197,11 +197,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                 </p>
               </div>
               <Link
-                href="/session/w1-s1"
+                href="/continue"
                 className="inline-flex min-h-11 items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
               >
                 <Sparkles className="h-4 w-4" />
-                Открыть сессию 1
+                Продолжить с того места
               </Link>
             </div>
             <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">

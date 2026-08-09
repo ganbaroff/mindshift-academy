@@ -139,6 +139,11 @@ function startServer(port, databaseUrl) {
       TURSO_AUTH_TOKEN: "",
       FAKE_AI: "1",
       FAKE_AI_MODE: "tutor_down",
+      // The gate exists to certify what a child actually meets, so it drives the v1.1
+      // mechanics on regardless of the developer's shell. §7 step 6 makes this suite the
+      // precondition for turning the flag on in production; a run with the flag off
+      // would certify the old screen and prove nothing about the new one.
+      NEXT_PUBLIC_UX_V11: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -256,7 +261,7 @@ async function driveGrid(page, task) {
     }
     assert.ok(wrong, "collision has a non-target probe cell");
     await workspace.getByRole("button", { name: `Выбрать клетку ${wrong[0] + 1}, ${wrong[1] + 1}`, exact: true }).click();
-    await workspace.getByRole("button", { name: "Проверить", exact: true }).click();
+    await submitCurrentTask(page, workspace);
     // After a FAILED attempt the footer must offer both: the same Check button (answer
     // again in place) and Пропустить (give up). A single button here means the retry
     // wall is back — that regression shipped once already behind a green unit gate.
@@ -308,9 +313,41 @@ async function driveClaims(page, task) {
   }
 }
 
+/**
+ * Submit the current task the way a child does.
+ *
+ * The surfaces keep their own «Проверить» in the DOM for form semantics and screen
+ * readers, but the session screen passes `externalPrimaryAction`, which clips it and
+ * sets `pointer-events: none` (`PRIMARY_ACTION_HIDDEN`). The button a human presses is
+ * the one in the sticky footer. This suite used to click the clipped one and hang for
+ * 30s against the footer intercepting the pointer — which is why the gate was never
+ * wired into `verify:release`. Assert on the accessible button; click the visible one.
+ */
+async function submitCurrentTask(page, workspace) {
+  const inWorkspace = workspace.getByRole("button", { name: "Проверить", exact: true });
+  await assert.doesNotReject(() => inWorkspace.waitFor({ state: "attached" }));
+  const footerCheck = page.getByTestId("session-primary-check");
+  await footerCheck.waitFor({ state: "visible" });
+  await footerCheck.click();
+}
+
 async function driveTask(page, task) {
   await page.getByTestId(`task-workspace-${task.family}`).waitFor();
-  await assert.doesNotReject(() => page.getByTestId("task-prompt-caption").filter({ hasText: task.promptRu }).waitFor());
+  // The prompt line carries the task's GOAL once a session is briefed
+  // (08-UX-MONSTER-JOURNEY §10.2); promptRu remains the line for sessions not yet
+  // backfilled. Derived from content, not hardcoded, so backfilling the remaining
+  // sessions cannot silently break this gate.
+  await assert.doesNotReject(() =>
+    page.getByTestId("task-prompt-caption").filter({ hasText: task.goalRu ?? task.promptRu }).waitFor()
+  );
+  if (task.givenRu?.length) {
+    await assert.doesNotReject(() => page.getByTestId("task-given").waitFor());
+  }
+  if (task.doneWhenRu) {
+    await assert.doesNotReject(() =>
+      page.getByTestId("task-done-when").filter({ hasText: task.doneWhenRu }).first().waitFor()
+    );
+  }
   if (task.family === "grid-draw") await driveGrid(page, task);
   else if (task.family === "sequence-world") await driveSequence(page);
   else if (task.family === "rule-runner") await driveRule(page, task);
@@ -318,12 +355,74 @@ async function driveTask(page, task) {
   else await driveClaims(page, task);
 }
 
+/**
+ * The re-ask, driven as a child meets it (08-UX-MONSTER-JOURNEY §3, §10.1).
+ *
+ * The three properties that make it safe are the ones asserted here: it is not an
+ * attempt (no verdict appears, so no Пропустить joins the bar), it lands *under* the
+ * feedback area rather than replacing the workspace, and the child's own text survives
+ * so a 90%-right answer is not retyped from scratch.
+ */
+async function assertReaskFlow(browser, baseUrl, outDir) {
+  // Its own context: the drive that follows expects a session it has never opened, and
+  // an exhausted page left mid-conversation is not that. Cheap insurance — this check
+  // costs one navigation.
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 900 },
+    reducedMotion: "reduce",
+  });
+  await installAcademyBrowserRoutes(context);
+  const page = await context.newPage();
+  try {
+  await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+  await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
+
+  // The brief must be readable before the child touches anything.
+  await page.getByTestId("task-given").waitFor();
+  await page.getByTestId("task-done-when").waitFor();
+
+  await page.getByText("Сказать своими словами", { exact: true }).click();
+  const input = page.locator("#task-utterance");
+  await input.fill("намажь");
+  await page.getByRole("button", { name: "Отправить текст", exact: true }).click();
+
+  const reask = page.getByTestId("monster-reask");
+  await reask.waitFor({ timeout: 15000 });
+  const asked = await reask.innerText();
+  assert.ok(asked.includes("«намажь»"), `re-ask must quote the child: ${asked}`);
+  // A verdict, not the word: «Это не ошибка» is the helper line and must be present.
+  assert.ok(
+    !/неправильно|провал|ты ошибся|ты не смог/i.test(asked),
+    `re-ask must not read as a verdict: ${asked}`
+  );
+  assert.ok(asked.includes("Это не ошибка"), `re-ask must say it is not one: ${asked}`);
+
+  // Not an attempt: no verdict, so the skip control never appears beside Проверить.
+  assert.equal(
+    await page.getByRole("button", { name: "Пропустить", exact: true }).count(),
+    0,
+    "a re-ask must not be recorded as a failed attempt"
+  );
+  // The workspace is still there and the child's words are still editable in place.
+  await page.getByTestId("task-workspace-grid-draw").waitFor();
+  assert.equal(await input.inputValue(), "намажь", "the child's text must stay editable");
+
+  await page.screenshot({ path: join(outDir, "desktop-w1-s1-reask.png"), fullPage: true });
+
+  // A re-ask writes nothing server-side, so closing the context leaves no trace at all.
+  // That the re-ask *closes* on the next submission is asserted in
+  // tests/ux-v11-monster-journey.test.mjs, where it records no attempt and costs no browser.
+  } finally {
+    await context.close();
+  }
+}
+
 async function passTask(page, task, finalTask) {
   const workspace = page.getByTestId(`task-workspace-${task.family}`);
   const submit = workspace.getByRole("button", { name: "Проверить", exact: true });
-  await assert.doesNotReject(() => submit.waitFor());
+  await assert.doesNotReject(() => submit.waitFor({ state: "attached" }));
   assert.equal(await submit.isEnabled(), true, `${task.id} primary action is enabled after visible input`);
-  await submit.click();
+  await submitCurrentTask(page, workspace);
   if (!finalTask) {
     const next = page.getByRole("button", { name: "Дальше", exact: true });
     await next.waitFor({ timeout: 20000 });
@@ -432,6 +531,11 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
     });
 
     const curriculum = loadCurriculum();
+
+    // Before the drive: w1-s1 is the only session guaranteed open, and the drive would
+    // destroy this state by passing every task in it.
+    await assertReaskFlow(page.context().browser(), baseUrl, outDir);
+
     for (const sessionId of SESSION_IDS) {
       const session = curriculum.find((candidate) => candidate.id === sessionId);
       assert.ok(session, `curriculum contains ${sessionId}`);

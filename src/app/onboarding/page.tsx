@@ -116,7 +116,9 @@ function OnboardingContent() {
 
   const goToFirstLesson = () => {
     // Thinking curriculum entry — Module 1 /lesson/1 is legacy archive.
-    router.push("/session/w1-s1");
+    // /continue resolves the child's actual position; hardcoding w1-s1 here is
+    // what put a returning child back on step 1 (08-UX-MONSTER-JOURNEY §1, defect 2).
+    router.push("/continue");
   };
 
   return (

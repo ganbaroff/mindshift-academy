@@ -66,6 +66,32 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run build
 
+  # 08-UX-MONSTER-JOURNEY §7 step 6, non-negotiable precondition: the CURRENT /session
+  # route must be driven in a real browser in CI before UX v1.1 may be turned on. Until
+  # this job existed, CI ran unit tests and a build only, and `verify:release` drove the
+  # legacy /lesson route — which is how a broken retry button once shipped green.
+  # The suite starts its own Next dev server and SQLite fixture and forces
+  # NEXT_PUBLIC_UX_V11=1, so it certifies the screen a child actually meets.
+  current-session-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run test:e2e:current-sessions
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-session-ui-evidence
+          path: .superpowers/sdd/evidence/
+          if-no-files-found: warn
+
   atlas-learning-e2e:
     runs-on: ubuntu-latest
     steps:

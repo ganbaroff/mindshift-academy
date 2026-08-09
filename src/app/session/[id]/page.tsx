@@ -21,6 +21,14 @@ import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
 import { effectiveTaskTier } from "@/lib/tasks/tier-select";
+import {
+  clarify,
+  clarifyMessage,
+  CLARIFY_HELPER_RU,
+  type ClarifyQuestion,
+} from "@/lib/tasks/clarify";
+import { isStuckOnTask, stuckNoticeRu, hintLabelRu } from "@/lib/tasks/stuck";
+import { uxV11Enabled } from "@/lib/ux-flags";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
@@ -82,6 +90,16 @@ export default function ThinkingSessionPage() {
   const [choices, setChoices] = useState<{ id: string; labelRu: string }[] | null>(null);
   const [primaryAction, setPrimaryAction] = useState<TaskPrimaryActionState | null>(null);
   const [coachDismissed, setCoachDismissed] = useState(false);
+  /**
+   * The re-ask (08-UX-MONSTER-JOURNEY §3, §10.1). It is not an attempt: it never
+   * reaches /api/tasks/attempt, records nothing and spends nothing. It appears as a
+   * new message *under* the feedback — the child never watches their own answer
+   * disappear — and their text stays editable in place.
+   */
+  const [reask, setReask] = useState<ClarifyQuestion | null>(null);
+  const [reasksUsed, setReasksUsed] = useState(0);
+  /** Consecutive misses on the current task — drives the unprompted, free help. */
+  const [failStreak, setFailStreak] = useState(0);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -193,6 +211,11 @@ export default function ThinkingSessionPage() {
     if (!session) return;
     resetAttemptView();
     setUtterance("");
+    // Re-ask budget and miss streak are per task, never carried forward: a child who
+    // struggled once does not start the next task already counted as struggling.
+    setReask(null);
+    setReasksUsed(0);
+    setFailStreak(0);
     setTaskIndex((i) => Math.min(i + 1, session.tasks.length));
   }, [resetAttemptView, session]);
 
@@ -247,6 +270,31 @@ export default function ThinkingSessionPage() {
   }) => {
     if (!session || !currentTask || sendingRef.current) return;
     if (!opts.choiceId && !opts.program && !opts.utterance?.trim()) return;
+
+    /**
+     * Ask before grading. Deterministic, local, free — no request leaves the device,
+     * so nothing is recorded, no crystal moves and no failure counter advances (§3).
+     * Only free text can be ambiguous this way; a tapped grid or an ordered list has
+     * already said exactly what it means.
+     *
+     * §10.3: an open re-ask owns the next submission. That submission closes it — and
+     * is then graded normally, because the attempt it belongs to was never recorded.
+     * If it is *still* ambiguous, clarify() returns the second, confirming question.
+     */
+    if (uxV11Enabled() && opts.utterance?.trim()) {
+      const question = clarify({
+        utterance: opts.utterance,
+        family: currentTask.family,
+        given: currentTask.givenRu,
+        reasksUsed,
+      });
+      if (question) {
+        setReask(question);
+        setReasksUsed((n) => n + 1);
+        return;
+      }
+    }
+    setReask(null);
 
     sendingRef.current = true;
     setIsSending(true);
@@ -307,11 +355,13 @@ export default function ThinkingSessionPage() {
       }
 
       if (data.pass) {
+        setFailStreak(0);
         soundEngine.play("success");
         if (!prefersReducedMotion) {
           confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#a78bfa", "#22d3ee"] });
         }
       } else {
+        setFailStreak((n) => n + 1);
         soundEngine.play("fail");
       }
     } catch {
@@ -619,11 +669,13 @@ export default function ThinkingSessionPage() {
         data-testid="session-scroll-main"
       >
         <header className="min-w-0">
-          <p className="truncate text-xs text-[var(--text-muted)]">
+          {/* `truncate` on the paragraph clips the ink but not the inline child boxes:
+              at 320px the title's own box ran to 352px. A block child truncates inside
+              its parent's width instead, so nothing sticks out of a real phone. */}
+          <p className="text-xs text-[var(--text-muted)]">
             Неделя {session.week}, сессия {session.session}
-            <span className="text-white/30"> · </span>
-            <span className="text-white/70">{session.titleRu}</span>
           </p>
+          <p className="block truncate text-xs text-white/70">{session.titleRu}</p>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
             <p
               role="status"
@@ -648,10 +700,21 @@ export default function ThinkingSessionPage() {
             <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
           </div>
           <div className="min-w-0 space-y-3 sm:space-y-4">
-            <div className="flex items-start gap-3 sm:hidden">
-              <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
-              <p className="pt-1 text-sm leading-5 text-slate-300">
-                Смотри цель и собирай поле ниже — «Проверить» внизу.
+            {/* «Готово, когда» — one short line in the monster's voice, always visible
+                before the first attempt. We refused to hide it until after a miss
+                (§10.2): the defect that started this work was a child who could not
+                tell what a finished answer looked like, and hiding the condition makes
+                the first attempt a guess by design. No label, no third row to read. */}
+            <div className="flex items-start gap-3">
+              {/* The avatar is phone-only — a second monster already sits in the desktop
+                  column. The line itself is visible at every width: it is the success
+                  condition, and hiding it on a viewport is the same defect as hiding it
+                  until after a miss. */}
+              <div className="sm:hidden">
+                <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
+              </div>
+              <p className="pt-1 text-sm leading-5 text-slate-300" data-testid="task-done-when">
+                {currentTask?.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
               </p>
             </div>
             {idleNudge >= 2 && showStructuredCheck ? (
@@ -718,6 +781,65 @@ export default function ThinkingSessionPage() {
               >
                 {feedback}
               </pre>
+            ) : null}
+
+            {/* The full success condition, with its reasoning — the *expansion* after a
+                miss, not the first appearance (§10.2). */}
+            {failStreak > 0 && currentTask?.doneWhenFullRu ? (
+              <p
+                data-testid="task-done-when-full"
+                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-300"
+              >
+                {currentTask.doneWhenFullRu}
+              </p>
+            ) : null}
+
+            {/* The re-ask: a NEW message under the feedback, never replacing it, and
+                never dressed as an error. The difference from a failure is carried by
+                voice register — first person, curious — not by colour (§10.1). */}
+            {reask ? (
+              <div
+                data-testid="monster-reask"
+                role="status"
+                aria-live="polite"
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <MonsterAvatar mood="thinking" size={36} />
+                <div className="min-w-0">
+                  <p className="text-sm leading-6 text-slate-100">{clarifyMessage(reask)}</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+                    {CLARIFY_HELPER_RU}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {/* The stuck child is never interrupted: no modal, no mode switch, no "are
+                you struggling?". The monster names what it noticed in the same shape as
+                any other message, and the hint stops costing anything (§10.1). */}
+            {uxV11Enabled() && isStuckOnTask(failStreak) && !revealedHint ? (
+              <div
+                data-testid="stuck-notice"
+                role="status"
+                aria-live="polite"
+                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              >
+                <MonsterAvatar mood="happy" size={36} />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm leading-6 text-slate-100">{stuckNoticeRu(failStreak)}</p>
+                  {currentTask?.hintAvailable ? (
+                    <button
+                      type="button"
+                      onClick={revealHint}
+                      disabled={hintBusy}
+                      data-testid="stuck-free-hint"
+                      className="min-h-11 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                    >
+                      Показать подсказку · бесплатно
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             ) : null}
 
             {choices?.length ? (
@@ -797,8 +919,16 @@ export default function ThinkingSessionPage() {
                 <Lightbulb className="h-4 w-4" aria-hidden="true" />
               )}
               <span className="sr-only sm:not-sr-only">Подсказка ·</span>
-              <span>{HINT_CRYSTAL_COST}💎</span>
-              <span className="text-xs text-amber-200/70">({crystals})</span>
+              {/* The price the child will actually pay. A stuck child pays nothing, and
+                  the server decides that from recorded misses — this label only reports it. */}
+              <span>
+                {uxV11Enabled()
+                  ? hintLabelRu(failStreak, HINT_CRYSTAL_COST)
+                  : `${HINT_CRYSTAL_COST}💎`}
+              </span>
+              {uxV11Enabled() && isStuckOnTask(failStreak) ? null : (
+                <span className="text-xs text-amber-200/70">({crystals})</span>
+              )}
             </button>
           ) : null}
 

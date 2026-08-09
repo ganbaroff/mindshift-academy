@@ -27,6 +27,25 @@ export type ContentTask = {
    * Revealed via /api/hints/reveal for HINT_CRYSTAL_COST crystals.
    */
   hintRu: string;
+  /**
+   * ── The brief: three things a task must state before the child acts ──
+   * Contract: docs/architecture/08-UX-MONSTER-JOURNEY.md §2, rendered per §10.2.
+   * Optional in the type until every week is backfilled; `validateSession` makes
+   * them required per week as soon as one task in that week has them, so nothing
+   * breaks mid-migration and no week ships half-briefed.
+   */
+  /** Цель — one sentence naming the finished thing. Replaces promptRu on screen. */
+  goalRu?: string;
+  /** Что дано — the explicit list the child works with. Never «и т.д.». Shown in the workspace. */
+  givenRu?: string[];
+  /**
+   * Готово, когда — one short line in the monster's voice, always visible before the
+   * first attempt (§10.2: we refused to hide the success condition until after a miss).
+   * No label, no third row: «получится, когда назовёшь 4 шага по порядку».
+   */
+  doneWhenRu?: string;
+  /** The same condition with its reasoning, revealed as an expansion after a miss. */
+  doneWhenFullRu?: string;
   /** grid-draw: 0-based target cells. */
   target?: [number, number][];
   /** rule-runner: maps the child's rule must pass. */

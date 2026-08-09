@@ -315,9 +315,97 @@ than three labelled rows. Step 5 becomes "map with current-cluster reveal + mons
 instead of "map and ranks", and it now needs a small addition to the `Monster` model for the
 parts the child has earned — additive, one migration, no change to existing rows.
 
-### 10.5 Still open, and it is the CEO's call
+### 10.5 Still open, and it is the CEO's call (see also §11)
 
 The designer is building the mockup on this basis. Before it is implemented, one real child
 should see the growing monster and say what the new part means to them. If a part does not
 read as a reward without explanation, the growth idea has the same problem the ranks had — it
 just fails more expensively, because growth is drawn art and a rank is a word.
+
+---
+
+## 11. Implementation record — 2026-08-09
+
+Steps 1-3 of §7 are in the tree, gated per §6. Verified by `npm run test:ux-v11`
+(90 assertions, now chained into `npm test`), plus `tsc --noEmit`, `eslint` and
+`npm run build`. The live session screen was **not** driven in a browser this pass —
+it sits behind Clerk auth and a consented parent, and the local database has no tables.
+
+### 11.1 Shipped
+
+**Step 1 — resume.** `src/app/continue/page.tsx` resolves the child's real position and
+redirects. `src/lib/tasks/course-map.ts` is now the single source of truth for course
+order, week ideas, earned monster parts and map stop states; `/api/continue` was rewritten
+to use it instead of its own private copy of the session list. The dashboard CTA and
+onboarding now link to `/continue`. `tests/w2-learner-state.test.mjs` asserted the
+hardcoded `/session/w1-s1` — that assertion pinned defect 2 in place and was replaced.
+
+**Step 2 — the task brief.** `goalRu` / `givenRu` / `doneWhenRu` / `doneWhenFullRu` added
+to `ContentTask`, optional until backfilled. `validateSession` enforces all-or-nothing per
+session, so a half-briefed session fails the build rather than reaching a child.
+Rendered per §10.2, not as three labelled rows: the goal replaces the prompt line, what is
+given appears as chips inside the workspace, «готово, когда» is one line in the monster's
+voice above the fold, and the full condition expands only after a miss.
+
+**Step 3 — the re-ask.** `src/lib/tasks/clarify.ts`, deterministic, no model call, five
+rules ordered most-specific first, and a curated Russian lexicon rather than a stemmer.
+Wired ahead of `/api/tasks/attempt`, so a re-ask records nothing and spends nothing. It
+renders as a new message under the feedback, never replacing it. Copy lives locally as
+codes → Russian, the same discipline `unclear-copy.ts` already uses.
+
+**§10.1 — the stuck child.** `src/lib/tasks/stuck.ts` plus a change to
+`/api/hints/reveal`: after two recorded misses on a task the hint costs nothing. The
+decision is taken **on the server from `TaskAttempt` rows** — a client cannot declare
+itself stuck and get paid scaffolding free. The free unlock still writes the same
+idempotent ledger event, so replay is safe at either price. No modal, no mode switch.
+
+**§6 — the gate.** `NEXT_PUBLIC_UX_V11`, off by default, covers the re-ask and the stuck
+offer. It deliberately does **not** cover `/continue` (hiding a bug fix behind a design
+flag keeps the bug) or the brief (content is its own gate — an unbriefed session looks
+exactly as it does today).
+
+**Step 6 precondition — met.** `test:e2e:current-sessions` now runs in `verify:release`
+and in its own CI job, across Chromium, Firefox and WebKit. Three things had to be fixed
+first, all pre-existing and all confirmed against a clean checkout of `1224e17` in a
+throwaway worktree before any of them were attributed to this work:
+
+1. The suite clicked the surfaces' own «Проверить», which the session screen clips and
+   sets `pointer-events: none` on (`PRIMARY_ACTION_HIDDEN`) because the real control
+   moved to the sticky footer in `0304134`. Every run hung 30s and failed. It now asserts
+   on the accessible button and clicks the visible one.
+2. At 320px the session title's inline box ran to 352px. `truncate` on the parent clipped
+   the ink but not the child box. The title is its own truncating block now. This is the
+   brief's own ground rule — 320px is a real device.
+3. The suite forced `NEXT_PUBLIC_UX_V11=1` into the server it starts, so the gate
+   certifies the screen a child meets rather than the one behind the flag, and it drives
+   the re-ask end to end: the question quotes the child, says it is not a mistake, leaves
+   the workspace standing, keeps the text editable, and — the property that matters —
+   produces no «Пропустить», proving no attempt was recorded.
+
+Evidence: `.superpowers/sdd/evidence/browser-*/desktop-w1-s1-reask.png`. Two consecutive
+green cross-browser runs. **The flag itself is still off**: flipping it in production is
+the CEO's call, and §10.5 still wants one real child in front of the growing monster.
+
+### 11.2 Not shipped, and why
+
+- **Step 5 — the map screen and the growing monster.** The data model is done and tested
+  (`courseStops`, `earnedMonsterParts`, `COURSE_WEEKS` with the part each week grows), but
+  no map route and no growth art exist yet. §10.5 is the reason to stop here: one real
+  child should see a growing monster before we draw five parts and a growth celebration.
+- **Backfilling the other 13 sessions to the brief template.** `w1-s1` and `w2-s1` are
+  done as the reference — `w2-s1` is the sandwich task from §1, rewritten. The remaining
+  ~60 tasks are the founder's call per `docs/design-handoff/v1.1/07-PROJECT-ANSWERS.md`;
+  the validator will reject any session that is briefed only halfway.
+- **Mood decay.** `06-MONSTER-ANATOMY-ANSWERS.md` §4 flags the live contradiction: the
+  nightly cron drops the monster's mood for missed days, which is the streak guilt this
+  design promises not to do. Still open, still the CEO's call. It gets worse once the
+  monster grows.
+
+### 11.3 One place the spec was read, not followed literally
+
+§10.3 says an open re-ask owns the next submission and "nothing is recorded". Implemented
+as: the re-ask closes on that submission, and the submission is then **graded normally** —
+because the attempt it belongs to was never recorded when the re-ask fired. The alternative
+reading, where answering the re-ask is also unrecorded, would make a child who answers
+correctly submit twice. If that reading was intended, `runAttempt` in
+`src/app/session/[id]/page.tsx` is the one place to change.

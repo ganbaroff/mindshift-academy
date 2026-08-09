@@ -86,6 +86,25 @@ export function TaskWorkspace({
     >
       {/* Task-first: goal + controls before long copy so phones see the board above the fold. */}
       {reference}
+      {/* «Что дано» is shown in the workspace, not stated in prose — the designer's
+          point in 08-UX-MONSTER-JOURNEY §10.2, which we accepted: a child reads the
+          materials where they use them, not in a labelled row above the fun. */}
+      {task.givenRu?.length ? (
+        <ul
+          data-testid="task-given"
+          aria-label="Что у тебя есть"
+          className="flex flex-wrap gap-2"
+        >
+          {task.givenRu.map((item) => (
+            <li
+              key={item}
+              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {surface}
 
       <header className="space-y-1.5 border-t border-white/5 pt-3">
@@ -96,8 +115,10 @@ export function TaskWorkspace({
             {FAMILY_TITLES[task.family]}
           </span>
         </p>
+        {/* The goal lives inside the prompt line (§10.2) — one sentence naming the
+            finished thing. promptRu remains the fallback until a session is backfilled. */}
         <p className="text-sm leading-6 text-slate-200" data-testid="task-prompt-caption">
-          {task.promptRu}
+          {task.goalRu ?? task.promptRu}
         </p>
         {offeredTier === 1 ? (
           <p className="rounded-xl bg-sky-400/10 p-2.5 text-xs leading-5 text-sky-100 sm:text-sm">
