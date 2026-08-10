@@ -23,6 +23,10 @@ export const REQUIRED_PRODUCTION_ENV = [
   "UPSTASH_REDIS_REST_TOKEN",
   "RESEND_API_KEY",
   "RESEND_FROM",
+  // Without a destination, notifyOperator() returns "none" and every access request and
+  // every problem report is silently discarded. A closed pilot whose feedback loop ends
+  // in a void learns nothing, so this is required, not optional.
+  "OPERATOR_ALERT_EMAIL",
   "CONSENT_CODE_PEPPER",
   "CRON_SECRET",
 ] as const;

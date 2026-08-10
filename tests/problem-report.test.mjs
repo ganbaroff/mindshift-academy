@@ -113,7 +113,13 @@ console.log("\n=== the route enforces it, not the button ===");
   // not hydrated still needs the loop. The server answers 401 and the button says where
   // to write instead, rather than vanishing or faking success.
   check("the button is not hidden by client auth state", !button.includes("useAuth"));
-  check("a signed-out tap is answered honestly", button.includes('res.status === 401 ? "anonymous"'));
+  check("a signed-out tap is answered honestly", button.includes('res.status === 401'));
+  // The confirmation must follow the channel the server actually used. A 2xx only means
+  // the report was accepted, not that anyone received it.
+  check("success is claimed only when a channel carried it", button.includes('body?.channel === "none"'));
+  check("and an undelivered report says so", button.includes("report-problem-undelivered"));
+  const prodEnv = readFileSync(join(root, "src/lib/production-env.ts"), "utf8");
+  check("production cannot run without somewhere to deliver", prodEnv.includes("OPERATOR_ALERT_EMAIL"));
   check("and points somewhere real", button.includes("report-problem-anonymous"));
 }
 
