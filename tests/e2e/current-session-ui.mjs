@@ -795,21 +795,30 @@ export async function runCurrentSessionUiSuite(options = {}) {
     // Two legitimate sources: the runner's environment (CI) or an untracked `.env.local`
     // that `next dev` loads itself (a developer machine). Existence only — this never
     // reads the file, so no key value can reach a log.
+    // BOTH keys, not either. The first version checked only the publishable key, so
+    // supplying that one alone walked the suite past this guard and into a genuine
+    // "Missing secretKey" crash — a configuration gap reported as a red gate again, one
+    // level further in. The app boots only when Clerk has both halves.
+    const hasEnvFile =
+      existsSync(join(root, ".env.local")) || existsSync(join(root, ".env"));
     const bootable =
-      Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()) ||
-      existsSync(join(root, ".env.local")) ||
-      existsSync(join(root, ".env"));
+      hasEnvFile ||
+      (Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()) &&
+        Boolean(process.env.CLERK_SECRET_KEY?.trim()));
     if (!bootable) {
       const receipt = {
         verdict: "BLOCKED",
         startedAt,
         finishedAt: new Date().toISOString(),
         reason:
-          "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. Every page renders through " +
-          "ClerkProvider, so the app cannot boot without it and nothing can be certified. " +
-          "Set it as a GitHub Actions repository variable (it is public by design — the " +
-          "same value ships to every browser). A fake key does not work: it encodes the " +
-          "Clerk instance host, so the middleware proxies to a domain that does not exist.",
+          "Clerk is not fully configured, so the app cannot boot and nothing was " +
+          "certified. BOTH keys are required: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY " +
+          `(${process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() ? "set" : "MISSING"}) ` +
+          `and CLERK_SECRET_KEY (${process.env.CLERK_SECRET_KEY?.trim() ? "set" : "MISSING"}). ` +
+          "The publishable key is public by design and belongs in an Actions repository " +
+          "VARIABLE; the secret key is a real credential and belongs in an Actions SECRET. " +
+          "Placeholders do not work for either: the publishable key encodes the Clerk " +
+          "instance host, and a fake secret fails the middleware handshake with a 500.",
       };
       persistReceipt(outDir, receipt);
       console.error(`CURRENT_SESSION_UI BLOCKED: ${receipt.reason}`);

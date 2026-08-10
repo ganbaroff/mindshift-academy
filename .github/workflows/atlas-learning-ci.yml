@@ -94,7 +94,11 @@ jobs:
       # reads as a pass. Any other non-zero code is a real failure and still fails here.
       - name: Current session UI browser gate
         env:
+          # Public by design — an Actions VARIABLE.
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          # A real credential — an Actions SECRET. Until it exists the gate reports
+          # BLOCKED and certifies nothing; it never fakes a pass.
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
         run: |
           set +e
           npm run test:e2e:current-sessions
