@@ -64,17 +64,17 @@ export function SessionCoach({ family, forceHide = false, onDismissed }: Props) 
       className="space-y-3 rounded-2xl border border-primary/35 bg-primary/10 p-4"
     >
       <MascotCue beat="taskLook" className="justify-start" />
-      <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-6 text-white/80">
+      <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-6 text-[var(--ink)]/80">
         <li>{MASCOT_LINES.taskLook}</li>
         <li>{MASCOT_LINES.taskTap}</li>
         <li>{MASCOT_LINES.taskCheck}</li>
       </ol>
-      <p className="text-sm font-medium text-primary-soft">{tip}</p>
+      <p className="text-sm font-medium text-[var(--color-secondary-dark)]">{tip}</p>
       <button
         type="button"
         data-testid="session-coach-dismiss"
         onClick={dismiss}
-        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-primary px-5 text-sm font-semibold text-[var(--ink)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
       >
         Понятно
       </button>

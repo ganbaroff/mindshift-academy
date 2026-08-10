@@ -35,11 +35,11 @@ export function MascotCue({
         aria-label="Прослушать подсказку"
         // 44px, not 32. This is the read-aloud button — the control a child who cannot
         // read well depends on most, and it was the smallest target on the screen.
-        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/12 bg-white/[0.04] text-primary-soft transition-[background-color,scale] duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] text-[var(--color-secondary-dark)] transition-[background-color,scale] duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] hover:bg-[var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
         <Volume2 className="h-4 w-4" />
       </button>
-      <p className="text-sm font-medium text-white/75">{line}</p>
+      <p className="text-sm font-medium text-[var(--text-secondary)]">{line}</p>
     </div>
   );
 }

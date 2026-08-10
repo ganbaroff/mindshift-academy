@@ -39,14 +39,14 @@ export function ClaimSurface({
     >
       <div className="space-y-3">
         {claims.map((claim, index) => (
-          <fieldset key={claim.id} disabled={disabled} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
-            <legend className="px-1 font-medium text-white">Утверждение: {claim.text}</legend>
+          <fieldset key={claim.id} disabled={disabled} className="rounded-xl border border-[var(--border-color)] bg-[var(--surface)]/70 p-3">
+            <legend className="px-1 font-medium text-[var(--ink)]">Утверждение: {claim.text}</legend>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              <label className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-600 px-3">
+              <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--border-color)] px-3">
                 <input type="radio" name={`claim-${index}`} checked={labels[claim.id] === true} onChange={() => setLabels((current) => ({ ...current, [claim.id]: true }))} />
                 Верно
               </label>
-              <label className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-600 px-3">
+              <label className="flex min-h-11 items-center gap-3 rounded-lg border border-[var(--border-color)] px-3">
                 <input type="radio" name={`claim-${index}`} checked={labels[claim.id] === false} onChange={() => setLabels((current) => ({ ...current, [claim.id]: false }))} />
                 Неверно
               </label>
@@ -58,7 +58,7 @@ export function ClaimSurface({
         type="submit"
         data-primary-action="true"
         disabled={disabled || !complete}
-        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
+        className={`min-h-11 w-full rounded-xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

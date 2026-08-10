@@ -79,28 +79,28 @@ export function RuleSurface({
       }}
     >
       <fieldset disabled={disabled} className="space-y-3">
-        <legend className="mb-2 font-medium text-white">Собери правило с веткой «иначе»</legend>
+        <legend className="mb-2 font-medium text-[var(--ink)]">Собери правило с веткой «иначе»</legend>
         <label className="grid gap-2 rounded-xl border border-violet-400/30 bg-violet-400/10 p-3 sm:grid-cols-[1fr_1.4fr] sm:items-center">
           <span><strong>Иначе, для остальных случаев:</strong></span>
           <select
             aria-label="Действие иначе, для остальных случаев"
             value={fallback}
             onChange={(event) => setFallback(event.target.value as RuleAction | "")}
-            className="min-h-11 rounded-lg border border-slate-600 bg-slate-800 px-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+            className="min-h-11 rounded-lg border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
           >
             <option value="">Выбрать действие</option>
             {ACTIONS.map((action) => <option key={action} value={action}>{ACTION_LABELS[action]}</option>)}
           </select>
         </label>
-        <p className="text-sm text-slate-300">Для каждого случая выбери отдельное действие или ветку «иначе». Нужны оба вида.</p>
+        <p className="text-sm text-[var(--text-secondary)]">Для каждого случая выбери отдельное действие или ветку «иначе». Нужны оба вида.</p>
         {tiles.map((tile, index) => (
-          <label key={tile} className="grid gap-2 rounded-xl border border-slate-700 bg-slate-900/70 p-3 sm:grid-cols-[1fr_1.4fr] sm:items-center">
+          <label key={tile} className="grid gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--surface)]/70 p-3 sm:grid-cols-[1fr_1.4fr] sm:items-center">
             <span><strong>Что впереди:</strong> {TILE_LABELS[tile]}</span>
             <select
               aria-label={`Действие, если впереди ${TILE_LABELS[tile]}`}
               value={actions[tile] ?? ""}
               onChange={(event) => setActions((current) => ({ ...current, [tile]: event.target.value as RuleChoice }))}
-              className="min-h-11 rounded-lg border border-slate-600 bg-slate-800 px-3 text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+              className="min-h-11 rounded-lg border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
             >
               <option value="">Выбрать действие</option>
               <option value="otherwise">Использовать ветку «иначе»</option>
@@ -114,7 +114,7 @@ export function RuleSurface({
         type="submit"
         data-primary-action="true"
         disabled={disabled || !complete}
-        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
+        className={`min-h-11 w-full rounded-xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

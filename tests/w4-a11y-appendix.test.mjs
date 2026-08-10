@@ -90,9 +90,38 @@ receipt(9, "auto-motion >5s has pause/stop/hide",
   !session.includes("setInterval") && !session.includes("Infinity"),
   "session has no infinite auto-motion loops");
 
-receipt(10, "contrast 4.5:1 text, 3:1 UI/focus",
-  globals.includes("outline: 3px solid #a78bfa") && taskSurfaces.includes("bg-violet-500") && taskSurfaces.includes("focus-visible:outline-violet-300"),
-  "solid violet primary check action; focus outline violet-300");
+// Was: a check that the CSS literally said `#a78bfa` and `bg-violet-500`. That asserted
+// the dark theme's colour NAMES, so repainting the product to warm paper failed a gate
+// about contrast without any contrast having changed. Compute the ratio instead: the
+// property is what matters, and now the gate survives the next repaint too.
+function srgbToLinear(c) {
+  const v = c / 255;
+  return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+}
+function relativeLuminance(hex) {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.2126 * srgbToLinear(r) + 0.7152 * srgbToLinear(g) + 0.0722 * srgbToLinear(b);
+}
+function contrast(a, b) {
+  const [x, y] = [relativeLuminance(a), relativeLuminance(b)].sort((p, q) => q - p);
+  return (x + 0.05) / (y + 0.05);
+}
+function token(name) {
+  const m = globals.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`));
+  return m ? m[1] : null;
+}
+{
+  const paper = token("--color-bg-base");
+  const ink = token("--ink");
+  const focus = token("--color-secondary-dark");
+  const textRatio = paper && ink ? contrast(paper, ink) : 0;
+  const focusRatio = paper && focus ? contrast(paper, focus) : 0;
+  const outlineWidth = /outline:\s*3px solid var\(--color-secondary-dark/.test(globals);
+  receipt(10, "contrast 4.5:1 text, 3:1 UI/focus",
+    textRatio >= 4.5 && focusRatio >= 3 && outlineWidth,
+    `body text ${textRatio.toFixed(2)}:1 (${ink} on ${paper}), focus ring ${focusRatio.toFixed(2)}:1 (${focus}), 3px outline ${outlineWidth}`);
+}
 
 receipt(11, "no drag-only interactions",
   !learnerUi.includes("onDrag") && !learnerUi.includes("draggable"),

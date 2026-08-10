@@ -46,10 +46,10 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
   return (
     <div className="flex flex-col gap-2">
       {label ? (
-        <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/80">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-primary-dark)]/80">{label}</p>
       ) : null}
       <div
-        className="inline-grid gap-1 p-3 rounded-2xl bg-white/5 border border-white/10 w-fit"
+        className="inline-grid gap-1 p-3 rounded-2xl bg-[var(--surface-strong)] border border-[var(--border-color)] w-fit"
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
         role="img"
         aria-label={accessibleSummary}
@@ -65,13 +65,13 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
           let cellClass =
             "w-11 h-11 sm:w-12 sm:h-12 rounded-lg border transition-colors duration-300 ";
           if (isMismatch) {
-            cellClass += "border-amber-400/70 bg-amber-500/25";
+            cellClass += "border-[var(--color-accent-dark)] bg-[var(--color-accent)]";
           } else if (isFilled) {
-            cellClass += "border-violet-400/60 bg-violet-500/40";
+            cellClass += "border-violet-400/60 bg-[var(--color-primary)]/40";
           } else if (isTarget) {
             cellClass += "border-cyan-400/40 bg-cyan-500/10";
           } else {
-            cellClass += "border-white/10 bg-white/[0.03]";
+            cellClass += "border-[var(--border-color)] bg-white/[0.03]";
           }
 
           return <div key={k} className={cellClass} aria-hidden="true" tabIndex={-1} />;

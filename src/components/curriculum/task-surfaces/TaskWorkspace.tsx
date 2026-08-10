@@ -82,7 +82,7 @@ export function TaskWorkspace({
     <section
       data-testid={`task-workspace-${task.family}`}
       aria-labelledby="task-workspace-title"
-      className="space-y-3 rounded-3xl border border-slate-700 bg-slate-950/60 p-3 sm:space-y-4 sm:p-6"
+      className="space-y-3 rounded-3xl border border-[var(--border-color)] bg-[var(--surface)] p-3 sm:space-y-4 sm:p-6"
     >
       {/* Task-first: goal + controls before long copy so phones see the board above the fold. */}
       {reference}
@@ -98,7 +98,7 @@ export function TaskWorkspace({
           {task.givenRu.map((item) => (
             <li
               key={item}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm font-medium text-slate-200"
+              className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]"
             >
               {item}
             </li>
@@ -107,21 +107,21 @@ export function TaskWorkspace({
       ) : null}
       {surface}
 
-      <header className="space-y-1.5 border-t border-white/5 pt-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-violet-300">
+      <header className="space-y-1.5 border-t border-[var(--border-color)] pt-3">
+        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-primary-dark)]">
           Уровень {offeredTier}
-          <span className="text-white/30"> · </span>
-          <span id="task-workspace-title" className="text-violet-200/90">
+          <span className="text-[var(--text-muted)]"> · </span>
+          <span id="task-workspace-title" className="text-[var(--color-primary-dark)]">
             {FAMILY_TITLES[task.family]}
           </span>
         </p>
         {/* The goal lives inside the prompt line (§10.2) — one sentence naming the
             finished thing. promptRu remains the fallback until a session is backfilled. */}
-        <p className="text-sm leading-6 text-slate-200" data-testid="task-prompt-caption">
+        <p className="text-sm leading-6 text-[var(--text-primary)]" data-testid="task-prompt-caption">
           {task.goalRu ?? task.promptRu}
         </p>
         {offeredTier === 1 ? (
-          <p className="rounded-xl bg-sky-400/10 p-2.5 text-xs leading-5 text-sky-100 sm:text-sm">
+          <p className="rounded-xl bg-[var(--color-secondary-soft)] p-2.5 text-xs leading-5 text-[var(--color-secondary-dark)] sm:text-sm">
             <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
           </p>
         ) : null}

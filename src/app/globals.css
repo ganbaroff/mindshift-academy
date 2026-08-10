@@ -1,15 +1,21 @@
 @import "tailwindcss";
 
+/* Warm paper + tactile clay, from the designer's mockup. The previous world was
+   #070b14 neon-on-black: it read as an adult analytics dashboard, not as a companion
+   for an eight-year-old. Values are the mockup's, unrounded. */
 :root {
-  --background: #070b14;
-  --color-bg-base: #070b14;
-  --foreground: #f5f7ff;
-  --text-primary: #f5f7ff;
-  --text-secondary: rgba(245, 247, 255, 0.8);
-  --text-muted: rgba(245, 247, 255, 0.55);
-  --surface: rgba(13, 18, 31, 0.84);
-  --surface-strong: #11182a;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --background: #FBF1E0;
+  --color-bg-base: #FBF1E0;
+  --foreground: #2B2320;
+  --ink: #2B2320;
+  --text-primary: #2B2320;
+  --text-secondary: rgba(43, 35, 32, 0.72);
+  --text-muted: rgba(43, 35, 32, 0.52);
+  --surface: #FFFDF8;
+  --surface-strong: #F3E4C8;
+  --border-color: rgba(43, 35, 32, 0.12);
+  --shadow-card: 0 1px 0 rgba(43, 35, 32, 0.04), 0 14px 30px -14px rgba(43, 35, 32, 0.28);
+  --shadow-pop: 0 24px 60px -16px rgba(43, 35, 32, 0.45);
 
   /* Motion tokens. Built-in CSS easings are too weak for deliberate motion, and five
      hand-typed curves that almost match is how a product stops feeling like one thing.
@@ -58,36 +64,71 @@
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
   --color-surface-strong: var(--surface-strong);
-  --color-primary-violet: #8b5cf6;
-  --color-primary: #7c3aed;
-  --color-primary-soft: #a78bfa;
-  --color-secondary-cyan: #06b6d4;
-  --color-secondary: #22d3ee;
-  --color-accent-amber: #f59e0b;
-  --color-warning: #e9c400;
-  --color-success-emerald: #10b981;
-  --color-error: #d4b4ff;
+  --color-primary: #FF6B4A;
+  --color-primary-dark: #E14E30;
+  --color-primary-soft: #FFB199;
+  --color-primary-violet: #8B6BFF;
+  --color-secondary: #1FA398;
+  --color-secondary-dark: #14776E;
+  --color-secondary-soft: #9BE3D8;
+  --color-secondary-cyan: #1FA398;
+  --color-accent: #FFC93C;
+  --color-accent-dark: #E0A700;
+  --color-accent-amber: #E0A700;
+  --color-warning: #E0A700;
+  --color-success: #3FB37F;
+  --color-success-dark: #2A8C61;
+  --color-success-soft: #B7E4C7;
+  --color-success-emerald: #3FB37F;
+  --color-error: #E14E30;
+  --color-ink: var(--ink);
   --color-border: var(--border-color);
-  
-  --font-sans: var(--font-geist-sans);
+
+  --font-sans: var(--font-nunito);
+  --font-display: var(--font-baloo);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   min-height: 100vh;
+  position: relative;
   background:
-    radial-gradient(circle at 18% 18%, rgba(139, 92, 246, 0.18) 0%, transparent 34%),
-    radial-gradient(circle at 82% 16%, rgba(34, 211, 238, 0.14) 0%, transparent 28%),
-    radial-gradient(circle at 50% 110%, rgba(233, 196, 0, 0.1) 0%, transparent 26%),
-    linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-base) 100%);
+    radial-gradient(circle at 12% 8%, rgba(255, 107, 74, 0.10) 0%, transparent 30%),
+    radial-gradient(circle at 88% 14%, rgba(31, 163, 152, 0.10) 0%, transparent 28%),
+    radial-gradient(circle at 50% 105%, rgba(255, 201, 60, 0.12) 0%, transparent 30%),
+    var(--color-bg-base);
   color: var(--text-primary);
+  font-family: var(--font-nunito), system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
 
+/* Paper grain. Without it the warm palette reads flat and digital; with it the surface
+   feels like something you could put a sticker on. Inline SVG, no network request. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Clay, not paper-thin: the mockup's critique of v1 was that flat 1px-border cards had
+   no tactility. Anything that reads as a raised surface gets the card shadow. */
+.rounded-3xl, .rounded-\[28px\], .rounded-2xl {
+  box-shadow: var(--shadow-card);
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-baloo), var(--font-nunito), system-ui, sans-serif;
+}
+
 ::selection {
-  background: rgba(139, 92, 246, 0.35);
-  color: #fff;
+  background: rgba(255, 107, 74, 0.28);
+  color: var(--ink);
 }
 
 /* === Accessibility === */
@@ -102,9 +143,21 @@ body {
   }
 }
 
-/* Focus visible outlines for keyboard navigation — ≥3:1 against dark bg */
+/* The blanket rule above kills every duration, including the two fades that exist
+   precisely to survive it. Reduced motion means gentler, not nothing: a message that
+   arrives with no announcement at all is a state change the child can miss. */
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .pop-from-corner {
+    animation: fade-in 200ms var(--ease-out) both !important;
+    animation-duration: 200ms !important;
+  }
+}
+
+/* Focus visible outlines for keyboard navigation. Was violet #a78bfa, which sat at
+   1.6:1 on the new cream paper — invisible. Teal clears 3:1 against #FBF1E0. */
 *:focus-visible {
-  outline: 3px solid #a78bfa;
+  outline: 3px solid var(--color-secondary-dark, #14776E);
   outline-offset: 2px;
   border-radius: 4px;
 }

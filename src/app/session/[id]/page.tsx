@@ -390,7 +390,7 @@ export default function ThinkingSessionPage() {
   if (consentEnded) {
     return (
       <div
-        className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col"
+        className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col"
         data-testid="consent-ended-calm"
       >
         <Header />
@@ -398,14 +398,14 @@ export default function ThinkingSessionPage() {
           <div className="text-center space-y-5 max-w-md">
             <MonsterAvatar mood="thinking" color="#a78bfa" size={96} />
             <h1 className="text-2xl font-semibold">Сессия завершена</h1>
-            <p className="text-sm text-white/70 leading-relaxed">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
               Родитель закрыл доступ к обучению. Это спокойная пауза — прогресс
               сохранён. Когда согласие снова будет подтверждено, можно продолжить
               с того же места.
             </p>
             <Link
               href="/"
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)]"
             >
               На главный экран
             </Link>
@@ -417,21 +417,21 @@ export default function ThinkingSessionPage() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
-            <p className="text-violet-200">{loadError}</p>
+            <p className="text-[var(--color-primary-dark)]">{loadError}</p>
             {lockedPrereq ? (
               <Link
                 href={`/session/${lockedPrereq}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-violet-600 px-6 font-semibold hover:bg-violet-500"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-violet-600 px-6 font-semibold hover:bg-[var(--color-primary)]"
               >
                 Открыть предыдущую сессию
               </Link>
             ) : null}
             <div>
-              <Link href="/dashboard" className="text-violet-300 underline">
+              <Link href="/dashboard" className="text-[var(--color-primary-dark)] underline">
                 В кабинет
               </Link>
             </div>
@@ -443,7 +443,7 @@ export default function ThinkingSessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
@@ -457,7 +457,7 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone && formulationEcho) {
       return (
-        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
           <Header />
           <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
         </div>
@@ -466,12 +466,12 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone) {
       return (
-        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
           <Header />
           <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
             <MonsterAvatar mood="celebrating" size={120} />
             <h1 className="text-3xl font-bold text-center">Итог: своими словами</h1>
-            <p className="text-gray-300 text-center">
+            <p className="text-[var(--text-secondary)] text-center">
               Напиши главное правило мышления. Качество не мешает завершить путь — важно
               подать формулировку.
             </p>
@@ -479,12 +479,12 @@ export default function ThinkingSessionPage() {
               value={formulationText}
               onChange={(e) => setFormulationText(e.target.value)}
               rows={4}
-              className="w-full rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-base text-white"
+              className="w-full rounded-2xl bg-[var(--surface-strong)] border border-[var(--border-color)] px-4 py-3 text-base text-[var(--ink)]"
               placeholder="Моё главное правило мышления…"
               data-testid="formulation-input"
             />
             {formulationError ? (
-              <p className="text-sm text-violet-200" role="alert">
+              <p className="text-sm text-[var(--color-primary-dark)]" role="alert">
                 {formulationError}
               </p>
             ) : null}
@@ -492,7 +492,7 @@ export default function ThinkingSessionPage() {
               type="button"
               disabled={formulationBusy}
               data-testid="formulation-submit"
-              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
+              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold disabled:opacity-50"
               onClick={async () => {
                 setFormulationBusy(true);
                 setFormulationError(null);
@@ -531,13 +531,13 @@ export default function ThinkingSessionPage() {
     }
 
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-8 text-center">
           <MonsterAvatar mood="happy" size={120} />
           <h1 className="text-3xl font-bold">Сессия пройдена!</h1>
-          <p className="text-gray-300">{session.titleRu}</p>
-          <p className="text-sm text-violet-200/80 bg-white/5 rounded-2xl p-4 border border-white/10">
+          <p className="text-[var(--text-secondary)]">{session.titleRu}</p>
+          <p className="text-sm text-[var(--color-primary-dark)]/80 bg-[var(--surface-strong)] rounded-2xl p-4 border border-[var(--border-color)]">
             Вопрос за ужином: {session.dinnerQuestionRu}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -545,7 +545,7 @@ export default function ThinkingSessionPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/session/${nextSessionId}`)}
-                className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold"
+                className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold"
               >
                 Следующая сессия
               </button>
@@ -553,7 +553,7 @@ export default function ThinkingSessionPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="min-h-11 px-6 py-3 rounded-full border border-white/15 hover:bg-white/5 font-semibold"
+              className="min-h-11 px-6 py-3 rounded-full border border-[var(--border-color)] hover:bg-[var(--surface-strong)] font-semibold"
             >
               В кабинет
             </button>
@@ -565,12 +565,12 @@ export default function ThinkingSessionPage() {
 
   if (pastLastWithoutComplete) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-6 text-center">
           <MonsterAvatar mood="thinking" size={100} />
           <h1 className="text-2xl font-bold">Сессия ещё не завершена</h1>
-          <p className="text-gray-300">
+          <p className="text-[var(--text-secondary)]">
             Нужно пройти практику и перенос. Вернись к заданиям без галочки.
           </p>
           <button
@@ -582,7 +582,7 @@ export default function ThinkingSessionPage() {
               setTaskIndex(firstOpen >= 0 ? firstOpen : 0);
               resetAttemptView();
             }}
-            className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold"
+            className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold"
           >
             Вернуться к заданиям
           </button>
@@ -617,19 +617,19 @@ export default function ThinkingSessionPage() {
       <Header />
 
       <div
-        className="sticky top-12 z-40 border-b border-white/5 bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none sm:top-[4.5rem]"
+        className="sticky top-12 z-40 border-b border-[var(--border-color)] bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none sm:top-[4.5rem]"
         data-testid="session-sticky-top"
       >
         <div className="mx-auto flex w-full max-w-lg items-center gap-3 px-4 py-2">
           <Link
             href="/dashboard"
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Назад
           </Link>
           <p
-            className="min-w-0 flex-1 truncate text-xs uppercase tracking-widest text-violet-300/70"
+            className="min-w-0 flex-1 truncate text-xs uppercase tracking-widest text-[var(--color-primary-dark)]/70"
             aria-live="polite"
             data-testid="session-progress-live"
           >
@@ -647,10 +647,10 @@ export default function ThinkingSessionPage() {
                   <span
                     className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-[11px] font-bold border ${
                       doneTask
-                        ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+                        ? "bg-[var(--color-success-soft)] border-[var(--color-success)] text-[var(--color-success-dark)]"
                         : current
-                          ? "bg-violet-500/20 border-violet-400/50 text-white"
-                          : "bg-white/5 border-white/10 text-[var(--text-muted)]"
+                          ? "bg-[var(--color-primary-soft)] border-[var(--color-primary-soft)] text-[var(--ink)]"
+                          : "bg-[var(--surface-strong)] border-[var(--border-color)] text-[var(--text-muted)]"
                     }`}
                     aria-current={current ? "step" : undefined}
                     title={doneTask ? "Пройдено" : current ? "Сейчас" : `Задание ${i + 1}`}
@@ -675,11 +675,11 @@ export default function ThinkingSessionPage() {
           <p className="text-xs text-[var(--text-muted)]">
             Неделя {session.week}, сессия {session.session}
           </p>
-          <p className="block truncate text-xs text-white/70">{session.titleRu}</p>
+          <p className="block truncate text-xs text-[var(--text-secondary)]">{session.titleRu}</p>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
             <p
               role="status"
-              className="mt-2 rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200/90"
+              className="mt-2 rounded-2xl border border-[var(--color-success)] bg-[var(--color-success-soft)] px-3 py-2 text-sm text-[var(--color-success-dark)]"
             >
               Это задание уже пройдено ✓. Можно потренироваться или нажать «Дальше».
             </p>
@@ -688,7 +688,7 @@ export default function ThinkingSessionPage() {
             // Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
             // runs on the main thread and drops frames exactly when the page is busy
             // fetching. Same motion, in CSS, off the main thread.
-            <p className="rise-in mt-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-gray-300">
+            <p className="rise-in mt-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
               {session.explanationRu}
             </p>
           ) : null}
@@ -712,7 +712,7 @@ export default function ThinkingSessionPage() {
               <div className="sm:hidden">
                 <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
               </div>
-              <p className="pt-1 text-sm leading-5 text-slate-300" data-testid="task-done-when">
+              <p className="pt-1 text-sm leading-5 text-[var(--text-secondary)]" data-testid="task-done-when">
                 {currentTask?.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
               </p>
             </div>
@@ -722,7 +722,7 @@ export default function ThinkingSessionPage() {
             {idleNudge >= 3 && showStructuredCheck && primaryAction?.ready ? (
               <p
                 role="status"
-                className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary-soft"
+                className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-[var(--color-secondary-dark)]"
               >
                 Нажми «Проверить» внизу экрана.
               </p>
@@ -760,13 +760,13 @@ export default function ThinkingSessionPage() {
             ) : null}
 
             {revealedHint ? (
-              <p className="text-sm leading-relaxed rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-100">
+              <p className="text-sm leading-relaxed rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-4 py-3 text-[#3A2600]">
                 {revealedHint}
               </p>
             ) : null}
 
             {hintError ? (
-              <p role="alert" className="text-sm text-violet-200">
+              <p role="alert" className="text-sm text-[var(--color-primary-dark)]">
                 {hintError}
               </p>
             ) : null}
@@ -776,7 +776,7 @@ export default function ThinkingSessionPage() {
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="whitespace-pre-wrap text-sm text-gray-200 bg-black/30 rounded-xl p-4 border border-white/5 font-mono leading-relaxed"
+                className="whitespace-pre-wrap text-sm text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-mono leading-relaxed"
               >
                 {feedback}
               </pre>
@@ -787,7 +787,7 @@ export default function ThinkingSessionPage() {
             {failStreak > 0 && currentTask?.doneWhenFullRu ? (
               <p
                 data-testid="task-done-when-full"
-                className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-300"
+                className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]"
               >
                 {currentTask.doneWhenFullRu}
               </p>
@@ -801,7 +801,7 @@ export default function ThinkingSessionPage() {
                 data-testid="monster-reask"
                 role="status"
                 aria-live="polite"
-                className="rise-in flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3"
               >
                 <MonsterAvatar mood="thinking" size={36} />
                 <div className="min-w-0">
@@ -821,7 +821,7 @@ export default function ThinkingSessionPage() {
                 data-testid="stuck-notice"
                 role="status"
                 aria-live="polite"
-                className="rise-in flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3"
               >
                 <MonsterAvatar mood="happy" size={36} />
                 <div className="min-w-0 space-y-2">
@@ -832,7 +832,7 @@ export default function ThinkingSessionPage() {
                       onClick={revealHint}
                       disabled={hintBusy}
                       data-testid="stuck-free-hint"
-                      className="min-h-11 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                      className="min-h-11 rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[#3A2600] transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
                     >
                       Показать подсказку · бесплатно
                     </button>
@@ -856,7 +856,7 @@ export default function ThinkingSessionPage() {
                     disabled={isSending}
                     data-testid={`choice-${c.id}`}
                     onClick={() => void runAttempt({ choiceId: c.id })}
-                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-violet-400/40 bg-violet-500/15 text-left font-semibold hover:bg-violet-500/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] text-left font-semibold hover:bg-[var(--color-primary-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
                   >
                     {c.labelRu}
                   </button>
@@ -864,11 +864,11 @@ export default function ThinkingSessionPage() {
               </div>
             ) : null}
 
-            <details className="rounded-2xl border border-white/10 bg-white/5 p-3">
-              <summary className="min-h-11 cursor-pointer py-2 font-semibold text-slate-200 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300">
+            <details className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3">
+              <summary className="min-h-11 cursor-pointer py-2 font-semibold text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)]">
                 Сказать своими словами
               </summary>
-              <p className="mb-3 text-sm leading-6 text-slate-400">
+              <p className="mb-3 text-sm leading-6 text-[var(--text-muted)]">
                 Это дополнительный способ. Основное задание можно выполнить в понятном поле выше.
               </p>
               <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
@@ -883,13 +883,13 @@ export default function ThinkingSessionPage() {
                   disabled={isSending}
                   maxLength={500}
                   placeholder="Скажи монстру, что сделать…"
-                  className="min-h-11 flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-base outline-none focus:border-violet-400/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+                  className="min-h-11 flex-1 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-base outline-none focus:border-[var(--color-primary-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
                   autoComplete="off"
                 />
                 <button
                   type="submit"
                   disabled={isSending || !utterance.trim()}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-violet-400/50 px-5 py-3 font-semibold text-violet-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-primary-soft)] px-5 py-3 font-semibold text-[var(--color-primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
                 >
                   {isSending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
                   <span>Отправить текст</span>
@@ -901,7 +901,7 @@ export default function ThinkingSessionPage() {
       </main>
 
       <footer
-        className="sticky bottom-0 z-40 border-t border-white/10 bg-[var(--color-bg-base)]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] motion-reduce:transition-none"
+        className="sticky bottom-0 z-40 border-t border-[var(--border-color)] bg-[var(--color-bg-base)]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] motion-reduce:transition-none"
         data-testid="session-action-bar"
       >
         <div className="mx-auto flex w-full max-w-lg items-stretch gap-2 px-4 py-3">
@@ -910,7 +910,7 @@ export default function ThinkingSessionPage() {
               type="button"
               onClick={revealHint}
               disabled={hintBusy}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-semibold text-amber-200 transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50 sm:px-4"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-3 text-sm font-semibold text-[#3A2600] transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50 sm:px-4"
             >
               {hintBusy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -926,7 +926,7 @@ export default function ThinkingSessionPage() {
                   : `${HINT_CRYSTAL_COST}💎`}
               </span>
               {uxV11Enabled() && isStuckOnTask(failStreak) ? null : (
-                <span className="text-xs text-amber-200/70">({crystals})</span>
+                <span className="text-xs text-[var(--text-muted)]">({crystals})</span>
               )}
             </button>
           ) : null}
@@ -950,7 +950,7 @@ export default function ThinkingSessionPage() {
                 form={primaryAction?.formId}
                 disabled={checkDisabled}
                 data-testid="session-primary-check"
-                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSending ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -968,7 +968,7 @@ export default function ThinkingSessionPage() {
             <button
               type="button"
               onClick={advanceTask}
-              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+              className="min-h-11 flex-1 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 font-semibold transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-[var(--surface-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
             >
               {advanceLabel}
             </button>

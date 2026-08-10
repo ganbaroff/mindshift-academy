@@ -51,7 +51,7 @@ export function GridDrawSurface({
       }}
     >
       <fieldset disabled={disabled}>
-        <legend className="mb-2 text-sm font-medium text-white">Выбери клетки на поле 4×4</legend>
+        <legend className="mb-2 text-sm font-medium text-[var(--ink)]">Выбери клетки на поле 4×4</legend>
         <div className="grid w-fit grid-cols-4 gap-1.5 sm:gap-2" role="group" aria-label="Клетки поля">
           {Array.from({ length: 16 }, (_, index) => {
             const row = Math.floor(index / 4);
@@ -71,7 +71,7 @@ export function GridDrawSurface({
                 // most-tapped controls in the product and every one of them was under the
                 // touch minimum. The room was always there: 320px leaves 264px inside the
                 // page and workspace padding, and four 44px cells with 6px gaps need 194px.
-                className={`h-11 w-11 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
+                className={`h-11 w-11 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:h-12 sm:w-12 sm:text-sm ${active ? "border-[var(--color-primary-dark)] bg-[var(--color-primary)] text-white" : "border-[var(--border-color)] bg-[var(--surface-strong)] text-[var(--text-secondary)]"}`}
               >
                 {row + 1},{column + 1}
               </button>
@@ -83,7 +83,7 @@ export function GridDrawSurface({
         type="button"
         onClick={clear}
         disabled={disabled || selected.size === 0}
-        className="min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-200 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+        className="min-h-11 rounded-xl px-4 text-sm font-semibold text-[var(--text-primary)] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
       >
         Очистить поле
       </button>
@@ -91,7 +91,7 @@ export function GridDrawSurface({
         type="submit"
         data-primary-action="true"
         disabled={disabled || !ready}
-        className={`min-h-11 w-full rounded-xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
+        className={`min-h-11 w-full rounded-xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50 ${hidePrimaryAction ? PRIMARY_ACTION_HIDDEN : ""}`}
       >
         Проверить
       </button>

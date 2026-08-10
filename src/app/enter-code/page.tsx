@@ -85,7 +85,7 @@ export default function EnterCodePage() {
     return (
       <main className="grid min-h-screen place-items-center px-6 py-12">
         <SignedInContinue variant="replace-form" />
-        <p className="mt-6 text-sm text-white/50" aria-live="polite">
+        <p className="mt-6 text-sm text-[var(--ink)]/50" aria-live="polite">
           Ищем, где ты остановился…
         </p>
       </main>
@@ -96,10 +96,10 @@ export default function EnterCodePage() {
     <main className="grid min-h-screen place-items-center px-6 py-12">
       <div className="w-full max-w-md space-y-8 text-center">
         <div className="space-y-3">
-          <h1 className="text-2xl font-semibold text-white">Введи 8-символьный код ребёнка</h1>
+          <h1 className="text-2xl font-semibold text-[var(--ink)]">Введи 8-символьный код ребёнка</h1>
           {/* Voiced instruction in the pet's voice + a caption — reading optional (spec §3). */}
           <MascotCue beat="code" />
-          <p id="child-code-help" className="text-sm leading-6 text-white/60">
+          <p id="child-code-help" className="text-sm leading-6 text-[var(--text-muted)]">
             Этот код взрослый получает по приглашению и передаёт тебе. Если кода нет, попроси взрослого проверить приглашение.
           </p>
         </div>
@@ -133,7 +133,7 @@ export default function EnterCodePage() {
               // in. Reported in docs/design-handoff/v1.1/02-CURRENT-STATE.md and open since.
               // The space was always there: at 320px the page has 272px inside its px-6,
               // and four 56px boxes with 8px gaps need 248px.
-              className="h-14 w-14 rounded-xl border border-white/15 bg-surface-strong/90 text-center text-xl font-bold uppercase text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-14 sm:w-11"
+              className="h-14 w-14 rounded-xl border border-[var(--border-color)] bg-surface-strong/90 text-center text-xl font-bold uppercase text-[var(--ink)] outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-14 sm:w-11"
             />
           ))}
         </div>
@@ -151,7 +151,7 @@ export default function EnterCodePage() {
             type="button"
             onClick={submit}
             disabled={busy || chars.join("").length !== LEN}
-            className="relative z-10 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="relative z-10 inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy ? "Заходим…" : "Продолжить"}
             <ArrowRight className="h-4 w-4" />
