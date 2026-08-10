@@ -281,6 +281,14 @@ console.log("\n=== §6 · the new mechanics stay behind the gate until e2e cover
   const ci = readFileSync(join(root, ".github/workflows/atlas-learning-ci.yml"), "utf8");
   check("CI runs it too", ci.includes("npm run test:e2e:current-sessions"));
   check("CI installs the browsers it needs", ci.includes("playwright install"));
+  // BLOCKED must never be able to read as a pass, and must never look like a failure.
+  check("CI distinguishes BLOCKED from a real failure", /code" -eq 2|code" = "2/.test(ci) && ci.includes("::warning"));
+  check("and says so in the job summary rather than staying silent", ci.includes("GITHUB_STEP_SUMMARY"));
+  check("a real failure still fails the job", ci.includes("exit $code"));
+  check(
+    "the gate is still not claimed as met while it cannot run",
+    ci.includes("certified nothing")
+  );
 
   const suite = readFileSync(join(root, "tests/e2e/current-session-ui.mjs"), "utf8");
   check(

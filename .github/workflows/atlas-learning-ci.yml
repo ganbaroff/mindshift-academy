@@ -87,9 +87,32 @@ jobs:
       # variable, not a secret. Without it ClerkProvider throws during render and the
       # suite exits BLOCKED with instructions rather than pretending to have certified
       # anything. Set it at Settings → Secrets and variables → Actions → Variables.
-      - run: npm run test:e2e:current-sessions
+      # Exit 2 is BLOCKED — the suite could not boot the app, so it certified nothing.
+      # That is a configuration gap, not a broken product, and the two must not look the
+      # same: a red job for a missing variable trains everyone to ignore a red job. It
+      # surfaces as a warning annotation and a job-summary line instead, and it never
+      # reads as a pass. Any other non-zero code is a real failure and still fails here.
+      - name: Current session UI browser gate
         env:
           NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          set +e
+          npm run test:e2e:current-sessions
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "::warning title=Browser gate did not run::NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set as a repository variable, so the app could not boot and nothing was certified."
+            {
+              echo "### current-session-ui: BLOCKED, not run"
+              echo ""
+              echo "The app cannot render without a Clerk publishable key, so this gate certified nothing."
+              echo "This is **not** a pass. Set \`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY\` under"
+              echo "Settings → Secrets and variables → Actions → **Variables** to turn it on."
+              echo "It is public by design — the same value ships to every browser."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit $code
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4
