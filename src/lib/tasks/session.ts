@@ -5,7 +5,7 @@
 
 export type SessionTaskResult = {
   id: string;
-  role: "practice" | "transfer" | "collision" | "other";
+  role: "practice" | "transfer" | "collision" | "prediction" | "other";
   pass: boolean;
   tier: number;
 };
@@ -17,6 +17,10 @@ export type SessionDef = {
   practiceRequired: number;
   /** Transfer must pass. */
   requireTransfer: boolean;
+  /** Collision evidence must pass (used by capstone). */
+  requireCollision?: boolean;
+  /** A separate prediction task must pass (used by capstone). */
+  requirePrediction?: boolean;
   /** Minimum tier that counts for completion. */
   minTier: 1 | 2 | 3;
 };
@@ -26,6 +30,10 @@ export function sessionComplete(def: SessionDef, results: SessionTaskResult[]): 
     (r) => r.role === "practice" && r.pass && r.tier >= def.minTier
   ).length;
   if (practicePasses < def.practiceRequired) return false;
-  if (!def.requireTransfer) return true;
-  return results.some((r) => r.role === "transfer" && r.pass && r.tier >= def.minTier);
+  const hasRequiredPass = (role: SessionTaskResult["role"]) =>
+    results.some((r) => r.role === role && r.pass && r.tier >= def.minTier);
+  if (def.requireCollision && !hasRequiredPass("collision")) return false;
+  if (def.requirePrediction && !hasRequiredPass("prediction")) return false;
+  if (def.requireTransfer && !hasRequiredPass("transfer")) return false;
+  return true;
 }

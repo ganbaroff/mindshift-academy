@@ -256,6 +256,24 @@ model AtlasLearningSession {
   completedAt        DateTime?
 }
 
+/// Inbound pilot-access request from the public site (/request-access).
+/// ADULT contact data only — the form must never ask for or store child data.
+/// Writing a row grants nothing: an operator still has to approve (allowlist grant + issued code).
+model AccessRequest {
+  id         String    @id @default(cuid())
+  email      String    @unique // normalised parent email, self-submitted
+  parentName String? // optional, length-capped
+  note       String? // optional short message from the parent, length-capped
+  source     String    @default("site")
+  status     String    @default("new") // new | approved | declined
+  notifiedAt DateTime? // operator alert delivered (Telegram)
+  decidedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status])
+}
+
 // One-time child-access code (docs/superpowers/specs/2026-07-19-child-async-access-design.md).
 // Lifecycle: issued -> (parent activates: find/create Clerk user + record consent) active
 //   -> (child redeems: mint sign-in ticket) redeemed. Raw code & raw activation token are

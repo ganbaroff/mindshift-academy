@@ -84,6 +84,37 @@ console.log("\n=== session completion ===");
       { id: "t", role: "transfer", pass: true, tier: 1 },
     ])
   );
+
+  const capstone = {
+    ...def,
+    id: "capstone",
+    practiceRequired: 1,
+    requireCollision: true,
+    requirePrediction: true,
+  };
+  const capstoneBase = [
+    { id: "p", role: "practice", pass: true, tier: 1 },
+    { id: "t", role: "transfer", pass: true, tier: 1 },
+  ];
+  check(
+    "capstone cannot complete without collision and prediction",
+    !sessionComplete(capstone, capstoneBase)
+  );
+  check(
+    "capstone collision alone does not substitute for prediction",
+    !sessionComplete(capstone, [
+      ...capstoneBase,
+      { id: "c", role: "collision", pass: true, tier: 1 },
+    ])
+  );
+  check(
+    "capstone completes only with collision and prediction evidence",
+    sessionComplete(capstone, [
+      ...capstoneBase,
+      { id: "c", role: "collision", pass: true, tier: 1 },
+      { id: "x", role: "prediction", pass: true, tier: 1 },
+    ])
+  );
 }
 
 console.log("\n=== content ===");
@@ -108,6 +139,13 @@ console.log("\n=== content ===");
   check(
     "practice count meets required",
     all.every((s) => s.tasks.filter((t) => t.role === "practice").length >= s.practiceRequired)
+  );
+  const capstone = all.find((s) => s.id === "w5-s3");
+  check(
+    "capstone explicitly requires collision and prediction",
+    capstone?.requireCollision === true &&
+      capstone?.requirePrediction === true &&
+      capstone.tasks.some((t) => t.role === "prediction")
   );
 }
 

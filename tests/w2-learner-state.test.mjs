@@ -140,7 +140,12 @@ console.log("\n=== onboarding copy alignment ===");
   check("no legacy Пробуждение card", !onboarding.includes("Пробуждение"));
   check("mentions session 1 of 15", onboarding.includes("Сессия 1 из 15"));
   check("CTA Начать сессию", onboarding.includes("Начать сессию"));
-  check("routes to w1-s1", onboarding.includes("/session/w1-s1"));
+  // Was: `onboarding.includes("/session/w1-s1")`. That assertion pinned defect 2 in
+  // place — 08-UX-MONSTER-JOURNEY §1 names this exact line as one of the two places
+  // that sent a returning child back to step 1. A newly hatched child still lands on
+  // w1-s1, because /continue computes it; a returning one lands where they stopped.
+  check("routes into the curriculum via the computed resume door", onboarding.includes('router.push("/continue")'));
+  check("does not hardcode the first session", !onboarding.includes("/session/w1-s1"));
 }
 
 console.log("\n=== consent email ru default ===");

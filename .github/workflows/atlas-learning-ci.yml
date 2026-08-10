@@ -66,6 +66,65 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm run build
 
+  # 08-UX-MONSTER-JOURNEY §7 step 6, non-negotiable precondition: the CURRENT /session
+  # route must be driven in a real browser in CI before UX v1.1 may be turned on. Until
+  # this job existed, CI ran unit tests and a build only, and `verify:release` drove the
+  # legacy /lesson route — which is how a broken retry button once shipped green.
+  # The suite starts its own Next dev server and SQLite fixture and forces
+  # NEXT_PUBLIC_UX_V11=1, so it certifies the screen a child actually meets.
+  current-session-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx playwright install --with-deps chromium firefox webkit
+      # Public by design — this exact value ships to every browser — so it is a repository
+      # variable, not a secret. Without it ClerkProvider throws during render and the
+      # suite exits BLOCKED with instructions rather than pretending to have certified
+      # anything. Set it at Settings → Secrets and variables → Actions → Variables.
+      # Exit 2 is BLOCKED — the suite could not boot the app, so it certified nothing.
+      # That is a configuration gap, not a broken product, and the two must not look the
+      # same: a red job for a missing variable trains everyone to ignore a red job. It
+      # surfaces as a warning annotation and a job-summary line instead, and it never
+      # reads as a pass. Any other non-zero code is a real failure and still fails here.
+      - name: Current session UI browser gate
+        env:
+          # Public by design — an Actions VARIABLE.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          # A real credential — an Actions SECRET. Until it exists the gate reports
+          # BLOCKED and certifies nothing; it never fakes a pass.
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+        run: |
+          set +e
+          npm run test:e2e:current-sessions
+          code=$?
+          set -e
+          if [ "$code" -eq 2 ]; then
+            echo "::warning title=Browser gate did not run::NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set as a repository variable, so the app could not boot and nothing was certified."
+            {
+              echo "### current-session-ui: BLOCKED, not run"
+              echo ""
+              echo "The app cannot render without a Clerk publishable key, so this gate certified nothing."
+              echo "This is **not** a pass. Set \`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY\` under"
+              echo "Settings → Secrets and variables → Actions → **Variables** to turn it on."
+              echo "It is public by design — the same value ships to every browser."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          exit $code
+      - name: Upload browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-session-ui-evidence
+          path: .superpowers/sdd/evidence/
+          if-no-files-found: warn
+
   atlas-learning-e2e:
     runs-on: ubuntu-latest
     steps:

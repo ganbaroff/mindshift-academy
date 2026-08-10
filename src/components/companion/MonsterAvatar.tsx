@@ -18,7 +18,7 @@ const DynamicMonsterAvatarInner = dynamic(
     ssr: false,
     loading: () => (
       <div 
-        className="flex items-center justify-center bg-white/5 animate-pulse motion-reduce:animate-none rounded-full border border-white/10"
+        className="flex items-center justify-center bg-[var(--surface-strong)] animate-pulse motion-reduce:animate-none rounded-full border border-[var(--border-color)]"
         style={{ width: "100%", height: "100%", minWidth: "32px", minHeight: "32px" }}
       />
     )

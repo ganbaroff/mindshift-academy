@@ -13,7 +13,7 @@ export const STARTER_CRYSTALS = 15;
 
 export type ContentTask = {
   id: string;
-  role: "collision" | "practice" | "transfer";
+  role: "collision" | "practice" | "prediction" | "transfer";
   family: TaskFamilyId;
   /** Authoring hint; runtime may raise/lower via mastery. */
   tier: 1 | 2 | 3;
@@ -27,6 +27,25 @@ export type ContentTask = {
    * Revealed via /api/hints/reveal for HINT_CRYSTAL_COST crystals.
    */
   hintRu: string;
+  /**
+   * ── The brief: three things a task must state before the child acts ──
+   * Contract: docs/architecture/08-UX-MONSTER-JOURNEY.md §2, rendered per §10.2.
+   * Optional in the type until every week is backfilled; `validateSession` makes
+   * them required per week as soon as one task in that week has them, so nothing
+   * breaks mid-migration and no week ships half-briefed.
+   */
+  /** Цель — one sentence naming the finished thing. Replaces promptRu on screen. */
+  goalRu?: string;
+  /** Что дано — the explicit list the child works with. Never «и т.д.». Shown in the workspace. */
+  givenRu?: string[];
+  /**
+   * Готово, когда — one short line in the monster's voice, always visible before the
+   * first attempt (§10.2: we refused to hide the success condition until after a miss).
+   * No label, no third row: «получится, когда назовёшь 4 шага по порядку».
+   */
+  doneWhenRu?: string;
+  /** The same condition with its reasoning, revealed as an expansion after a miss. */
+  doneWhenFullRu?: string;
   /** grid-draw: 0-based target cells. */
   target?: [number, number][];
   /** rule-runner: maps the child's rule must pass. */
@@ -51,15 +70,24 @@ export type SessionContent = {
   tasks: ContentTask[];
   practiceRequired: number;
   minTier: 1 | 2 | 3;
+  /** Require a passed collision task before session completion. */
+  requireCollision?: boolean;
+  /** Require a distinct passed prediction task before session completion. */
+  requirePrediction?: boolean;
 };
 
 /** Public claim — ground-truth stripped (never send answer key to client). */
 export type PublicClaim = Omit<Claim, "truth">;
+export type PublicRuleMap = Omit<RuleMap, "successWhen">;
 
 /** Public session payload — hints stripped until purchased. */
-export type PublicContentTask = Omit<ContentTask, "hintRu" | "claims"> & {
+export type PublicContentTask = Omit<
+  ContentTask,
+  "hintRu" | "claims" | "patternExpected" | "ruleMaps"
+> & {
   hintAvailable: boolean;
   claims?: PublicClaim[];
+  ruleMaps?: PublicRuleMap[];
 };
 
 export type PublicSessionContent = Omit<SessionContent, "tasks"> & {
@@ -69,14 +97,20 @@ export type PublicSessionContent = Omit<SessionContent, "tasks"> & {
 export function toPublicSession(session: SessionContent): PublicSessionContent {
   return {
     ...session,
-    tasks: session.tasks.map(({ hintRu: _hint, claims, ...task }) => ({
-      ...task,
-      ...(claims
-        ? {
-            claims: claims.map((c) => ({ id: c.id, text: c.text })),
-          }
-        : {}),
-      hintAvailable: Boolean(_hint?.trim()),
-    })),
+    tasks: session.tasks.map(
+      ({ hintRu, claims, patternExpected, ruleMaps, ...task }) => {
+        void patternExpected;
+        return {
+          ...task,
+          ...(claims
+            ? { claims: claims.map((claim) => ({ id: claim.id, text: claim.text })) }
+            : {}),
+          ...(ruleMaps
+            ? { ruleMaps: ruleMaps.map(({ id, ahead }) => ({ id, ahead })) }
+            : {}),
+          hintAvailable: Boolean(hintRu.trim()),
+        };
+      }
+    ),
   };
 }

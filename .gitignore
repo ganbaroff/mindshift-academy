@@ -59,6 +59,12 @@ scripts/e2e/*.png
 # Installed agent skills (dev tooling, regenerable)
 .claude/skills/
 
+# Isolated Codex implementation worktrees
+/.worktrees/
+
+# Local subagent ledgers and unpublished gate receipts
+/.superpowers/sdd/
+
 # Local CI crystal harness DB
 ci-crystals*.db
 
@@ -77,3 +83,10 @@ docs/release/_w4_drill_workspace/*.out.txt
 docs/release/_w4_drill_workspace/*.db
 docs/release/_w4_drill_workspace/drill-console.log
 
+/preview.db
+/preview.db-shm
+/preview.db-wal
+/family-codes-*.txt
+/invite-preview-*.html
+/public/_invite-preview.html
+/clerk-prod-config.json

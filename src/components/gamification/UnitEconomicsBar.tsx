@@ -34,25 +34,25 @@ export const UnitEconomicsBar = () => {
   const spentFraction = spent / SPEND_LIMIT;
 
   return (
-    <div className="bg-[#111928]/75 backdrop-blur-xl border border-white/5 rounded-2xl p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="bg-[#111928]/75 backdrop-blur-xl border border-[var(--border-color)] rounded-2xl p-4 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Стоимость API (Запрос)</span>
+        <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Стоимость API (Запрос)</span>
         <span className="text-emerald-400 font-bold text-lg tabular-nums">{usdPrecise.format(currentCost)}</span>
       </div>
 
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Потрачено Лимита (Ученик)</span>
+        <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Потрачено Лимита (Ученик)</span>
         <span className="font-bold text-lg tabular-nums break-words">{percent.format(spentFraction)} ({usd.format(spent)} / {usd.format(SPEND_LIMIT)})</span>
       </div>
 
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Toxicity Filter</span>
+        <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Toxicity Filter</span>
         <span className="text-cyan-400 font-bold text-lg tabular-nums">0.00 (Безопасно)</span>
       </div>
 
       <div className="flex flex-col gap-1 min-w-0">
-        <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Время отклика API</span>
-        <span className="font-bold text-lg text-gray-200 tabular-nums">{latency}</span>
+        <span className="text-[var(--text-muted)] text-[10px] font-bold uppercase tracking-wider">Время отклика API</span>
+        <span className="font-bold text-lg text-[var(--text-primary)] tabular-nums">{latency}</span>
       </div>
     </div>
   );

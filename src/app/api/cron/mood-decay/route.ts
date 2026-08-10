@@ -52,12 +52,11 @@ export async function GET(req: Request) {
 
       if (shouldWarnParent(newMood)) {
         warned++;
-        // TODO: trigger parent warning email via Resend
-        // For now, log the warning — Antigravity will build the email UI
-        console.log(
-          `[mood-decay] Parent warning: user=${user.username}, monster=${user.monster.name}, mood=${newMood}`
-        );
       }
+    }
+
+    if (warned > 0) {
+      console.warn("[mood-decay] parent-warning", { warned });
     }
 
     return NextResponse.json({
@@ -69,7 +68,9 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[mood-decay] CRON failed:", error);
+    console.error("[mood-decay] CRON failed", {
+      errorType: error instanceof Error ? error.name : typeof error,
+    });
     return NextResponse.json(
       { error: Errors.calmRetry },
       { status: 500 }

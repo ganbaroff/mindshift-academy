@@ -1,0 +1,72 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "14d610b",
+  "headSha": "e995e72ad2e20ddd238bfe57b8759f57bf4f3827",
+  "commits": [
+    "dcfe05b4641d043ba35021b56eb0239cf000dd53",
+    "31ed7557fe5d110ff5286282b20e37377685a454",
+    "e995e72ad2e20ddd238bfe57b8759f57bf4f3827"
+  ],
+  "changedFiles": [
+    "docs/release/evidence/wave-1/W1-STRUCTURED-ATTEMPT/task-brief.md",
+    "package.json",
+    "scripts/qa/academy-gates.mjs",
+    "scripts/run-structured-attempt-contract.mjs",
+    "src/app/api/tasks/attempt/route.ts",
+    "src/content/curriculum/types.ts",
+    "src/lib/tasks/index.ts",
+    "src/lib/tasks/schemas.ts",
+    "tests/structured-attempt-route.test.mjs",
+    "tests/task-program-contract.test.mjs"
+  ],
+  "red": {
+    "command": "npx tsx tests/task-program-contract.test.mjs && node scripts/run-structured-attempt-contract.mjs",
+    "expectedFailure": "structured mode rejected, answer keys public, then tutor_down preempted valid structured attempt",
+    "exitCode": 1,
+    "checks": null
+  },
+  "green": [
+    {
+      "command": "npx tsx tests/task-program-contract.test.mjs",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 8
+    },
+    {
+      "command": "npm run test:structured-attempt",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 6
+    },
+    {
+      "command": "npm run test:attempt-trust",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 17
+    },
+    {
+      "command": "npm run test:gate-contract",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 9
+    },
+    {
+      "command": "npm run lint",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    },
+    {
+      "command": "npm run build",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    }
+  ],
+  "concerns": [
+    "Visible family workspaces and current-session browser evidence are separate Wave 1 tickets and remain release blockers."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}

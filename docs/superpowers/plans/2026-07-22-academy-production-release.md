@@ -154,7 +154,7 @@ Expected: `verified`.
 
 - [ ] **Step 4: Switch Vercel to live provider configuration**
 
-Получить production Clerk keys напрямую для указанного app/instance во временный файл вне repo; обновить Vercel `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` и `CLERK_SECRET_KEY` без печати значений. Задать `NEXT_PUBLIC_CLERK_JS_URL=https://clerk.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js` и `RESEND_FROM` точным значением `MindShift Academy <noreply@volaura.app>`. Удалить временный файл сразу после обновления.
+Получить production Clerk keys напрямую для указанного app/instance во временный файл вне repo; обновить Vercel `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` и `CLERK_SECRET_KEY` без печати значений. Задать `NEXT_PUBLIC_CLERK_JS_URL=https://clerk.academy.volaura.app/npm/@clerk/clerk-js@6/dist/clerk.browser.js` и `RESEND_FROM` точным значением `MindShift Academy <noreply@volaura.app>`. Удалить временный файл сразу после обновления.
 
 - [ ] **Step 5: Run provider preflight**
 

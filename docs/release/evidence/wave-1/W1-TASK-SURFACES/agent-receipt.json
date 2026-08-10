@@ -1,0 +1,67 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "afae82049f7910234e8b15bb52a9a6bc0af07f1a",
+  "headSha": "def2a2a2f70425846d6795859faacf75fb983e5f",
+  "commits": [
+    "e7fc18a11b682f923c41693b8cbafa77af995c35",
+    "def2a2a2f70425846d6795859faacf75fb983e5f"
+  ],
+  "changedFiles": [
+    "docs/release/evidence/wave-1/W1-TASK-SURFACES/task-brief.md",
+    "package.json",
+    "src/components/curriculum/task-surfaces/ClaimSurface.tsx",
+    "src/components/curriculum/task-surfaces/GridDrawSurface.tsx",
+    "src/components/curriculum/task-surfaces/PatternSurface.tsx",
+    "src/components/curriculum/task-surfaces/RuleSurface.tsx",
+    "src/components/curriculum/task-surfaces/SequenceSurface.tsx",
+    "src/components/curriculum/task-surfaces/TaskWorkspace.tsx",
+    "src/components/curriculum/task-surfaces/WorkedExample.tsx",
+    "src/components/curriculum/task-surfaces/examples.ts",
+    "tests/session-task-surfaces.test.mjs"
+  ],
+  "red": {
+    "command": "npm run test:task-surfaces",
+    "expectedFailure": "TaskWorkspace module did not exist; review correction then proved buildRuleProgram did not expose an explicit otherwise branch",
+    "exitCode": 1,
+    "checks": null
+  },
+  "green": [
+    {
+      "command": "npm run test:task-surfaces",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 5
+    },
+    {
+      "command": "npm run test:structured-attempt",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 6
+    },
+    {
+      "command": "npm run lint",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    },
+    {
+      "command": "npm run build",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    }
+  ],
+  "review": {
+    "specCompliance": "ACCEPT",
+    "codeQuality": "ACCEPT",
+    "critical": [],
+    "important": []
+  },
+  "concerns": [
+    "The workspaces are not yet integrated into the current /session page; Task 3C remains a release blocker.",
+    "Interactive keyboard and browser behavior require current-session Playwright evidence in Task 3C."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}

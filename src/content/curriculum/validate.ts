@@ -1,6 +1,23 @@
-import type { SessionContent } from "./types";
+import type { ContentTask, SessionContent } from "./types";
 
 export type ContentIssue = { sessionId: string; message: string };
+
+/** A task carries the brief when it states all three things (08-UX-MONSTER-JOURNEY §2). */
+export function hasTaskBrief(task: ContentTask): boolean {
+  return Boolean(
+    task.goalRu?.trim() && task.givenRu?.length && task.doneWhenRu?.trim()
+  );
+}
+
+/** Any sign the author started briefing this task — used to demand they finish. */
+function briefStarted(task: ContentTask): boolean {
+  return Boolean(
+    task.goalRu?.trim() ||
+      task.givenRu?.length ||
+      task.doneWhenRu?.trim() ||
+      task.doneWhenFullRu?.trim()
+  );
+}
 
 /** Build-time / test-time validator. Rejects sessions that cannot teach. */
 export function validateSession(session: SessionContent): ContentIssue[] {
@@ -29,6 +46,13 @@ export function validateSession(session: SessionContent): ContentIssue[] {
       sessionId: id,
       message: `need ≥${session.practiceRequired} practice tasks, have ${practice.length}`,
     });
+  }
+
+  if (session.requireCollision && !session.tasks.some((t) => t.role === "collision")) {
+    issues.push({ sessionId: id, message: "required collision task is missing" });
+  }
+  if (session.requirePrediction && !session.tasks.some((t) => t.role === "prediction")) {
+    issues.push({ sessionId: id, message: "required prediction task is missing" });
   }
 
   for (const task of session.tasks) {
@@ -90,6 +114,24 @@ export function validateSession(session: SessionContent): ContentIssue[] {
           sessionId: id,
           message: `task ${task.id}: unknown family`,
         });
+    }
+  }
+
+  // Brief migration gate (§7 step 2): the fields are optional until an author starts
+  // briefing a session — from that moment every task in it must state all three, or a
+  // child meets a mixed session where some tasks say what "done" means and some do not.
+  if (session.tasks.some(briefStarted)) {
+    for (const task of session.tasks) {
+      if (hasTaskBrief(task)) continue;
+      const missing = [
+        task.goalRu?.trim() ? null : "goalRu",
+        task.givenRu?.length ? null : "givenRu",
+        task.doneWhenRu?.trim() ? null : "doneWhenRu",
+      ].filter(Boolean);
+      issues.push({
+        sessionId: id,
+        message: `task ${task.id}: session is briefed but this task is missing ${missing.join(", ")}`,
+      });
     }
   }
 

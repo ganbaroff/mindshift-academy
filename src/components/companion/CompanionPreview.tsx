@@ -9,7 +9,7 @@ export const CompanionPreview = () => {
   const monsterColor = useGameStore((state) => state.monsterColor);
 
   return (
-    <div className="aspect-square bg-gradient-to-b from-white/5 to-transparent border border-white/5 rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group px-4">
+    <div className="aspect-square bg-gradient-to-b from-white/5 to-transparent border border-[var(--border-color)] rounded-2xl flex flex-col items-center justify-center relative overflow-hidden group px-4">
       <div
         className="absolute w-[180px] h-[180px] rounded-full filter blur-[50px] opacity-20 transition-[transform,opacity] duration-500 animate-pulse motion-reduce:animate-none"
         style={{ background: monsterColor }}

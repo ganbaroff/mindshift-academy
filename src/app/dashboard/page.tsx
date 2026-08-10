@@ -118,24 +118,24 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
   ].join("\n");
 
   return (
-    <main className="relative isolate min-h-screen overflow-hidden bg-background text-foreground">
+    <main className="relative isolate min-h-screen bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(139,92,246,0.18),transparent_32%),radial-gradient(circle_at_82%_16%,rgba(34,211,238,0.14),transparent_28%),radial-gradient(circle_at_48%_100%,rgba(233,196,0,0.1),transparent_26%)]" />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-[0.24em] text-white/80 uppercase">
-          <span className="grid h-9 w-9 place-items-center rounded-2xl border border-white/10 bg-white/5 text-base text-white">
+      <header className="relative z-10 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:gap-4 sm:px-6 sm:py-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-3 text-sm font-semibold tracking-[0.24em] text-[var(--text-secondary)] uppercase">
+          <span className="grid h-9 w-9 place-items-center rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] text-base text-[var(--ink)]">
             M
           </span>
           MindShift
         </Link>
 
-        <div className="flex items-center gap-2 text-sm text-white/68">
-          <span className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--text-secondary)]">
+          <span className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-2">
             {isDemo ? "Демо-режим" : "Панель родителя"}
           </span>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-transparent px-4 py-2 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-transparent px-4 py-2 transition-colors hover:bg-[var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             На главную
             <LinkIcon className="h-4 w-4" />
@@ -143,18 +143,18 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-6 pb-16 pt-4 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:pb-20 lg:pt-8">
-        <div className="space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-white/68">
-            <UserRound className="h-4 w-4 text-primary-soft" />
+      <section className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-4 pb-16 pt-4 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:pb-20 lg:pt-8">
+        <div className="min-w-0 space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+            <UserRound className="h-4 w-4 text-[var(--color-secondary-dark)]" />
             Доказательство обучения
           </div>
 
-          <div className="space-y-4">
-            <h1 className="max-w-3xl text-4xl font-semibold leading-[0.96] text-white sm:text-5xl lg:text-6xl">
+          <div className="min-w-0 space-y-4">
+            <h1 className="max-w-3xl text-balance break-words text-3xl font-semibold leading-[1.05] text-[var(--ink)] sm:text-5xl lg:text-6xl">
               Панель родителей, где видно реальное обучение.
             </h1>
-            <p className="max-w-2xl text-base leading-7 text-white/68 sm:text-lg">
+            <p className="max-w-2xl text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
               Вы видите прогресс ребёнка за эту неделю, как менялся монстр
               и как растут его серия дней и кристаллы. Данные Academy можно удалить в настройках согласия.
             </p>
@@ -166,9 +166,9 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               { label: "Серия дней", value: `${streak} дн.`, hint: "Мотивация", isStreak: true },
               { label: "Инвентарь", value: `${inventoryCount} шт.`, hint: "Разблокировано", isStreak: false },
             ].map((item) => (
-              <div key={item.label} className="rounded-[20px] border border-white/10 bg-surface/80 p-5">
-                <p className="text-sm font-medium uppercase tracking-[0.2em] text-white/45">{item.label}</p>
-                <p className="mt-3 text-2xl font-semibold text-white flex items-center gap-2">
+              <div key={item.label} className="rounded-[20px] border border-[var(--border-color)] bg-surface/80 p-5">
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ink)]/45">{item.label}</p>
+                <p className="mt-3 text-2xl font-semibold text-[var(--ink)] flex items-center gap-2">
                   {item.value}
                   {item.isStreak && (
                     <span
@@ -179,52 +179,52 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
                     </span>
                   )}
                 </p>
-                <p className="mt-2 text-sm text-white/58">{item.hint}</p>
+                <p className="mt-2 text-sm text-[var(--ink)]/58">{item.hint}</p>
               </div>
             ))}
           </div>
 
-          <section className="rounded-[28px] border border-violet-400/20 bg-violet-500/10 p-6">
+          <section className="rounded-[28px] border border-[var(--color-primary-soft)] bg-[var(--surface-strong)] p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.28em] text-violet-200/70">
+                <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--text-muted)]">
                   Основной курс · закрытая beta
                 </p>
-                <h2 className="mt-2 text-xl font-semibold text-white">Неделя 1: точность мышления</h2>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-white/68">
+                <h2 className="mt-2 text-xl font-semibold text-[var(--ink)]">Неделя 1: точность мышления</h2>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">
                   Три сессии с исполняемыми заданиями. Ребёнок описывает — монстр рисует буквально.
                   Сессии 2–3 открываются после завершения предыдущей. Старые 5 уроков Module 1 — архив.
                 </p>
               </div>
               <Link
-                href="/session/w1-s1"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-violet-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                href="/continue"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-primary)]"
               >
                 <Sparkles className="h-4 w-4" />
-                Открыть сессию 1
+                Продолжить с того места
               </Link>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2 text-xs text-white/55">
-              <Link href="/session/w1-s1" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+            <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--text-muted)]">
+              <Link href="/session/w1-s1" className="rounded-full border border-[var(--border-color)] px-3 py-1.5 hover:bg-[var(--surface-strong)]">
                 Сессия 1 · Точность
               </Link>
-              <Link href="/session/w1-s2" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+              <Link href="/session/w1-s2" className="rounded-full border border-[var(--border-color)] px-3 py-1.5 hover:bg-[var(--surface-strong)]">
                 Сессия 2 · Фигура
               </Link>
-              <Link href="/session/w1-s3" className="rounded-full border border-white/10 px-3 py-1.5 hover:bg-white/5">
+              <Link href="/session/w1-s3" className="rounded-full border border-[var(--border-color)] px-3 py-1.5 hover:bg-[var(--surface-strong)]">
                 Сессия 3 · Клетка в клетку
               </Link>
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+          <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+                <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">
                   Недельный отчёт
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Что ребёнок сделал на этой неделе</h2>
-                <p className="mt-2 text-sm text-white/55">
+                <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Что ребёнок сделал на этой неделе</h2>
+                <p className="mt-2 text-sm text-[var(--text-muted)]">
                   Основной прогресс — в сессиях недели 1 выше. Ниже Module 1 только если ребёнок
                   успел пройти старые уроки (архив).
                 </p>
@@ -235,7 +235,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
 
             <div className="mt-6 space-y-4">
               {!dbUser?.progress.length && !isDemo ? (
-                <p className="rounded-[20px] border border-dashed border-white/15 bg-white/[0.03] p-4 text-sm text-white/55">
+                <p className="rounded-[20px] border border-dashed border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm text-[var(--text-muted)]">
                   Пока нет архивных уроков Module 1 — это нормально. Смотри блок «Неделя 1: точность
                   мышления».
                 </p>
@@ -243,18 +243,18 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               {lessonRows.map((lesson) => (
                 <div
                   key={lesson.title}
-                  className="rounded-[20px] border border-white/10 bg-surface-strong/80 p-4"
+                  className="rounded-[20px] border border-[var(--border-color)] bg-surface-strong/80 p-4"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-white">{lesson.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-white/62">{lesson.outcome}</p>
+                      <p className="text-sm font-semibold text-[var(--ink)]">{lesson.title}</p>
+                      <p className="mt-1 text-sm leading-6 text-[var(--ink)]/62">{lesson.outcome}</p>
                     </div>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs text-white/62">
+                    <span className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1.5 text-xs text-[var(--ink)]/62">
                       Прогресс урока
                     </span>
                   </div>
-                  <p className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] px-4 py-3 text-sm leading-6 text-white/76">
+                  <p className="mt-4 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-sm leading-6 text-[var(--ink)]/76">
                     {lesson.prompt}
                   </p>
                 </div>
@@ -264,11 +264,11 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
         </div>
 
         <div className="space-y-6">
-          <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+          <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">
               Поддержка пилота
             </p>
-            <h2 className="mt-2 text-xl font-semibold text-white">Связь с оператором</h2>
+            <h2 className="mt-2 text-xl font-semibold text-[var(--ink)]">Связь с оператором</h2>
             <div className="mt-4">
               <OperatorContactLine />
             </div>
@@ -277,35 +277,35 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
           {/* COPPA (§7): real (non-demo) parents can view + revoke consent here. */}
           {!isDemo && userId && <ManageConsent />}
 
-          <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+          <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+                <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">
                   Профиль питомца
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">{monsterName}</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">{monsterName}</h2>
               </div>
 
-              <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/68">
+              <div className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-2 text-xs text-[var(--text-secondary)]">
                 {isDemo ? "Предпросмотр" : "Подключено"}
               </div>
             </div>
 
-            <div className="mt-6 rounded-[24px] border border-white/10 bg-surface-strong/90 p-5">
+            <div className="mt-6 rounded-[24px] border border-[var(--border-color)] bg-surface-strong/90 p-5">
               <div className="flex items-center gap-3">
                 <DashboardMonster color={dbUser?.monster?.color ?? "#8b5cf6"} moodValue={monsterMood} />
                 <div>
-                  <p className="text-sm text-white/58">Активный питомец</p>
-                  <p className="text-lg font-semibold text-white">{monsterName}</p>
+                  <p className="text-sm text-[var(--ink)]/58">Активный питомец</p>
+                  <p className="text-lg font-semibold text-[var(--ink)]">{monsterName}</p>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+              <div className="mt-5 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">Настроение</p>
-                  <p className="text-sm font-semibold text-white">{monsterMood}/100</p>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink)]/45">Настроение</p>
+                  <p className="text-sm font-semibold text-[var(--ink)]">{monsterMood}/100</p>
                 </div>
-                <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-white/10">
+                <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-[var(--surface-strong)]">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-[width] duration-500 motion-reduce:transition-none"
                     style={{ width: `${monsterMood}%` }}
@@ -314,48 +314,48 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">XP</p>
-                  <p className="mt-2 text-xl font-semibold text-white tabular-nums">{totalXp}</p>
+                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink)]/45">XP</p>
+                  <p className="mt-2 text-xl font-semibold text-[var(--ink)] tabular-nums">{totalXp}</p>
                 </div>
-                <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-white/45">Кристаллы</p>
-                  <p className="mt-2 text-xl font-semibold text-white tabular-nums">{crystals}</p>
+                <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--ink)]/45">Кристаллы</p>
+                  <p className="mt-2 text-xl font-semibold text-[var(--ink)] tabular-nums">{crystals}</p>
                 </div>
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+              <div className="mt-5 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-4 w-4 text-warning" />
-                  <p className="text-sm font-semibold text-white">Культурное доверие</p>
+                  <p className="text-sm font-semibold text-[var(--ink)]">Культурное доверие</p>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-white/62">
+                <p className="mt-2 text-sm leading-6 text-[var(--ink)]/62">
                   Родители получают отчёт без давления и без стыда. Прогресс монстра,
                   вежливый тон.
                 </p>
               </div>
 
               {inventoryCount > 0 && (
-                <div className="mt-6 border-t border-white/5 pt-5">
+                <div className="mt-6 border-t border-[var(--border-color)] pt-5">
                   <InventoryGrid items={dbUser?.inventory ?? (isDemo ? demoInventory : [])} />
                 </div>
               )}
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+          <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+                <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">
                   Для родителей
                 </p>
-                <h2 className="mt-2 text-2xl font-semibold text-white">Недельный отчёт под рукой</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Недельный отчёт под рукой</h2>
               </div>
 
-              <Sparkles className="h-5 w-5 text-primary-soft" />
+              <Sparkles className="h-5 w-5 text-[var(--color-secondary-dark)]" />
             </div>
 
-            <p className="mt-4 text-sm leading-6 text-white/64">
+            <p className="mt-4 text-sm leading-6 text-[var(--ink)]/64">
               Каждую неделю можно скопировать короткий отчёт о том, чему научился
               ребёнок, и сохранить его себе или отправить близким — спокойно, без
               оценок и давления.
@@ -364,7 +364,7 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08]"
+                className="inline-flex items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-strong)]"
               >
                 На главную
                 <LinkIcon className="h-4 w-4" />

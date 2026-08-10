@@ -11,6 +11,8 @@ import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { prisma } from "@/lib/prisma";
 import { getSession, HINT_CRYSTAL_COST } from "@/content/curriculum";
 import { spendCrystalsForHint, hasHintUnlocked, ensureStarterCrystals } from "@/lib/tasks/crystals";
+import { hintCostFor, isStuckOnTask } from "@/lib/tasks/stuck";
+import { uxV11Enabled } from "@/lib/ux-flags";
 
 const bodySchema = z.object({
   sessionId: z.string().min(1).max(64),
@@ -93,10 +95,24 @@ export async function POST(req: Request) {
       });
     }
 
+    /**
+     * The stuck child pays nothing (08-UX-MONSTER-JOURNEY §10.1). Decided here, from
+     * recorded misses — a client that claims to be stuck proves nothing. The unlock
+     * still goes through the same idempotent ledger event, so a replay is free of
+     * side effects whether the price was 5 or 0.
+     */
+    const failedAttempts = uxV11Enabled()
+      ? await prisma.taskAttempt.count({
+          where: { userId: balanceUser.id, sessionId, taskId, pass: false },
+        })
+      : 0;
+    const cost = hintCostFor(failedAttempts, HINT_CRYSTAL_COST);
+
     const spent = await spendCrystalsForHint({
       userId: balanceUser.id,
       sessionId,
       taskId,
+      cost,
     });
 
     if (!spent.ok) {
@@ -105,7 +121,7 @@ export async function POST(req: Request) {
           error: "Не хватает кристаллов для подсказки.",
           code: "INSUFFICIENT_CRYSTALS",
           crystals: spent.crystals,
-          cost: HINT_CRYSTAL_COST,
+          cost,
         },
         { status: 402 }
       );
@@ -115,7 +131,8 @@ export async function POST(req: Request) {
       ok: true,
       alreadyOwned: spent.alreadyOwned,
       hintRu: task.hintRu,
-      cost: HINT_CRYSTAL_COST,
+      cost,
+      free: isStuckOnTask(failedAttempts),
       crystals: spent.crystals,
     });
   } catch (err) {

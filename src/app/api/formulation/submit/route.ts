@@ -12,6 +12,7 @@ import {
 } from "@/lib/certificate";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 import { moderate } from "@/lib/moderation";
+import { rateLimit, rateLimitMisconfiguredInProd } from "@/lib/ratelimit";
 import { getGuardClient, getSafetyClient } from "@/lib/ai-provider";
 import { Errors } from "@/lib/errors";
 import { minimizeChildText } from "@/lib/privacy";
@@ -61,6 +62,18 @@ export async function POST(req: Request) {
     const utterance = typeof body.utterance === "string" ? body.utterance.trim() : "";
     if (utterance.length < 3) {
       return NextResponse.json({ error: "Напиши правило своими словами." }, { status: 400 });
+    }
+
+    // Every other route that spends provider quota is throttled; this one calls moderate()
+    // on each POST, so a single compromised child session could burn the classifier budget.
+    if (!(isDev && testBypass)) {
+      if (rateLimitMisconfiguredInProd()) {
+        return NextResponse.json({ error: Errors.unavailable }, { status: 503 });
+      }
+      const rl = await rateLimit("formulation-submit", clerkId, 12, 3600);
+      if (!rl.success) {
+        return NextResponse.json({ error: Errors.rateLimited }, { status: 429 });
+      }
     }
 
     // Safety check on utterance — still never store it.

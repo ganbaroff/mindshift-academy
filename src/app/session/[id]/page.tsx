@@ -3,20 +3,36 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
+import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { SessionCoach } from "@/components/guide/SessionCoach";
+import { TapHint } from "@/components/guide/TapHint";
+import { useIdleNudge } from "@/components/guide/useIdleNudge";
+import { MascotCue } from "@/components/guide/MascotCue";
 import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
 import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
+import type { StructuredProgram } from "@/lib/tasks/schemas";
+import { effectiveTaskTier } from "@/lib/tasks/tier-select";
+import {
+  clarify,
+  clarifyMessage,
+  CLARIFY_HELPER_RU,
+  type ClarifyQuestion,
+} from "@/lib/tasks/clarify";
+import { isStuckOnTask, stuckNoticeRu, hintLabelRu } from "@/lib/tasks/stuck";
+import { uxV11Enabled } from "@/lib/ux-flags";
 import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
+import { DEFAULT_NUDGE } from "@/lib/guide";
 
 type TaskResult = {
   id: string;
@@ -53,6 +69,7 @@ export default function ThinkingSessionPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lockedPrereq, setLockedPrereq] = useState<string | null>(null);
   const [nextSessionId, setNextSessionId] = useState<string | null>(null);
+  const [offeredTier, setOfferedTier] = useState<1 | 2 | 3>(1);
   const [taskIndex, setTaskIndex] = useState(0);
   const [results, setResults] = useState<TaskResult[]>([]);
   const [utterance, setUtterance] = useState("");
@@ -71,6 +88,18 @@ export default function ThinkingSessionPage() {
   const [formulationError, setFormulationError] = useState<string | null>(null);
   const [certificateReady, setCertificateReady] = useState(false);
   const [choices, setChoices] = useState<{ id: string; labelRu: string }[] | null>(null);
+  const [primaryAction, setPrimaryAction] = useState<TaskPrimaryActionState | null>(null);
+  const [coachDismissed, setCoachDismissed] = useState(false);
+  /**
+   * The re-ask (08-UX-MONSTER-JOURNEY §3, §10.1). It is not an attempt: it never
+   * reaches /api/tasks/attempt, records nothing and spends nothing. It appears as a
+   * new message *under* the feedback — the child never watches their own answer
+   * disappear — and their text stays editable in place.
+   */
+  const [reask, setReask] = useState<ClarifyQuestion | null>(null);
+  const [reasksUsed, setReasksUsed] = useState(0);
+  /** Consecutive misses on the current task — drives the unprompted, free help. */
+  const [failStreak, setFailStreak] = useState(0);
   const sendingRef = useRef(false);
 
   const safeIndex = session
@@ -88,9 +117,11 @@ export default function ThinkingSessionPage() {
         concept: session.concept,
         practiceRequired: session.practiceRequired,
         requireTransfer: true,
+        requireCollision: session.requireCollision,
+        requirePrediction: session.requirePrediction,
         minTier: session.minTier,
       },
-      results.map((r) => ({ ...r, role: r.role === "collision" ? "collision" : r.role }))
+      results
     );
   }, [session, results]);
 
@@ -126,10 +157,12 @@ export default function ThinkingSessionPage() {
           passedTaskIds?: string[];
           crystals?: number;
           nextSessionId?: string | null;
+          offeredTier?: 1 | 2 | 3;
         };
         if (!cancelled) {
           setSession(body.session);
           setNextSessionId(body.nextSessionId ?? null);
+          setOfferedTier(body.offeredTier ?? 1);
           if (Array.isArray(body.passedTaskIds) && body.passedTaskIds.length) {
             const byId = new Map(body.session.tasks.map((t) => [t.id, t]));
             setResults(
@@ -164,7 +197,7 @@ export default function ThinkingSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, setCrystals, router]);
+  }, [sessionId, setCrystals]);
 
   const resetAttemptView = useCallback(() => {
     setFeedback(null);
@@ -178,6 +211,11 @@ export default function ThinkingSessionPage() {
     if (!session) return;
     resetAttemptView();
     setUtterance("");
+    // Re-ask budget and miss streak are per task, never carried forward: a child who
+    // struggled once does not start the next task already counted as struggling.
+    setReask(null);
+    setReasksUsed(0);
+    setFailStreak(0);
     setTaskIndex((i) => Math.min(i + 1, session.tasks.length));
   }, [resetAttemptView, session]);
 
@@ -220,26 +258,56 @@ export default function ThinkingSessionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session || !currentTask || sendingRef.current) return;
-    if (!utterance.trim() && !choices) return;
+    if (!utterance.trim()) return;
 
     await runAttempt({ utterance: utterance.trim() });
   };
 
-  const runAttempt = async (opts: { utterance?: string; choiceId?: string }) => {
+  const runAttempt = async (opts: {
+    utterance?: string;
+    choiceId?: string;
+    program?: StructuredProgram;
+  }) => {
     if (!session || !currentTask || sendingRef.current) return;
-    if (!opts.choiceId && !opts.utterance?.trim()) return;
+    if (!opts.choiceId && !opts.program && !opts.utterance?.trim()) return;
+
+    /**
+     * Ask before grading. Deterministic, local, free — no request leaves the device,
+     * so nothing is recorded, no crystal moves and no failure counter advances (§3).
+     * Only free text can be ambiguous this way; a tapped grid or an ordered list has
+     * already said exactly what it means.
+     *
+     * §10.3: an open re-ask owns the next submission. That submission closes it — and
+     * is then graded normally, because the attempt it belongs to was never recorded.
+     * If it is *still* ambiguous, clarify() returns the second, confirming question.
+     */
+    if (uxV11Enabled() && opts.utterance?.trim()) {
+      const question = clarify({
+        utterance: opts.utterance,
+        family: currentTask.family,
+        given: currentTask.givenRu,
+        reasksUsed,
+      });
+      if (question) {
+        setReask(question);
+        setReasksUsed((n) => n + 1);
+        return;
+      }
+    }
+    setReask(null);
 
     sendingRef.current = true;
     setIsSending(true);
     setFeedback(null);
     setFilledCells([]);
     setMismatchCells([]);
-    if (!opts.choiceId) setChoices(null);
+    setChoices(null);
 
     try {
       const payload = {
         utterance: opts.utterance ?? "",
         choiceId: opts.choiceId,
+        program: opts.program,
         eventId: crypto.randomUUID(),
         sessionId: session.id,
         taskId: currentTask.id,
@@ -265,7 +333,7 @@ export default function ThinkingSessionPage() {
       setFeedback(data.feedback);
       if (data.choiceMode && data.choices?.length) {
         setChoices(data.choices);
-      } else if (opts.choiceId || data.pass) {
+      } else if (opts.choiceId || opts.program || data.pass) {
         setChoices(null);
       }
       if (typeof data.crystals === "number") setCrystals(data.crystals);
@@ -278,7 +346,7 @@ export default function ThinkingSessionPage() {
         id: currentTask.id,
         role: currentTask.role,
         pass: data.pass,
-        tier: currentTask.tier,
+        tier: effectiveTaskTier(currentTask.tier, offeredTier, currentTask.role),
       };
       setResults((prev) => [...prev.filter((r) => r.id !== currentTask.id), result]);
 
@@ -287,11 +355,13 @@ export default function ThinkingSessionPage() {
       }
 
       if (data.pass) {
+        setFailStreak(0);
         soundEngine.play("success");
         if (!prefersReducedMotion) {
           confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#a78bfa", "#22d3ee"] });
         }
       } else {
+        setFailStreak((n) => n + 1);
         soundEngine.play("fail");
       }
     } catch {
@@ -302,10 +372,25 @@ export default function ThinkingSessionPage() {
     }
   };
 
+  const showAdvancePreview =
+    Boolean(feedback) &&
+    Boolean(currentTask) &&
+    results.some((r) => r.id === currentTask!.id);
+  const idleNudgeEnabled =
+    Boolean(session) &&
+    Boolean(currentTask) &&
+    !done &&
+    !pastLastWithoutComplete &&
+    !consentEnded &&
+    !showAdvancePreview &&
+    !(choices?.length) &&
+    !isSending;
+  const idleNudge = useIdleNudge(DEFAULT_NUDGE, idleNudgeEnabled);
+
   if (consentEnded) {
     return (
       <div
-        className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col"
+        className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col"
         data-testid="consent-ended-calm"
       >
         <Header />
@@ -313,14 +398,14 @@ export default function ThinkingSessionPage() {
           <div className="text-center space-y-5 max-w-md">
             <MonsterAvatar mood="thinking" color="#a78bfa" size={96} />
             <h1 className="text-2xl font-semibold">Сессия завершена</h1>
-            <p className="text-sm text-white/70 leading-relaxed">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
               Родитель закрыл доступ к обучению. Это спокойная пауза — прогресс
               сохранён. Когда согласие снова будет подтверждено, можно продолжить
               с того же места.
             </p>
             <Link
               href="/"
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-white"
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)]"
             >
               На главный экран
             </Link>
@@ -332,21 +417,21 @@ export default function ThinkingSessionPage() {
 
   if (loadError) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-4 max-w-md">
-            <p className="text-violet-200">{loadError}</p>
+            <p className="text-[var(--color-primary-dark)]">{loadError}</p>
             {lockedPrereq ? (
               <Link
                 href={`/session/${lockedPrereq}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-violet-600 px-6 font-semibold hover:bg-violet-500"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 font-semibold hover:bg-[var(--color-primary)]"
               >
                 Открыть предыдущую сессию
               </Link>
             ) : null}
             <div>
-              <Link href="/dashboard" className="text-violet-300 underline">
+              <Link href="/dashboard" className="text-[var(--color-primary-dark)] underline">
                 В кабинет
               </Link>
             </div>
@@ -358,7 +443,7 @@ export default function ThinkingSessionPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white flex flex-col">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
@@ -372,7 +457,7 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone && formulationEcho) {
       return (
-        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
           <Header />
           <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
         </div>
@@ -381,12 +466,12 @@ export default function ThinkingSessionPage() {
 
     if (isCapstone) {
       return (
-        <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+        <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
           <Header />
           <main className="max-w-2xl mx-auto px-6 py-12 space-y-6">
             <MonsterAvatar mood="celebrating" size={120} />
             <h1 className="text-3xl font-bold text-center">Итог: своими словами</h1>
-            <p className="text-gray-300 text-center">
+            <p className="text-[var(--text-secondary)] text-center">
               Напиши главное правило мышления. Качество не мешает завершить путь — важно
               подать формулировку.
             </p>
@@ -394,12 +479,12 @@ export default function ThinkingSessionPage() {
               value={formulationText}
               onChange={(e) => setFormulationText(e.target.value)}
               rows={4}
-              className="w-full rounded-2xl bg-white/5 border border-white/15 px-4 py-3 text-base text-white"
+              className="w-full rounded-2xl bg-[var(--surface-strong)] border border-[var(--border-color)] px-4 py-3 text-base text-[var(--ink)]"
               placeholder="Моё главное правило мышления…"
               data-testid="formulation-input"
             />
             {formulationError ? (
-              <p className="text-sm text-violet-200" role="alert">
+              <p className="text-sm text-[var(--color-primary-dark)]" role="alert">
                 {formulationError}
               </p>
             ) : null}
@@ -407,7 +492,7 @@ export default function ThinkingSessionPage() {
               type="button"
               disabled={formulationBusy}
               data-testid="formulation-submit"
-              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold disabled:opacity-50"
+              className="min-h-11 w-full px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold disabled:opacity-50"
               onClick={async () => {
                 setFormulationBusy(true);
                 setFormulationError(null);
@@ -446,13 +531,13 @@ export default function ThinkingSessionPage() {
     }
 
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-8 text-center">
           <MonsterAvatar mood="happy" size={120} />
           <h1 className="text-3xl font-bold">Сессия пройдена!</h1>
-          <p className="text-gray-300">{session.titleRu}</p>
-          <p className="text-sm text-violet-200/80 bg-white/5 rounded-2xl p-4 border border-white/10">
+          <p className="text-[var(--text-secondary)]">{session.titleRu}</p>
+          <p className="text-sm text-[var(--color-primary-dark)]/80 bg-[var(--surface-strong)] rounded-2xl p-4 border border-[var(--border-color)]">
             Вопрос за ужином: {session.dinnerQuestionRu}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -460,7 +545,7 @@ export default function ThinkingSessionPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/session/${nextSessionId}`)}
-                className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold"
+                className="min-h-11 px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold"
               >
                 Следующая сессия
               </button>
@@ -468,7 +553,7 @@ export default function ThinkingSessionPage() {
             <button
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="min-h-11 px-6 py-3 rounded-full border border-white/15 hover:bg-white/5 font-semibold"
+              className="min-h-11 px-6 py-3 rounded-full border border-[var(--border-color)] hover:bg-[var(--surface-strong)] font-semibold"
             >
               В кабинет
             </button>
@@ -480,12 +565,12 @@ export default function ThinkingSessionPage() {
 
   if (pastLastWithoutComplete) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-white">
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-6 text-center">
           <MonsterAvatar mood="thinking" size={100} />
           <h1 className="text-2xl font-bold">Сессия ещё не завершена</h1>
-          <p className="text-gray-300">
+          <p className="text-[var(--text-secondary)]">
             Нужно пройти практику и перенос. Вернись к заданиям без галочки.
           </p>
           <button
@@ -497,7 +582,7 @@ export default function ThinkingSessionPage() {
               setTaskIndex(firstOpen >= 0 ? firstOpen : 0);
               resetAttemptView();
             }}
-            className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-violet-500 font-semibold"
+            className="min-h-11 px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold"
           >
             Вернуться к заданиям
           </button>
@@ -507,57 +592,65 @@ export default function ThinkingSessionPage() {
   }
 
   const progressLabel = `Задание ${safeIndex + 1} из ${session.tasks.length}`;
-  // C3: collision target hidden until first attempt / explanation.
-  const revealCollisionTarget =
-    currentTask?.role !== "collision" || Boolean(feedback) || showExplanation;
+  // Always show the goal picture — hiding it on collision made "what do I paint?" impossible for kids.
   const gridTarget =
-    currentTask?.family === "grid-draw" && revealCollisionTarget
-      ? (currentTask.target ?? [])
-      : [];
-  const gridLabel =
-    currentTask?.role === "collision" && !revealCollisionTarget
-      ? "Пустое поле — скажи, что закрасить"
-      : filledCells.length
-        ? "Монстр закрасил так"
-        : "Цель — совпасть с этой картинкой";
+    currentTask?.family === "grid-draw" ? (currentTask.target ?? []) : [];
+  const gridLabel = filledCells.length
+    ? "Монстр закрасил так"
+    : "Цель — совпасть с этой картинкой";
+
+  // A FAILED task must keep its own Check button. Before this, any verdict — pass or
+  // fail — replaced Check with a single button labelled "Попробовать ещё или дальше"
+  // that only ever called advanceTask, so "попробовать ещё" silently meant "give up and
+  // move on". A child had to walk the rest of the session and loop back to answer again.
+  // Now: passed -> Дальше only; failed -> Check stays, with Пропустить beside it.
+  const currentResult = results.find((r) => r.id === currentTask?.id);
+  const passedCurrent = currentResult?.pass === true;
+  const showAdvance = Boolean(feedback) && Boolean(currentTask) && Boolean(currentResult);
+  const showStructuredCheck = !choices?.length && (!showAdvance || !passedCurrent);
+  const checkDisabled =
+    isSending || !primaryAction?.ready || !primaryAction?.formId;
+  const advanceLabel = passedCurrent ? "Дальше" : "Пропустить";
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
       <Header />
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
-        <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
-          <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] min-h-11">
-            <ArrowLeft className="w-4 h-4" />
+
+      <div
+        className="sticky top-12 z-40 border-b border-[var(--border-color)] bg-[var(--color-bg-base)]/90 backdrop-blur-xl motion-reduce:transition-none sm:top-[4.5rem]"
+        data-testid="session-sticky-top"
+      >
+        <div className="mx-auto flex w-full max-w-lg items-center gap-3 px-4 py-2">
+          <Link
+            href="/dashboard"
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             Назад
           </Link>
-          <span aria-hidden="true">·</span>
-          <span>
-            Неделя {session.week}, сессия {session.session}
-          </span>
-        </div>
-
-        <header className="space-y-2">
           <p
-            className="text-xs uppercase tracking-widest text-violet-300/70"
+            className="min-w-0 flex-1 truncate text-xs uppercase tracking-widest text-[var(--color-primary-dark)]/70"
             aria-live="polite"
             data-testid="session-progress-live"
           >
             {progressLabel}
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold leading-normal">{session.titleRu}</h1>
-          <ol className="flex flex-wrap gap-2" aria-label="Прогресс заданий">
+          <ol
+            className="hidden shrink-0 gap-1.5 sm:flex"
+            aria-label="Прогресс заданий"
+          >
             {session.tasks.map((task, i) => {
               const doneTask = results.some((r) => r.id === task.id && r.pass);
               const current = i === safeIndex;
               return (
                 <li key={task.id}>
                   <span
-                    className={`inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-xs font-bold border ${
+                    className={`inline-flex min-h-9 min-w-9 items-center justify-center rounded-full text-[11px] font-bold border ${
                       doneTask
-                        ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-200"
+                        ? "bg-[var(--color-success-soft)] border-[var(--color-success)] text-[var(--color-success-dark)]"
                         : current
-                          ? "bg-violet-500/20 border-violet-400/50 text-white"
-                          : "bg-white/5 border-white/10 text-[var(--text-muted)]"
+                          ? "bg-[var(--color-primary-soft)] border-[var(--color-primary-soft)] text-[var(--ink)]"
+                          : "bg-[var(--surface-strong)] border-[var(--border-color)] text-[var(--text-muted)]"
                     }`}
                     aria-current={current ? "step" : undefined}
                     title={doneTask ? "Пройдено" : current ? "Сейчас" : `Задание ${i + 1}`}
@@ -568,80 +661,184 @@ export default function ThinkingSessionPage() {
               );
             })}
           </ol>
+        </div>
+      </div>
+
+      <main
+        className="mx-auto w-full max-w-lg flex-1 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-2 sm:space-y-5 sm:pt-4"
+        data-testid="session-scroll-main"
+      >
+        <header className="min-w-0">
+          {/* `truncate` on the paragraph clips the ink but not the inline child boxes:
+              at 320px the title's own box ran to 352px. A block child truncates inside
+              its parent's width instead, so nothing sticks out of a real phone. */}
+          <p className="text-xs text-[var(--text-muted)]">
+            Неделя {session.week}, сессия {session.session}
+          </p>
+          <p className="block truncate text-xs text-[var(--text-secondary)]">{session.titleRu}</p>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
             <p
               role="status"
-              className="text-sm text-emerald-200/90 bg-emerald-500/10 border border-emerald-400/20 rounded-2xl px-4 py-3"
+              className="mt-2 rounded-2xl border border-[var(--color-success)] bg-[var(--color-success-soft)] px-3 py-2 text-sm text-[var(--color-success-dark)]"
             >
-              Это задание уже пройдено ✓. Повтор без новой награды — можно потренироваться или нажать
-              «Дальше».
+              Это задание уже пройдено ✓. Можно потренироваться или нажать «Дальше».
             </p>
           ) : null}
           {showExplanation ? (
-            <motion.p
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-gray-300 leading-relaxed bg-white/5 border border-white/10 rounded-2xl p-4"
-            >
+            // Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
+            // runs on the main thread and drops frames exactly when the page is busy
+            // fetching. Same motion, in CSS, off the main thread.
+            <p className="rise-in mt-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
               {session.explanationRu}
-            </motion.p>
+            </p>
           ) : null}
         </header>
 
-        <section className="grid sm:grid-cols-[auto_1fr] gap-6 items-start">
-          <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={96} />
-          <div className="space-y-4">
-            <p className="text-lg leading-relaxed not-italic" data-testid="task-prompt-caption">
-              {currentTask?.promptRu}
-            </p>
-
-            {currentTask?.family === "grid-draw" ? (
-              <div className="space-y-2">
-                <DisplayGrid
-                  filled={filledCells}
-                  target={gridTarget}
-                  mismatch={mismatchCells}
-                  label={gridLabel}
-                />
-                <p className="text-xs text-white/45">
-                  Картинку смотри глазами — закрашивает монстр по твоим словам, не по клику.
-                </p>
+        <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">
+          <div className="hidden sm:block">
+            <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
+          </div>
+          <div className="min-w-0 space-y-3 sm:space-y-4">
+            {/* «Готово, когда» — one short line in the monster's voice, always visible
+                before the first attempt. We refused to hide it until after a miss
+                (§10.2): the defect that started this work was a child who could not
+                tell what a finished answer looked like, and hiding the condition makes
+                the first attempt a guess by design. No label, no third row to read. */}
+            <div className="flex items-start gap-3">
+              {/* The avatar is phone-only — a second monster already sits in the desktop
+                  column. The line itself is visible at every width: it is the success
+                  condition, and hiding it on a viewport is the same defect as hiding it
+                  until after a miss. */}
+              <div className="sm:hidden">
+                <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
               </div>
+              <p className="pt-1 text-sm leading-5 text-[var(--text-secondary)]" data-testid="task-done-when">
+                {currentTask?.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
+              </p>
+            </div>
+            {idleNudge >= 2 && showStructuredCheck ? (
+              <MascotCue beat="sessionIdle" className="justify-start" />
             ) : null}
-
-            {currentTask?.hintAvailable && !revealedHint ? (
-              <button
-                type="button"
-                onClick={revealHint}
-                disabled={hintBusy}
-                className="min-h-11 px-4 py-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-200 font-semibold inline-flex items-center gap-2 disabled:opacity-50"
+            {idleNudge >= 3 && showStructuredCheck && primaryAction?.ready ? (
+              <p
+                role="status"
+                className="rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-[var(--color-secondary-dark)]"
               >
-                {hintBusy ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Lightbulb className="w-4 h-4" />
-                )}
-                Подсказка · {HINT_CRYSTAL_COST}💎
-                <span className="text-xs text-amber-200/70">(у тебя {crystals})</span>
-              </button>
+                Нажми «Проверить» внизу экрана.
+              </p>
+            ) : null}
+            {currentTask ? (
+              <TaskWorkspace
+                key={currentTask.id}
+                task={currentTask}
+                offeredTier={offeredTier}
+                disabled={isSending}
+                externalPrimaryAction
+                onPrimaryActionChange={setPrimaryAction}
+                onSubmit={(program) => {
+                  setCoachDismissed(true);
+                  void runAttempt({ program });
+                }}
+                reference={currentTask.family === "grid-draw" ? (
+                  <div className="space-y-1.5" aria-label="Образец текущего задания">
+                    <DisplayGrid
+                      filled={filledCells}
+                      target={gridTarget}
+                      mismatch={mismatchCells}
+                      label={gridLabel}
+                    />
+                  </div>
+                ) : undefined}
+              />
+            ) : null}
+            {currentTask && !showAdvance ? (
+              <SessionCoach
+                family={currentTask.family}
+                forceHide={coachDismissed || Boolean(feedback)}
+                onDismissed={() => setCoachDismissed(true)}
+              />
             ) : null}
 
             {revealedHint ? (
-              <p className="text-sm leading-relaxed rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-100">
+              <p className="text-sm leading-relaxed rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-4 py-3 text-[#3A2600]">
                 {revealedHint}
               </p>
             ) : null}
 
             {hintError ? (
-              <p role="alert" className="text-sm text-violet-200">
+              <p role="alert" className="text-sm text-[var(--color-primary-dark)]">
                 {hintError}
               </p>
             ) : null}
 
             {feedback ? (
-              <pre className="whitespace-pre-wrap text-sm text-gray-200 bg-black/30 rounded-xl p-4 border border-white/5 font-mono leading-relaxed">
+              <pre
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="whitespace-pre-wrap text-sm text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-mono leading-relaxed"
+              >
                 {feedback}
               </pre>
+            ) : null}
+
+            {/* The full success condition, with its reasoning — the *expansion* after a
+                miss, not the first appearance (§10.2). */}
+            {failStreak > 0 && currentTask?.doneWhenFullRu ? (
+              <p
+                data-testid="task-done-when-full"
+                className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-sm leading-6 text-[var(--text-secondary)]"
+              >
+                {currentTask.doneWhenFullRu}
+              </p>
+            ) : null}
+
+            {/* The re-ask: a NEW message under the feedback, never replacing it, and
+                never dressed as an error. The difference from a failure is carried by
+                voice register — first person, curious — not by colour (§10.1). */}
+            {reask ? (
+              <div
+                data-testid="monster-reask"
+                role="status"
+                aria-live="polite"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3"
+              >
+                <MonsterAvatar mood="thinking" size={36} />
+                <div className="min-w-0">
+                  <p className="text-sm leading-6 text-slate-100">{clarifyMessage(reask)}</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+                    {CLARIFY_HELPER_RU}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {/* The stuck child is never interrupted: no modal, no mode switch, no "are
+                you struggling?". The monster names what it noticed in the same shape as
+                any other message, and the hint stops costing anything (§10.1). */}
+            {uxV11Enabled() && isStuckOnTask(failStreak) && !revealedHint ? (
+              <div
+                data-testid="stuck-notice"
+                role="status"
+                aria-live="polite"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3"
+              >
+                <MonsterAvatar mood="happy" size={36} />
+                <div className="min-w-0 space-y-2">
+                  <p className="text-sm leading-6 text-slate-100">{stuckNoticeRu(failStreak)}</p>
+                  {currentTask?.hintAvailable ? (
+                    <button
+                      type="button"
+                      onClick={revealHint}
+                      disabled={hintBusy}
+                      data-testid="stuck-free-hint"
+                      className="min-h-11 rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[#3A2600] transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
+                    >
+                      Показать подсказку · бесплатно
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             ) : null}
 
             {choices?.length ? (
@@ -659,7 +856,7 @@ export default function ThinkingSessionPage() {
                     disabled={isSending}
                     data-testid={`choice-${c.id}`}
                     onClick={() => void runAttempt({ choiceId: c.id })}
-                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-violet-400/40 bg-violet-500/15 text-left font-semibold hover:bg-violet-500/25 disabled:opacity-50"
+                    className="w-full min-h-11 px-4 py-3 rounded-2xl border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] text-left font-semibold hover:bg-[var(--color-primary-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
                   >
                     {c.labelRu}
                   </button>
@@ -667,45 +864,117 @@ export default function ThinkingSessionPage() {
               </div>
             ) : null}
 
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-              <label className="sr-only" htmlFor="task-utterance">
-                Твоя инструкция монстру
-              </label>
-              <input
-                id="task-utterance"
-                type="text"
-                value={utterance}
-                onChange={(e) => setUtterance(e.target.value)}
-                disabled={isSending}
-                maxLength={500}
-                placeholder="Скажи монстру, что сделать…"
-                className="flex-1 min-h-11 px-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:border-violet-400/50 outline-none text-base"
-                autoComplete="off"
-              />
-              <button
-                type="submit"
-                disabled={isSending || !utterance.trim()}
-                className="min-h-11 min-w-[44px] px-5 py-3 rounded-2xl bg-[var(--color-primary)] text-white font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-300"
-              >
-                {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                <span>Отправить</span>
-              </button>
-            </form>
-
-            {feedback && currentTask && results.some((r) => r.id === currentTask.id) ? (
-              <button
-                type="button"
-                onClick={advanceTask}
-                className="min-h-11 px-5 py-3 rounded-2xl border border-white/15 hover:bg-white/5 font-semibold"
-              >
-                {results.find((r) => r.id === currentTask.id)?.pass
-                  ? "Дальше"
-                  : "Попробовать ещё или дальше"}
-              </button>
-            ) : null}
+            <details className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3">
+              <summary className="min-h-11 cursor-pointer py-2 font-semibold text-[var(--text-primary)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)]">
+                Сказать своими словами
+              </summary>
+              <p className="mb-3 text-sm leading-6 text-[var(--text-muted)]">
+                Это дополнительный способ. Основное задание можно выполнить в понятном поле выше.
+              </p>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:flex-row">
+                <label className="sr-only" htmlFor="task-utterance">
+                  Твоя инструкция монстру
+                </label>
+                <input
+                  id="task-utterance"
+                  type="text"
+                  value={utterance}
+                  onChange={(e) => setUtterance(e.target.value)}
+                  disabled={isSending}
+                  maxLength={500}
+                  placeholder="Скажи монстру, что сделать…"
+                  className="min-h-11 flex-1 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-base outline-none focus:border-[var(--color-primary-soft)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+                  autoComplete="off"
+                />
+                <button
+                  type="submit"
+                  disabled={isSending || !utterance.trim()}
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-primary-soft)] px-5 py-3 font-semibold text-[var(--color-primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
+                >
+                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
+                  <span>Отправить текст</span>
+                </button>
+              </form>
+            </details>
           </div>
         </section>
       </main>
+
+      <footer
+        className="sticky bottom-0 z-40 border-t border-[var(--border-color)] bg-[var(--color-bg-base)]/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)] motion-reduce:transition-none"
+        data-testid="session-action-bar"
+      >
+        <div className="mx-auto flex w-full max-w-lg items-stretch gap-2 px-4 py-3">
+          {currentTask?.hintAvailable && !revealedHint ? (
+            <button
+              type="button"
+              onClick={revealHint}
+              disabled={hintBusy}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-3 text-sm font-semibold text-[#3A2600] transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50 sm:px-4"
+            >
+              {hintBusy ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Lightbulb className="h-4 w-4" aria-hidden="true" />
+              )}
+              <span className="sr-only sm:not-sr-only">Подсказка ·</span>
+              {/* The price the child will actually pay. A stuck child pays nothing, and
+                  the server decides that from recorded misses — this label only reports it. */}
+              <span>
+                {uxV11Enabled()
+                  ? hintLabelRu(failStreak, HINT_CRYSTAL_COST)
+                  : `${HINT_CRYSTAL_COST}💎`}
+              </span>
+              {uxV11Enabled() && isStuckOnTask(failStreak) ? null : (
+                <span className="text-xs text-[var(--text-muted)]">({crystals})</span>
+              )}
+            </button>
+          ) : null}
+
+          {/* Two independent slots, not one either/or ternary. The ternary was why the
+              previous attempt at this fix did nothing: showAdvance is true after ANY
+              verdict, so it always won the branch and the Check button below was
+              unreachable. Unanswered -> Check. Failed -> Check AND Пропустить. Passed ->
+              Дальше alone. */}
+          {showStructuredCheck ? (
+            <span className="relative inline-flex min-w-0 flex-1">
+              <TapHint
+                show={
+                  idleNudge >= 1 &&
+                  Boolean(primaryAction?.ready) &&
+                  !checkDisabled
+                }
+              />
+              <button
+                type="submit"
+                form={primaryAction?.formId}
+                disabled={checkDisabled}
+                data-testid="session-primary-check"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSending ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                    Проверяем…
+                  </span>
+                ) : (
+                  "Проверить"
+                )}
+              </button>
+            </span>
+          ) : null}
+
+          {showAdvance ? (
+            <button
+              type="button"
+              onClick={advanceTask}
+              className="min-h-11 flex-1 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 font-semibold transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-[var(--surface-strong)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+            >
+              {advanceLabel}
+            </button>
+          ) : null}
+        </div>
+      </footer>
     </div>
   );
 }

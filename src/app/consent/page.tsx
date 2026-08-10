@@ -174,17 +174,17 @@ export default function ConsentPage() {
     <main className="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-10 text-foreground">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(139,92,246,0.18),transparent_35%),radial-gradient(circle_at_80%_15%,rgba(34,211,238,0.14),transparent_30%)]" />
 
-      <section className="relative z-10 w-full max-w-xl rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-8">
+      <section className="relative z-10 w-full max-w-xl rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-8">
         <div className="mb-5 flex items-center gap-4">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.04]">
-            <ShieldCheck className="h-6 w-6 text-primary-soft" />
+          <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)]">
+            <ShieldCheck className="h-6 w-6 text-[var(--color-secondary-dark)]" />
           </span>
         </div>
 
-        <h1 className="text-2xl font-semibold text-white">{t.title}</h1>
-        <p className="mt-3 text-sm leading-6 text-white/72">{t.intro}</p>
+        <h1 className="text-2xl font-semibold text-[var(--ink)]">{t.title}</h1>
+        <p className="mt-3 text-sm leading-6 text-[var(--ink)]/72">{t.intro}</p>
 
-        <div className="mt-5 space-y-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/70">
+        <div className="mt-5 space-y-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm leading-6 text-[var(--text-secondary)]">
           <p>{t.collect}</p>
           <p>{t.processing}</p>
           <p>{t.never}</p>
@@ -192,7 +192,7 @@ export default function ConsentPage() {
           <p>{t.additionalDisclosures}</p>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+        <div className="mt-4 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
           <OperatorContactLine />
         </div>
 
@@ -213,7 +213,7 @@ export default function ConsentPage() {
         {devCode && (
           <p
             role="status"
-            className="mt-3 rounded-xl border border-violet-400/40 bg-violet-500/15 px-4 py-3 text-center font-mono text-2xl tracking-[0.4em] text-white"
+            className="mt-3 rounded-xl border border-[var(--color-primary-soft)] bg-[var(--color-primary-soft)] px-4 py-3 text-center font-mono text-2xl tracking-[0.4em] text-[var(--ink)]"
           >
             {devCode}
           </p>
@@ -222,8 +222,8 @@ export default function ConsentPage() {
         {step === "email" && (
           <div className="mt-6 space-y-4">
             <label className="block">
-              <span className="mb-2 flex items-center gap-2 text-sm font-medium text-white/80">
-                <Mail className="h-4 w-4 text-primary-soft" />
+              <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                <Mail className="h-4 w-4 text-[var(--color-secondary-dark)]" />
                 {t.emailLabel}
               </span>
               <input
@@ -234,15 +234,15 @@ export default function ConsentPage() {
                 value={email}
                 readOnly
                 aria-readonly="true"
-                className="w-full rounded-xl border border-white/12 bg-surface-strong/80 px-4 py-3 text-base text-white placeholder-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="w-full rounded-xl border border-[var(--border-color)] bg-surface-strong/80 px-4 py-3 text-base text-[var(--ink)] placeholder-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
-              <span className="mt-2 block text-xs text-white/50">{t.emailHint}</span>
+              <span className="mt-2 block text-xs text-[var(--text-muted)]">{t.emailHint}</span>
             </label>
             <button
               type="button"
               disabled={busy || !email}
               onClick={requestCode}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <KeyRound className="h-4 w-4" />}
               {t.sendCode}
@@ -253,8 +253,8 @@ export default function ConsentPage() {
         {step === "code" && (
           <div className="mt-6 space-y-5">
             <label className="block">
-              <span className="mb-2 flex items-center gap-2 text-sm font-medium text-white/80">
-                <KeyRound className="h-4 w-4 text-primary-soft" />
+              <span className="mb-2 flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
+                <KeyRound className="h-4 w-4 text-[var(--color-secondary-dark)]" />
                 {t.codeLabel}
               </span>
               <input
@@ -266,14 +266,14 @@ export default function ConsentPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 placeholder="000000"
-                className="w-full rounded-xl border border-white/12 bg-surface-strong/80 px-4 py-3 text-center text-2xl tracking-[0.5em] text-white placeholder-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="w-full rounded-xl border border-[var(--border-color)] bg-surface-strong/80 px-4 py-3 text-center text-2xl tracking-[0.5em] text-[var(--ink)] placeholder-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               />
-              <span className="mt-2 block text-xs text-white/50">{t.codeHint}</span>
+              <span className="mt-2 block text-xs text-[var(--text-muted)]">{t.codeHint}</span>
             </label>
 
             <fieldset className="space-y-3">
-              <legend className="mb-3 text-sm font-medium text-white/80">Согласия на обработку данных</legend>
-              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
+              <legend className="mb-3 text-sm font-medium text-[var(--text-secondary)]">Согласия на обработку данных</legend>
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm leading-6 text-[var(--ink)]/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
                 <input
                   type="checkbox"
                   checked={optA}
@@ -282,7 +282,7 @@ export default function ConsentPage() {
                 />
                 <span>{t.optA}</span>
               </label>
-              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm leading-6 text-[var(--ink)]/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
                 <input
                   type="checkbox"
                   checked={optB}
@@ -297,7 +297,7 @@ export default function ConsentPage() {
               type="button"
               disabled={busy || code.length !== 6 || !optA || !optB}
               onClick={submitConsent}
-              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <CheckCircle2 className="h-4 w-4" />}
               {t.confirm}
@@ -307,7 +307,7 @@ export default function ConsentPage() {
               <button
                 type="button"
                 onClick={() => { setStep("email"); setCode(""); setNotice(null); setError(null); }}
-                className="min-h-[36px] text-white/60 underline-offset-2 hover:text-white hover:underline"
+                className="min-h-[36px] text-[var(--text-muted)] underline-offset-2 hover:text-[var(--ink)] hover:underline"
               >
                 {t.changeEmail}
               </button>
@@ -315,7 +315,7 @@ export default function ConsentPage() {
                 type="button"
                 disabled={busy}
                 onClick={requestCode}
-                className="min-h-[36px] text-primary-soft underline-offset-2 hover:underline disabled:opacity-50"
+                className="min-h-[36px] text-[var(--color-secondary-dark)] underline-offset-2 hover:underline disabled:opacity-50"
               >
                 {t.resend}
               </button>

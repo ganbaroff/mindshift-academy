@@ -5,6 +5,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { MascotCue } from "@/components/guide/MascotCue";
+import { TapHint } from "@/components/guide/TapHint";
 
 type Phase = "hatching" | "naming" | "ready";
 
@@ -114,7 +116,9 @@ function OnboardingContent() {
 
   const goToFirstLesson = () => {
     // Thinking curriculum entry — Module 1 /lesson/1 is legacy archive.
-    router.push("/session/w1-s1");
+    // /continue resolves the child's actual position; hardcoding w1-s1 here is
+    // what put a returning child back on step 1 (08-UX-MONSTER-JOURNEY §1, defect 2).
+    router.push("/continue");
   };
 
   return (
@@ -128,6 +132,16 @@ function OnboardingContent() {
             transition={{ duration: prefersReducedMotion ? 0 : 0.4 }}
             className="space-y-8"
           >
+            <div className="space-y-2">
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                Шаг 1 из 3
+              </p>
+              <h1 className="text-2xl font-semibold text-[var(--ink)]">
+                Питомец просыпается
+              </h1>
+              <MascotCue beat="hatch" />
+            </div>
+
             <motion.div
               animate={{
                 scale: [1, 1.06, 1],
@@ -137,7 +151,7 @@ function OnboardingContent() {
                 duration: prefersReducedMotion ? 0 : 0.6,
                 ease: "easeInOut",
               }}
-              className="mx-auto flex h-40 w-40 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-7xl shadow-[0_0_80px_rgba(139,92,246,0.3)]"
+              className="mx-auto flex h-40 w-40 items-center justify-center rounded-full border border-[var(--border-color)] bg-surface-strong/80 text-7xl shadow-[0_0_80px_rgba(139,92,246,0.3)]"
               style={{
                 boxShadow: `0 0 ${40 + hatchStep * 20}px ${monsterColor}44`,
               }}
@@ -149,7 +163,7 @@ function OnboardingContent() {
               )}
             </motion.div>
 
-            <p className="text-lg font-medium text-white/90">
+            <p role="status" aria-live="polite" aria-atomic="true" className="text-lg font-medium text-[var(--text-primary)]">
               {HATCH_MESSAGES[hatchStep]}
             </p>
 
@@ -159,20 +173,23 @@ function OnboardingContent() {
                 <span
                   key={i}
                   className={`h-1.5 rounded-full transition-[width,background-color] motion-reduce:transition-none ${
-                    i <= hatchStep ? "w-5 bg-primary" : "w-1.5 bg-white/15"
+                    i <= hatchStep ? "w-5 bg-primary" : "w-1.5 bg-[var(--surface-strong)]"
                   }`}
                 />
               ))}
             </div>
 
             {isHatched ? (
-              <button
-                onClick={() => setPhase("naming")}
-                className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
-              >
-                <Sparkles className="h-4 w-4" />
-                Познакомиться!
-              </button>
+              <span className="relative inline-flex">
+                <TapHint show />
+                <button
+                  onClick={() => setPhase("naming")}
+                  className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Познакомиться!
+                </button>
+              </span>
             ) : (
               <button
                 type="button"
@@ -180,7 +197,7 @@ function OnboardingContent() {
                   e.stopPropagation();
                   skipHatch();
                 }}
-                className="text-sm font-medium text-white/45 underline-offset-4 transition-colors hover:text-white/70 hover:underline"
+                className="text-sm font-medium text-[var(--ink)]/45 underline-offset-4 transition-colors hover:text-[var(--text-secondary)] hover:underline"
               >
                 Нажми, чтобы пропустить
               </button>
@@ -197,17 +214,24 @@ function OnboardingContent() {
             className="space-y-6"
           >
             <div
-              className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-6xl"
+              className="mx-auto flex h-32 w-32 items-center justify-center rounded-full border border-[var(--border-color)] bg-surface-strong/80 text-6xl"
               style={{ boxShadow: `0 0 60px ${monsterColor}44` }}
             >
               <MonsterAvatar mood="thinking" color={monsterColor} size={112} />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="pet-name" className="block text-xl font-semibold text-white">
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                Шаг 2 из 3
+              </p>
+              <h1 className="text-2xl font-semibold text-[var(--ink)]">
+                Дай питомцу имя
+              </h1>
+              <MascotCue beat="name" />
+              <label htmlFor="pet-name" className="block text-base font-medium text-[var(--ink)]">
                 Как зовут твоего питомца?
               </label>
-              <p id="pet-name-hint" className="text-sm text-white/60">
+              <p id="pet-name-hint" className="text-sm text-[var(--text-muted)]">
                 Можешь оставить имя или придумать своё
               </p>
             </div>
@@ -220,17 +244,20 @@ function OnboardingContent() {
               maxLength={PET_NAME_MAX}
               autoComplete="off"
               aria-describedby="pet-name-hint"
-              className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-center text-lg font-medium text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
+              className="mx-auto h-14 w-full max-w-xs rounded-2xl border border-[var(--border-color)] bg-surface-strong/90 px-4 text-center text-lg font-medium text-[var(--ink)] outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
             />
 
-            <button
-              onClick={confirmName}
-              disabled={saving || petName.trim().length === 0}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
-            >
-              {saving ? "Сохраняем…" : `Это ${petName}!`}
-              <ArrowRight className="h-4 w-4" />
-            </button>
+            <span className="relative inline-flex">
+              <TapHint show={petName.trim().length > 0 && !saving} />
+              <button
+                onClick={confirmName}
+                disabled={saving || petName.trim().length === 0}
+                className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? "Сохраняем…" : `Это ${petName}!`}
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </span>
 
             {saveError && (
               <p role="alert" className="text-sm font-medium text-error">
@@ -254,41 +281,71 @@ function OnboardingContent() {
                 duration: prefersReducedMotion ? 0 : 0.8,
                 ease: "easeOut",
               }}
-              className="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-white/10 bg-surface-strong/80 text-7xl"
+              className="mx-auto flex h-36 w-36 items-center justify-center rounded-full border border-[var(--border-color)] bg-surface-strong/80 text-7xl"
               style={{ boxShadow: `0 0 80px ${monsterColor}55` }}
             >
               <MonsterAvatar mood="celebrating" color={monsterColor} size={128} />
             </motion.div>
 
             <div className="space-y-2">
-              <p className="text-2xl font-semibold text-white">
-                {petName} готов учиться!
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-muted)]">
+                Шаг 3 из 3
               </p>
-              <p className="text-sm text-white/60">
+              <h1 className="text-2xl font-semibold text-[var(--ink)]">
+                {petName} готов учиться!
+              </h1>
+              <MascotCue beat="lessonStart" />
+              <p className="text-sm text-[var(--text-muted)]">
                 Первая сессия: научи {petName} слышать только то, что сказано —
                 клетка за клеткой, без угадывания.
               </p>
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-surface/80 p-4 text-left">
-              <p className="text-xs font-medium uppercase tracking-widest text-white/40">
+            <div className="rounded-2xl border border-[var(--border-color)] bg-surface/80 p-4 text-left">
+              <p className="text-xs font-medium uppercase tracking-widest text-[var(--text-muted)]">
                 Сессия 1 из 15 · Неделя 1
               </p>
-              <p className="mt-1 text-sm font-semibold text-white">
+              <p className="mt-1 text-sm font-semibold text-[var(--ink)]">
                 Монстр слышит только то, что сказано
               </p>
-              <p className="mt-1 text-sm text-white/60">
+              <p className="mt-1 text-sm text-[var(--text-muted)]">
                 Точные команды для ИИ — старт программы мышления
               </p>
             </div>
 
-            <button
-              onClick={goToFirstLesson}
-              className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+            <section
+              aria-labelledby="first-session-example-title"
+              className="rounded-2xl border border-primary/30 bg-primary/10 p-4 text-left"
             >
-              Начать сессию
-              <ArrowRight className="h-4 w-4" />
-            </button>
+              <h2 id="first-session-example-title" className="text-sm font-semibold text-[var(--ink)]">
+                Перед стартом — маленький пример
+              </h2>
+              <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="font-medium text-[var(--color-secondary-dark)]">Что сделаешь</p>
+                  <p className="mt-1 text-[var(--text-secondary)]">
+                    Выберешь на поле клетки, которые нужно закрасить, и нажмёшь «Проверить».
+                  </p>
+                </div>
+                <div>
+                  <p className="font-medium text-[var(--color-secondary-dark)]">Что получится</p>
+                  <p className="mt-1 text-[var(--text-secondary)]">
+                    Питомец закрасит только выбранные клетки — без угадывания.
+                  </p>
+                </div>
+              </div>
+            </section>
+
+            <span className="relative inline-flex">
+              <TapHint show />
+              <button
+                onClick={goToFirstLesson}
+                className="relative z-10 inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90"
+              >
+                Начать сессию 1
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </span>
           </motion.div>
         )}
       </div>
@@ -299,9 +356,9 @@ function OnboardingContent() {
 export default function OnboardingPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-[var(--color-bg-base)] flex flex-col items-center justify-center text-[var(--ink)] font-sans">
         <div className="w-12 h-12 rounded-full border-4 border-violet-500/20 border-t-violet-500 animate-spin motion-reduce:animate-none" />
-        <p className="mt-4 text-sm font-semibold text-gray-400">Загрузка инкубатора…</p>
+        <p className="mt-4 text-sm font-semibold text-[var(--text-muted)]">Загрузка инкубатора…</p>
       </div>
     }>
       <OnboardingContent />

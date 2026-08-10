@@ -1,0 +1,70 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "698476c292060f4974ee0618539d695f76ecaa83",
+  "headSha": "ec5912f44a928d3c0e688df4d12d97b0025206fd",
+  "commits": [
+    "8664c257685a3e256872bb8da38190114855b01d",
+    "09db133936616216693bb16ba8fdf7444d30e1f2",
+    "53e520bf089440d0fb29253ddf72d222a1cca238",
+    "5f380461736d69edca2f8e30e0942102ad96a7a2",
+    "ff8c0edc37c932c02b2d6086e34c9fff6f2fea04",
+    "b4801cde72d4f7a0159bfcbc0604d64766607745",
+    "498ac2cd7fbde171434e56130f5ece6e6af21486",
+    "2f06039b5347b47d43bb172e9af398885a300991",
+    "ec5912f44a928d3c0e688df4d12d97b0025206fd"
+  ],
+  "changedFiles": [
+    "docs/release/evidence/wave-1/W1-CROSS-BROWSER-SMOKE/task-brief.md",
+    "package.json",
+    "scripts/e2e/current-session-flow.mjs",
+    "tests/cross-browser-smoke-contract.test.mjs",
+    "tests/e2e/current-session-ui.mjs"
+  ],
+  "red": {
+    "command": "node tests/cross-browser-smoke-contract.test.mjs",
+    "expectedFailure": "Current-session browser suite declared only Chromium and had no Firefox/WebKit entry, resume, or capstone proof.",
+    "exitCode": 1,
+    "checks": null
+  },
+  "green": [
+    {
+      "command": "node tests/cross-browser-smoke-contract.test.mjs",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 7
+    },
+    {
+      "command": "npm run lint",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": null
+    },
+    {
+      "command": "npm run verify:academy:browser",
+      "expectedFailure": null,
+      "exitCode": 0,
+      "checks": 15
+    }
+  ],
+  "review": {
+    "specCompliance": "ACCEPT",
+    "codeQuality": "ACCEPT",
+    "critical": [],
+    "important": []
+  },
+  "concerns": [
+    "Firefox/WebKit use deterministic passed-task rows only to unlock w5-s3; the capstone itself is completed through visible UI controls.",
+    "Wave 2 learning-integrity, Wave 3 child UX/accessibility, Wave 4 auth/persistence, and live/prod gates remain release work."
+  ],
+  "browserEvidence": [
+    ".superpowers/sdd/evidence/2026-08-01T23-13-45.051Z-browser.json",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/browser-receipt.json",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/current-session-chromium-trace.zip",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/current-session-firefox-trace.zip",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/current-session-firefox-capstone.png",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/current-session-webkit-trace.zip",
+    ".superpowers/sdd/evidence/browser-2026-08-01T23-13-49.149Z/current-session-webkit-capstone.png"
+  ],
+  "productionActions": false,
+  "secretAccess": false
+}

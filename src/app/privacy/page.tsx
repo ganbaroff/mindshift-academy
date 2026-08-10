@@ -23,13 +23,13 @@ export default function PrivacyPage() {
   return (
     <main className="min-h-screen bg-[var(--color-bg-base)] px-6 py-10 text-[var(--text-primary)]">
       <div className="mx-auto max-w-3xl space-y-6">
-        <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        <p className="rounded-xl border border-amber-500/40 bg-[var(--color-accent)] px-4 py-3 text-sm text-[#3A2600]">
           ЧЕРНОВИК — требует подтверждения юриста. Не является действующей политикой.
         </p>
         <h1 className="text-3xl font-semibold">Уведомление о конфиденциальности</h1>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-white/80">{md}</pre>
+        <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-[var(--text-secondary)]">{md}</pre>
         <OperatorContactLine />
-        <Link href="/dashboard" className="text-sm text-primary-soft underline">
+        <Link href="/dashboard" className="text-sm text-[var(--color-secondary-dark)] underline">
           ← К дашборду
         </Link>
       </div>

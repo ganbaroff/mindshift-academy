@@ -30,7 +30,7 @@ export const SkinSelector = () => {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Выбрать Облик</span>
+      <span className="text-[var(--text-muted)] text-xs font-bold uppercase tracking-wider">Выбрать Облик</span>
       <div className="grid grid-cols-4 gap-2">
         {skins.map((skin) => (
           <button
@@ -41,7 +41,7 @@ export const SkinSelector = () => {
             className={`aspect-square rounded-xl border text-xl flex items-center justify-center transition-[colors,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
               activeSkin === skin.emoji
                 ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
-                : "border-white/5 bg-white/5 hover:bg-white/10"
+                : "border-[var(--border-color)] bg-[var(--surface-strong)] hover:bg-[var(--surface-strong)]"
             }`}
           >
             {skin.emoji}

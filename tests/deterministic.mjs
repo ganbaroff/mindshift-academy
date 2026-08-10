@@ -620,7 +620,15 @@ check(
 // ---- GUIDE: escalating idle-nudge + mascot lines (pure) ----
 console.log("=== GUIDE: idle-nudge + mascot lines ===");
 {
-  const { idleNudgeLevel, DEFAULT_NUDGE, mascotLine, MASCOT_LINES } = await import("../src/lib/guide.ts");
+  const {
+    idleNudgeLevel,
+    DEFAULT_NUDGE,
+    mascotLine,
+    MASCOT_LINES,
+    SESSION_COACH_FAMILY_TIPS,
+    SESSION_COACH_STORAGE_KEY,
+    sessionCoachFamilyTip,
+  } = await import("../src/lib/guide.ts");
   check("no nudge before the first threshold", idleNudgeLevel(0) === 0 && idleNudgeLevel(5999) === 0);
   check("pulse at 6s, voice at 15s, demo at 30s (monotonic escalation)",
     idleNudgeLevel(6000) === 1 && idleNudgeLevel(15000) === 2 && idleNudgeLevel(30000) === 3);
@@ -631,6 +639,14 @@ console.log("=== GUIDE: idle-nudge + mascot lines ===");
     DEFAULT_NUDGE.pulseMs < DEFAULT_NUDGE.voiceMs && DEFAULT_NUDGE.voiceMs < DEFAULT_NUDGE.demoMs);
   check("every mascot beat has a non-empty line", Object.values(MASCOT_LINES).every((l) => l.length > 4));
   check("unknown beat falls back to a safe generic nudge, never empty", mascotLine("nope").length > 4);
+  check("lessonStart is click-primary (not write-only)",
+    !/Напиши/i.test(MASCOT_LINES.lessonStart) && /Проверить/i.test(MASCOT_LINES.lessonStart));
+  check("coach beats exist",
+    ["taskLook", "taskTap", "taskCheck", "sessionIdle"].every((k) => MASCOT_LINES[k]?.length > 4));
+  check("coach storage key is stable", SESSION_COACH_STORAGE_KEY === "msa-coach-session-v1");
+  check("all five families have coach tips",
+    Object.keys(SESSION_COACH_FAMILY_TIPS).length === 5 &&
+      sessionCoachFamilyTip("grid-draw").length > 4);
 }
 
 // ---- totals ----

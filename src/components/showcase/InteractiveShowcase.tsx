@@ -108,27 +108,27 @@ export function InteractiveShowcase() {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-[32px] border border-white/10 bg-surface/90 p-5 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-6">
+    <section className="relative overflow-hidden rounded-[32px] border border-[var(--border-color)] bg-surface/90 p-5 shadow-[0_30px_120px_rgba(0,0,0,0.28)] sm:p-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(139,92,246,0.16),transparent_35%),radial-gradient(circle_at_85%_0%,rgba(34,211,238,0.12),transparent_25%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]" />
 
       <div className="relative z-10 flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-white/60">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.24em] text-[var(--text-muted)]">
             <Sparkles className="h-3.5 w-3.5 text-warning" />
             Инкубатор питомцев
           </div>
-          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{title}</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-[var(--ink)] sm:text-3xl">{title}</h2>
         </div>
 
-        <div className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-right text-xs text-white/60">
+        <div className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-2 text-right text-xs text-[var(--text-muted)]">
           <p>Интерактивная проба</p>
-          <p className="mt-1 text-white/80">Без стресса и оценок</p>
+          <p className="mt-1 text-[var(--text-secondary)]">Без стресса и оценок</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="relative z-10 mt-6 space-y-4">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-white/70">Введите 3 слова-описания монстра</span>
+          <span className="text-sm font-medium text-[var(--text-secondary)]">Введите 3 слова-описания монстра</span>
           <input
             ref={inputRef}
             name="monster-words"
@@ -150,7 +150,7 @@ export function InteractiveShowcase() {
             placeholder="храбрый быстрый весёлый"
             autoComplete="off"
             spellCheck={false}
-            className="h-14 w-full rounded-2xl border border-white/10 bg-surface-strong/90 px-4 text-base text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
+            className="h-14 w-full rounded-2xl border border-[var(--border-color)] bg-surface-strong/90 px-4 text-base text-[var(--ink)] outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30"
           />
           {inputError ? (
             <span id="monster-words-error" role="alert" className="block text-sm font-medium text-warning">
@@ -160,16 +160,16 @@ export function InteractiveShowcase() {
         </label>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm text-white/58">
-            <span className={isReady ? "text-warning" : "text-white/45"}>{wordCount}/3 слов</span>
-            <span className="mx-2 text-white/25">•</span>
+          <div className="text-sm text-[var(--ink)]/58">
+            <span className={isReady ? "text-warning" : "text-[var(--ink)]/45"}>{wordCount}/3 слов</span>
+            <span className="mx-2 text-[var(--ink)]/25">•</span>
             <span>{phase === "draft" ? "Сначала силуэт" : "Теперь нужен код"}</span>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 disabled:cursor-not-allowed disabled:opacity-70"
           >
             {isSubmitting ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -183,17 +183,17 @@ export function InteractiveShowcase() {
         </div>
       </form>
 
-      <div className="relative z-10 mt-6 overflow-hidden rounded-[28px] border border-white/10 bg-surface-strong/85 p-5">
+      <div className="relative z-10 mt-6 overflow-hidden rounded-[28px] border border-[var(--border-color)] bg-surface-strong/85 p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">Предпросмотр</p>
-            <p className="mt-2 text-lg font-semibold text-white">
+            <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">Предпросмотр</p>
+            <p className="mt-2 text-lg font-semibold text-[var(--ink)]">
               {phase === "draft" ? "Магия начинается здесь" : "Твой питомец готов"}
             </p>
           </div>
 
           <div
-            className="rounded-full border border-white/10 px-3 py-2 text-xs font-medium text-white/70"
+            className="rounded-full border border-[var(--border-color)] px-3 py-2 text-xs font-medium text-[var(--text-secondary)]"
             style={{ color: accent }}
           >
             {phase === "draft" ? "Превью" : "Готово"}
@@ -222,7 +222,7 @@ export function InteractiveShowcase() {
               }}
             />
             <div
-              className="absolute inset-6 rounded-[46%_54%_44%_56%/56%_44%_56%_44%] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))] shadow-[inset_0_0_40px_rgba(255,255,255,0.08)]"
+              className="absolute inset-6 rounded-[46%_54%_44%_56%/56%_44%_56%_44%] border border-[var(--border-color)] bg-[linear-gradient(180deg,rgba(255,255,255,0.12),rgba(255,255,255,0.02))] shadow-[inset_0_0_40px_rgba(255,255,255,0.08)]"
               style={{
                 transform: `translateY(${phase === "locked" ? 0 : 4}px)`,
               }}
@@ -247,7 +247,7 @@ export function InteractiveShowcase() {
             >
               {monsterData?.emoji ?? "🥚"}
             </div>
-            <div className="absolute left-1/2 top-10 h-12 w-24 -translate-x-1/2 rounded-full bg-white/10 blur-2xl" />
+            <div className="absolute left-1/2 top-10 h-12 w-24 -translate-x-1/2 rounded-full bg-[var(--surface-strong)] blur-2xl" />
           </motion.div>
         </div>
 
@@ -256,24 +256,24 @@ export function InteractiveShowcase() {
             words.map((word, index) => (
               <span
                 key={`${word}-${index}`}
-                className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-sm text-white/82"
+                className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1.5 text-sm text-[var(--ink)]/82"
               >
                 {word}
               </span>
             ))
           ) : (
-            <span className="rounded-full border border-dashed border-white/10 px-3 py-1.5 text-sm text-white/38">
+            <span className="rounded-full border border-dashed border-[var(--border-color)] px-3 py-1.5 text-sm text-[var(--ink)]/38">
               Слова появятся здесь
             </span>
           )}
         </div>
 
-        <div className="mt-6 flex items-start justify-between gap-4 border-t border-white/8 pt-4">
+        <div className="mt-6 flex items-start justify-between gap-4 border-t border-[var(--border-color)] pt-4">
           <div className="space-y-1" role="status" aria-live="polite">
             {monsterData?.description && phase === "locked" ? (
-              <p className="text-sm font-medium text-white/90">{monsterData.description}</p>
+              <p className="text-sm font-medium text-[var(--text-primary)]">{monsterData.description}</p>
             ) : null}
-            <p className="text-sm text-white/62">{status}</p>
+            <p className="text-sm text-[var(--ink)]/62">{status}</p>
             {error ? <p className="text-sm text-error">{error}</p> : null}
           </div>
 
@@ -285,7 +285,7 @@ export function InteractiveShowcase() {
                 setMonsterData(null);
                 setStatus("Вернулись к словам. Можно уточнить силуэт.");
               }}
-              className="inline-flex h-11 items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm text-white/72 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex h-11 items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 text-sm text-[var(--ink)]/72 transition-colors hover:bg-[var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               <RotateCcw className="h-4 w-4" />
               Изменить слова

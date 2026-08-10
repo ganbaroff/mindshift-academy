@@ -1,0 +1,19 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "460b376",
+  "headSha": "2bc0b385bfab2460418a5722fa0dec932ddd1e93",
+  "commits": ["2bc0b385bfab2460418a5722fa0dec932ddd1e93"],
+  "changedFiles": ["tests/w4-a11y-appendix.test.mjs", "tests/w4-session-matrix.test.mjs", "tests/w4-legacy-receipt-write-guard.test.mjs", "package.json", "scripts/qa/academy-gates.mjs", "tests/academy-gates.test.mjs", "docs/release/evidence/wave-5/W5-OFFLINE-DETERMINISM/task-brief.md"],
+  "red": {"command": "node tests/w4-legacy-receipt-write-guard.test.mjs", "expectedFailure": "Both W4 tests wrote legacy tracked receipts unconditionally, causing the offline gate worktree check to fail.", "exitCode": 1, "checks": 2},
+  "green": [
+    {"command": "npm run test:w4-legacy-receipt-write-guard", "expectedFailure": null, "exitCode": 0, "checks": 2},
+    {"command": "npm run test:w4", "expectedFailure": null, "exitCode": 0, "checks": 141},
+    {"command": "npm run test:gate-contract", "expectedFailure": null, "exitCode": 0, "checks": 9},
+    {"command": "npm run lint", "expectedFailure": null, "exitCode": 0, "checks": null},
+    {"command": "npm run build", "expectedFailure": null, "exitCode": 0, "checks": null}
+  ],
+  "concerns": ["Legacy receipt generation remains available only with ACADEMY_WRITE_LEGACY_RECEIPTS=1.", "Existing Turbopack workspace-root and rate-limit warnings remain outside this ticket."],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}

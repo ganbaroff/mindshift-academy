@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Academy Gate Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "gate",
+    "sha",
+    "startedAt",
+    "finishedAt",
+    "verdict",
+    "commands",
+    "warnings",
+    "blockedReason",
+    "workspaceClean"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "gate": { "enum": ["offline", "browser", "live", "prod"] },
+    "sha": { "type": "string", "minLength": 7 },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "verdict": { "enum": ["PASS", "FAIL", "BLOCKED", "UNVERIFIED"] },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exitCode", "elapsedMs"],
+        "properties": {
+          "command": { "type": "string", "minLength": 1 },
+          "exitCode": { "type": "integer" },
+          "elapsedMs": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "warnings": { "type": "array", "items": { "type": "string" } },
+    "blockedReason": { "type": ["string", "null"] },
+    "workspaceClean": { "type": "boolean" }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "status": "DONE_WITH_CONCERNS",
+  "baseSha": "aa16fcd",
+  "headSha": "0aba008d8e68e165ed57bf4ca5bbdacf4d0bbd97",
+  "commits": ["0aba008d8e68e165ed57bf4ca5bbdacf4d0bbd97"],
+  "changedFiles": [
+    "docs/release/evidence/wave-5/W5-RELEASE-PACKAGING-CONTRACT/task-brief.md",
+    "package.json",
+    "scripts/qa/academy-gates.mjs",
+    "tests/academy-gates.test.mjs",
+    "tests/release-packaging.test.mjs"
+  ],
+  "red": {
+    "command": "node tests/release-packaging.test.mjs",
+    "expectedFailure": "Contract expected stale Next 16.2.11 while package.json commits 16.2.12.",
+    "exitCode": 1,
+    "checks": null
+  },
+  "green": [
+    { "command": "npm run test:release-packaging", "expectedFailure": null, "exitCode": 0, "checks": null },
+    { "command": "npm run test:gate-contract", "expectedFailure": null, "exitCode": 0, "checks": 9 },
+    { "command": "npm run lint", "expectedFailure": null, "exitCode": 0, "checks": null },
+    { "command": "npm run build", "expectedFailure": null, "exitCode": 0, "checks": null }
+  ],
+  "concerns": [
+    "Build retains existing Turbopack workspace-root and non-distributed rate-limit warnings.",
+    "Version assertions require intentional updates when dependencies are upgraded; this is expected release-contract maintenance."
+  ],
+  "browserEvidence": [],
+  "productionActions": false,
+  "secretAccess": false
+}

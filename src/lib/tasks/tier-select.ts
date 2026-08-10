@@ -19,7 +19,7 @@ export function selectOfferedTier(mastery: number): 1 | 2 | 3 {
 export function effectiveTaskTier(
   authoredTier: 1 | 2 | 3,
   offeredTier: 1 | 2 | 3,
-  role: "collision" | "practice" | "transfer"
+  role: "collision" | "practice" | "prediction" | "transfer"
 ): 1 | 2 | 3 {
   if (role === "collision") return authoredTier;
   return Math.max(authoredTier, offeredTier) as 1 | 2 | 3;

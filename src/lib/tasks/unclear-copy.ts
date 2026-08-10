@@ -13,6 +13,7 @@ const COPY: Record<UnclearReasonCode, string> = {
   out_of_vocabulary: "Такого действия я не умею. Скажи словами из тех, что я знаю.",
   not_an_instruction: "Это не похоже на задание для меня. Скажи, что закрасить или какие шаги сделать.",
   do_nothing: "Ты сказал ничего не делать — тогда мне нечего выполнить. Назови клетки или шаги.",
+  copied_output: "Получился готовый список. Скажи короткое правило: с чего начать и что повторять.",
 };
 
 export function unclearMessage(code: UnclearReasonCode): string {

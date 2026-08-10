@@ -9,20 +9,10 @@ import { isParentEmailAllowed } from "@/lib/parent-allowlist";
 import { signedInContinuePath } from "@/lib/academy-access";
 import { prisma } from "@/lib/prisma";
 import { isCurriculumSessionComplete } from "@/lib/tasks/crystals";
-
-const SESSION_ORDER = [
-  "w1-s1", "w1-s2", "w1-s3",
-  "w2-s1", "w2-s2", "w2-s3",
-  "w3-s1", "w3-s2", "w3-s3",
-  "w4-s1", "w4-s2", "w4-s3",
-  "w5-s1", "w5-s2", "w5-s3",
-] as const;
+import { resolveFirstIncompleteSession } from "@/lib/tasks/course-map";
 
 async function firstIncompleteSessionId(userId: string): Promise<string | null> {
-  for (const id of SESSION_ORDER) {
-    if (!(await isCurriculumSessionComplete(userId, id))) return id;
-  }
-  return null;
+  return resolveFirstIncompleteSession((id) => isCurriculumSessionComplete(userId, id));
 }
 
 export async function GET(req: Request) {
