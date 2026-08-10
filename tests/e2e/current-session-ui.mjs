@@ -422,7 +422,13 @@ async function assertReaskFlow(browser, baseUrl, outDir) {
   const report = page.getByTestId("report-problem");
   await report.waitFor({ timeout: 15000 });
   await report.click();
-  await page.getByTestId("report-problem-thanks").waitFor({ timeout: 15000 });
+  // Either answer is correct and both are honest: "ушло оператору" when a channel
+  // carried it, "не ушло" when none is configured — which is the case on a test runner.
+  // What must never happen is silence, or a claim of delivery nobody can back.
+  await page
+    .locator('[data-testid="report-problem-thanks"], [data-testid="report-problem-undelivered"]')
+    .first()
+    .waitFor({ timeout: 15000 });
   assert.equal(
     await page.getByTestId("report-problem-form").count(),
     0,
