@@ -545,6 +545,17 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
 
     const curriculum = loadCurriculum();
 
+    /**
+     * Warm the route before anything is asserted. `next dev` compiles a route on its
+     * first request, and on a cold CI runner that first compile of /session/[id] takes
+     * longer than any per-assertion timeout is willing to wait — the suite then reports
+     * "workspace never appeared", which reads like a product defect and is not one.
+     * One patient navigation up front, then every later wait can stay short and mean
+     * what it says.
+     */
+    await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+    await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 180000 });
+
     // Before the drive: w1-s1 is the only session guaranteed open, and the drive would
     // destroy this state by passing every task in it.
     await assertReaskFlow(page.context().browser(), baseUrl, outDir);

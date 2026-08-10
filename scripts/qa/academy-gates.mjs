@@ -1,5 +1,5 @@
 import { URL } from "node:url";
-import { dirname, join } from "node:path";
+import path from "node:path";
 
 export const GATE_MODES = ["offline", "browser", "live", "prod"];
 
@@ -13,11 +13,17 @@ export function platformInvocation(
   } = {}
 ) {
   if (platform === "win32" && (command === "npm" || command === "npx")) {
+    // Use the WINDOWS path module, not the host's. This function takes `platform` as an
+    // argument, so it can be asked about win32 from a Linux runner — and it was: on CI
+    // `dirname("C:\\…\\npm-cli.js")` returned "." under posix rules, so the shim path
+    // collapsed to a bare filename and the gate runner would have spawned the wrong
+    // thing. Ambient `path` silently assumes the machine you happen to be on.
+    const p = path.win32;
     const npmBin = npmExecPath
-      ? dirname(npmExecPath)
-      : join(dirname(execPath), "node_modules", "npm", "bin");
+      ? p.dirname(npmExecPath)
+      : p.join(p.dirname(execPath), "node_modules", "npm", "bin");
     const cli = command === "npm" ? "npm-cli.js" : "npx-cli.js";
-    return { command: execPath, args: [join(npmBin, cli), ...args] };
+    return { command: execPath, args: [p.join(npmBin, cli), ...args] };
   }
   return { command, args };
 }
