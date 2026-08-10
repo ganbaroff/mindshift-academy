@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "Введи 8-символьный код ребёнка" [level=1] [ref=e5]
+        - generic [ref=e6]:
+          - button "Прослушать подсказку" [ref=e7]:
+            - img [ref=e8]
+          - paragraph [ref=e12]: Впиши секретный код, который дал тебе взрослый.
+        - paragraph [ref=e13]: Этот код взрослый получает по приглашению и передаёт тебе. Если кода нет, попроси взрослого проверить приглашение.
+      - generic [ref=e14]:
+        - textbox "Символ 1" [ref=e15]
+        - textbox "Символ 2" [ref=e16]
+        - textbox "Символ 3" [ref=e17]
+        - textbox "Символ 4" [ref=e18]
+        - textbox "Символ 5" [ref=e19]
+        - textbox "Символ 6" [ref=e20]
+        - textbox "Символ 7" [ref=e21]
+        - textbox "Символ 8" [ref=e22]
+      - button "Продолжить" [disabled] [ref=e24]:
+        - text: Продолжить
+        - img [ref=e25]
+  - button "Сообщить о проблеме" [ref=e27]:
+    - img [ref=e28]

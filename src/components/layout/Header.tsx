@@ -23,7 +23,13 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-[var(--border-color)] bg-[var(--color-bg-base)]/80 px-4 py-2.5 backdrop-blur-xl sm:px-8 sm:py-4">
-      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+      {/* On a child screen the wordmark is the way back to the map. The map was shipped
+          reachable only by typing its URL, which for an eight-year-old means not at all. */}
+      <a
+        href={isChild ? "/map" : "/"}
+        aria-label={isChild ? "К карте" : "На главную"}
+        className="flex min-w-0 items-center gap-2 rounded-2xl transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:gap-3"
+      >
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] text-lg font-extrabold text-[var(--ink)] sm:h-10 sm:w-10 sm:text-xl">
           {isChild ? "З" : "M"}
         </div>
@@ -32,8 +38,8 @@ export const Header = () => {
         <span className="font-display max-w-[140px] truncate text-sm font-bold tracking-tight text-[var(--ink)] sm:max-w-none sm:text-xl">
           {isChild ? "Зверёныш" : "MindShift Academy"}
         </span>
-      </div>
-      
+      </a>
+
       <div className="flex shrink-0 items-center gap-2 sm:gap-5">
         <div className="hidden items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-2 text-sm font-semibold sm:flex">
           <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
