@@ -19,6 +19,40 @@
   --duration-press: 160ms;
 }
 
+/* The monster arriving with something to say. CSS, not framer-motion: this runs off the
+   main thread, which is the difference between smooth and stuttering on a cheap Android
+   that is simultaneously fetching the next task. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.rise-in {
+  animation: rise-in 200ms var(--ease-out) both;
+}
+/* A panel that belongs to a trigger grows out of that trigger, never from its own centre.
+   Starts at 0.97, never 0 — nothing in the real world appears from nothing. */
+@keyframes pop-from-corner {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+.pop-from-corner {
+  transform-origin: bottom left;
+  animation: pop-from-corner 160ms var(--ease-out) both;
+}
+
+/* Reduced motion means gentler, not nothing: the message still needs to announce itself,
+   it just stops travelling. */
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .pop-from-corner {
+    animation: fade-in 200ms var(--ease-out) both;
+  }
+}
+
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

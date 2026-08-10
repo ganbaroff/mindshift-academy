@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
@@ -685,13 +685,12 @@ export default function ThinkingSessionPage() {
             </p>
           ) : null}
           {showExplanation ? (
-            <motion.p
-              initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-gray-300 motion-reduce:transform-none motion-reduce:transition-none"
-            >
+            // Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
+            // runs on the main thread and drops frames exactly when the page is busy
+            // fetching. Same motion, in CSS, off the main thread.
+            <p className="rise-in mt-2 rounded-2xl border border-white/10 bg-white/5 p-3 text-sm leading-relaxed text-gray-300">
               {session.explanationRu}
-            </motion.p>
+            </p>
           ) : null}
         </header>
 
@@ -802,7 +801,7 @@ export default function ThinkingSessionPage() {
                 data-testid="monster-reask"
                 role="status"
                 aria-live="polite"
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
               >
                 <MonsterAvatar mood="thinking" size={36} />
                 <div className="min-w-0">
@@ -822,7 +821,7 @@ export default function ThinkingSessionPage() {
                 data-testid="stuck-notice"
                 role="status"
                 aria-live="polite"
-                className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+                className="rise-in flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
               >
                 <MonsterAvatar mood="happy" size={36} />
                 <div className="min-w-0 space-y-2">

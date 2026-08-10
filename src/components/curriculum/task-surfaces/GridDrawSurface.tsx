@@ -67,7 +67,11 @@ export function GridDrawSurface({
                 // The cell a child actually taps, several times per attempt: it had no
                 // feedback at all, so a tap either landed or it did not and only the colour
                 // said so, with no press. 120ms colour + a 0.94 press. plans/002.
-                className={`h-10 w-10 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
+                // 44px on a phone, measured at 320px — was 40. Sixteen of these are the
+                // most-tapped controls in the product and every one of them was under the
+                // touch minimum. The room was always there: 320px leaves 264px inside the
+                // page and workspace padding, and four 44px cells with 6px gaps need 194px.
+                className={`h-11 w-11 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
               >
                 {row + 1},{column + 1}
               </button>

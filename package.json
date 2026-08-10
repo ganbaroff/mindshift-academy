@@ -52,7 +52,7 @@
     "test:e2e:matrix": "node tests/e2e-full-browser-matrix.test.mjs",
     "test:falsepos": "node scripts/measure-falsepos.mjs",
     "test:all": "node tests/deterministic.mjs && node scripts/regression.mjs",
-    "verify:release": "npm audit --omit=dev --audit-level=high && npm run lint && npm run check:prod-env && npm run test:config && npm run test:ui && node tests/release-packaging.test.mjs && node tests/release-copy.test.mjs && npm test && npm run test:tasks && npm run test:interpreter-contract && npm run test:session && npm run test:attempt-trust && npm run test:consent && npm run test:data-lifecycle && node tests/proxy-api-auth.test.mjs && node tests/live-safety-startup.test.mjs && npm run test:live && node tests/e2e-startup.test.mjs && npm run test:e2e-wrong && npm run test:e2e:firefox && npm run test:e2e:webkit && npm run test:falsepos && npm run test:regression && npm run test:e2e:matrix && npm run test:e2e:current-sessions && npm run build",
+    "verify:release": "npm audit --omit=dev --audit-level=high && npm run lint && npm run check:prod-env && npm run test:config && npm run test:ui && node tests/release-packaging.test.mjs && node tests/release-copy.test.mjs && npm test && npm run test:tasks && npm run test:interpreter-contract && npm run test:session && npm run test:attempt-trust && npm run test:consent && npm run test:data-lifecycle && node tests/proxy-api-auth.test.mjs && node tests/live-safety-startup.test.mjs && npm run test:live && node tests/e2e-startup.test.mjs && npm run test:e2e-wrong && npm run test:e2e:firefox && npm run test:e2e:webkit && npm run test:falsepos && npm run test:regression && npm run test:e2e:matrix && npm run test:e2e:current-sessions && npm run test:touch-targets && npm run build",
     "verify:academy:offline": "node scripts/qa/run-academy-gate.mjs offline",
     "verify:academy:browser": "node scripts/qa/run-academy-gate.mjs browser",
     "verify:academy:live": "node scripts/qa/run-academy-gate.mjs live",
@@ -61,7 +61,8 @@
     "test:invite": "node tests/family-invite.test.mjs",
     "test:ux-v11": "npx tsx tests/ux-v11-monster-journey.test.mjs",
     "test:feedback": "npx tsx tests/problem-report.test.mjs",
-    "test:motion": "npx tsx scripts/e2e/motion-check.mjs"
+    "test:motion": "npx tsx scripts/e2e/motion-check.mjs",
+    "test:touch-targets": "npx tsx scripts/e2e/touch-target-check.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.8.2",

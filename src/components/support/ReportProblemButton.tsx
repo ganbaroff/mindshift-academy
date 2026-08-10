@@ -93,7 +93,9 @@ export function ReportProblemButton() {
     return (
       <div
         data-testid="report-problem-form"
-        className="fixed bottom-24 left-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] space-y-2 rounded-2xl border border-white/10 bg-[var(--color-bg-base)]/95 p-3 backdrop-blur"
+        // Origin-aware: this panel comes out of the button in the bottom-left corner, so
+        // it grows from there rather than from its own centre.
+        className="pop-from-corner fixed bottom-24 left-3 z-50 w-[min(20rem,calc(100vw-1.5rem))] space-y-2 rounded-2xl border border-white/10 bg-[var(--color-bg-base)]/95 p-3 backdrop-blur"
         style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <label className="block text-xs text-white/60" htmlFor="report-problem-note">

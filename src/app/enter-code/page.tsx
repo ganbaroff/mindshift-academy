@@ -128,7 +128,12 @@ export default function EnterCodePage() {
               onKeyDown={(e) => {
                 if (e.key === "Backspace" && !chars[i] && i > 0) boxes.current[i - 1]?.focus();
               }}
-              className="h-12 w-8 rounded-xl border border-white/15 bg-surface-strong/90 text-center text-xl font-bold uppercase text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-14 sm:w-9"
+              // 56px on a phone, 44px in the desktop row. Was h-12 w-8 — 32px wide, under
+              // the 44px minimum, on the one control an unsupervised child must use to get
+              // in. Reported in docs/design-handoff/v1.1/02-CURRENT-STATE.md and open since.
+              // The space was always there: at 320px the page has 272px inside its px-6,
+              // and four 56px boxes with 8px gaps need 248px.
+              className="h-14 w-14 rounded-xl border border-white/15 bg-surface-strong/90 text-center text-xl font-bold uppercase text-white outline-none transition-[border-color,box-shadow] focus-visible:border-primary/70 focus-visible:ring-2 focus-visible:ring-primary/30 sm:h-14 sm:w-11"
             />
           ))}
         </div>

@@ -65,6 +65,35 @@ const gated = await page.evaluate(() => { const el = document.createElement("div
 assert.equal(gated, true, "no @media (hover: hover) rule found in the emitted CSS");
 console.log("PASS  @media (hover: hover) is emitted by Tailwind");
 
+
+// The monster's entrance: CSS, off the main thread, gentler under reduced motion.
+await page.getByText("Сказать своими словами", { exact: true }).click();
+await page.locator("#task-utterance").fill("намажь");
+await page.getByRole("button", { name: "Отправить текст", exact: true }).click();
+const bubble = page.getByTestId("monster-reask");
+await bubble.waitFor({ timeout: 15000 });
+const anim = await bubble.evaluate((el) => { const s = getComputedStyle(el); return { name: s.animationName, dur: s.animationDuration, timing: s.animationTimingFunction }; });
+assert.equal(anim.name, "rise-in", `re-ask animation=${anim.name}`);
+assert.equal(anim.dur, "0.2s", `re-ask duration=${anim.dur}`);
+assert.equal(anim.timing, "cubic-bezier(0.23, 1, 0.32, 1)", `re-ask timing=${anim.timing}`);
+console.log("PASS  re-ask rises in:", anim.name, anim.dur, anim.timing);
+
+// Under reduced motion it must still announce itself, just stop travelling.
+const reduced = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: "reduce" });
+await reduced.route("**/*", async (r) => { const h = r.request().headers(); h["x-test-bypass"] = "true"; await r.continue({ headers: h }); });
+const rp = await reduced.newPage();
+await rp.goto(`${base}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+await rp.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
+await rp.getByText("Сказать своими словами", { exact: true }).click();
+await rp.locator("#task-utterance").fill("намажь");
+await rp.getByRole("button", { name: "Отправить текст", exact: true }).click();
+const rb = rp.getByTestId("monster-reask");
+await rb.waitFor({ timeout: 15000 });
+const rAnim = await rb.evaluate((el) => getComputedStyle(el).animationName);
+assert.equal(rAnim, "fade-in", `reduced-motion animation=${rAnim}`);
+console.log("PASS  reduced motion: fade-in, no travel");
+await reduced.close();
+
 await page.screenshot({ path: join(root, "plans/motion-check-390px.png") });
 await browser.close(); srv.kill();
 console.log("MOTION CHECK: all passed");
