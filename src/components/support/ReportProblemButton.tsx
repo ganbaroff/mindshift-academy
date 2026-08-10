@@ -23,7 +23,7 @@ import {
   PROBLEM_REPORT_THANKS_RU,
 } from "@/lib/problem-report";
 
-type Phase = "idle" | "open" | "sending" | "sent" | "anonymous" | "error";
+type Phase = "idle" | "open" | "sending" | "sent" | "undelivered" | "anonymous" | "error";
 
 export function ReportProblemButton() {
   const pathname = usePathname() ?? "/";
@@ -52,15 +52,40 @@ export function ReportProblemButton() {
       // 401 is its own answer: nobody to reply to. Say where to write instead of
       // pretending the tap worked. Never gate the button on client-side auth state —
       // a child mid-session whose Clerk client has not hydrated still needs this.
+      // "Спасибо, ушло оператору" was shown on any 2xx — including the case where the
+      // server accepted the report and had NO channel configured to forward it. That is
+      // the worst lie a feedback loop can tell: the parent stops reporting because they
+      // believe they were heard. Trust the channel the server names, not the status code.
+      const body = res.ok ? await res.json().catch(() => ({})) : {};
       setState({
         path: pathname,
-        phase: res.ok ? "sent" : res.status === 401 ? "anonymous" : "error",
+        phase: res.ok
+          ? body?.channel === "none"
+            ? "undelivered"
+            : "sent"
+          : res.status === 401
+            ? "anonymous"
+            : "error",
         note: withNote,
       });
     } catch {
       setState({ path: pathname, phase: "error", note: withNote });
     }
   };
+
+  if (phase === "undelivered") {
+    return (
+      <p
+        role="alert"
+        data-testid="report-problem-undelivered"
+        className="fixed bottom-24 left-3 z-50 max-w-[16rem] rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-bg-base)]/95 px-3 py-2 text-xs text-[var(--text-secondary)] backdrop-blur"
+        style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        Канал связи с оператором сейчас не настроен — сообщение не ушло. Напиши на почту
+        со страницы «Родителям».
+      </p>
+    );
+  }
 
   if (phase === "anonymous") {
     return (
