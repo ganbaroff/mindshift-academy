@@ -833,7 +833,7 @@ export default function ThinkingSessionPage() {
                       onClick={revealHint}
                       disabled={hintBusy}
                       data-testid="stuck-free-hint"
-                      className="min-h-11 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+                      className="min-h-11 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-200 transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
                     >
                       Показать подсказку · бесплатно
                     </button>
@@ -911,7 +911,7 @@ export default function ThinkingSessionPage() {
               type="button"
               onClick={revealHint}
               disabled={hintBusy}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-semibold text-amber-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50 sm:px-4"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-semibold text-amber-200 transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50 sm:px-4"
             >
               {hintBusy ? (
                 <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -951,7 +951,7 @@ export default function ThinkingSessionPage() {
                 form={primaryAction?.formId}
                 disabled={checkDisabled}
                 data-testid="session-primary-check"
-                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-violet-500 px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSending ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -969,7 +969,7 @@ export default function ThinkingSessionPage() {
             <button
               type="button"
               onClick={advanceTask}
-              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+              className="min-h-11 flex-1 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
             >
               {advanceLabel}
             </button>

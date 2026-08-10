@@ -64,7 +64,10 @@ export function GridDrawSurface({
                 aria-label={`Выбрать клетку ${row + 1}, ${column + 1}`}
                 aria-pressed={active}
                 onClick={() => toggle(row, column)}
-                className={`h-10 w-10 rounded-xl border text-xs font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
+                // The cell a child actually taps, several times per attempt: it had no
+                // feedback at all, so a tap either landed or it did not and only the colour
+                // said so, with no press. 120ms colour + a 0.94 press. plans/002.
+                className={`h-10 w-10 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 sm:h-12 sm:w-12 sm:text-sm ${active ? "border-violet-300 bg-violet-500 text-white" : "border-slate-600 bg-slate-800 text-slate-300"}`}
               >
                 {row + 1},{column + 1}
               </button>

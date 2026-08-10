@@ -280,7 +280,7 @@ export const PromptInput = () => {
         </p>
         <button 
           onClick={handleGenerateMonster}
-          className="w-full transform rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg transition-[transform,box-shadow,background-color] hover:scale-[1.02] hover:bg-[var(--color-primary-violet)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="w-full transform rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg transition-[transform,box-shadow,background-color] [@media(hover:hover)]:hover:scale-[1.02] hover:bg-[var(--color-primary-violet)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           ✨ Оживить и получить карточку монстра! ✨
         </button>

@@ -10,6 +10,13 @@
   --surface: rgba(13, 18, 31, 0.84);
   --surface-strong: #11182a;
   --border-color: rgba(255, 255, 255, 0.08);
+
+  /* Motion tokens. Built-in CSS easings are too weak for deliberate motion, and five
+     hand-typed curves that almost match is how a product stops feeling like one thing.
+     Values are Emil Kowalski's, via plans/001 — do not round them. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --duration-press: 160ms;
 }
 
 @theme {

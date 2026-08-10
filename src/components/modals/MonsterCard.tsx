@@ -98,7 +98,7 @@ export const MonsterCard = () => {
               width={1024}
               height={1024}
               loading="lazy"
-              className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-500"
+              className="w-full h-full object-cover transition-transform group-[@media(hover:hover)]:hover:scale-105 duration-500"
             />
           </div>
 
@@ -135,7 +135,7 @@ export const MonsterCard = () => {
               href={generatedMonster.imageUrl} 
               target="_blank" 
               rel="noopener noreferrer" 
-              className="flex-1 bg-white text-black font-extrabold py-3 rounded-full text-sm hover:bg-gray-200 hover:scale-[1.02] transform transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="flex-1 bg-white text-black font-extrabold py-3 rounded-full text-sm hover:bg-gray-200 [@media(hover:hover)]:hover:scale-[1.02] transition-[transform,background-color] duration-[160ms] [transition-timing-function:var(--ease-out)] cursor-pointer flex items-center justify-center gap-2"
             >
               <span aria-hidden="true">📥</span> Открыть / Скачать
             </a>
@@ -150,7 +150,7 @@ export const MonsterCard = () => {
                   setCopyNotice("Не получилось скопировать. Попробуй ещё раз.");
                 }
               }}
-              className="flex-1 bg-white/5 hover:bg-white/10 text-white font-extrabold py-3 border border-white/10 rounded-full text-sm hover:scale-[1.02] transform transition-all cursor-pointer"
+              className="flex-1 bg-white/5 hover:bg-white/10 text-white font-extrabold py-3 border border-white/10 rounded-full text-sm [@media(hover:hover)]:hover:scale-[1.02] transition-[transform,background-color] duration-[160ms] [transition-timing-function:var(--ease-out)] cursor-pointer"
             >
               <span aria-hidden="true">🔗</span> Поделиться
             </button>

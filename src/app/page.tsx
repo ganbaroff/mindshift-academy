@@ -135,7 +135,7 @@ export default function HomePage() {
             <div className="flex flex-col gap-1.5">
               <Link
                 href="/sign-up"
-                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-base font-semibold text-white shadow-[0_0_40px_rgba(139,92,246,0.35)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-base font-semibold text-white shadow-[0_0_40px_rgba(139,92,246,0.35)] transition-transform [@media(hover:hover)]:hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t.parentCta}
                 <ArrowRight className="h-5 w-5" aria-hidden="true" />

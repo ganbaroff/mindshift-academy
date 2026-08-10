@@ -112,7 +112,7 @@ export function ReportProblemButton() {
             type="button"
             onClick={() => void send(note)}
             data-testid="report-problem-send"
-            className="min-h-11 flex-1 rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
+            className="min-h-11 flex-1 rounded-xl bg-violet-500 px-4 text-sm font-semibold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300"
           >
             Отправить
           </button>
@@ -135,7 +135,7 @@ export function ReportProblemButton() {
       aria-label={PROBLEM_REPORT_LABEL_RU}
       disabled={phase === "sending"}
       onClick={() => (canType ? setPhase("open") : void send(""))}
-      className="fixed bottom-24 left-3 z-50 inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full border border-white/10 bg-[var(--color-bg-base)]/90 px-3 text-xs text-white/60 backdrop-blur hover:text-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
+      className="fixed bottom-24 left-3 z-50 inline-flex min-h-11 min-w-11 items-center gap-2 rounded-full border border-white/10 bg-[var(--color-bg-base)]/90 px-3 text-xs text-white/60 backdrop-blur transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] hover:text-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-300 disabled:opacity-50"
       style={{ marginBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       {phase === "sending" ? (

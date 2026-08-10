@@ -60,7 +60,8 @@
     "test:access-request": "node tests/access-request.test.mjs",
     "test:invite": "node tests/family-invite.test.mjs",
     "test:ux-v11": "npx tsx tests/ux-v11-monster-journey.test.mjs",
-    "test:feedback": "npx tsx tests/problem-report.test.mjs"
+    "test:feedback": "npx tsx tests/problem-report.test.mjs",
+    "test:motion": "npx tsx scripts/e2e/motion-check.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.8.2",
