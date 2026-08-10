@@ -69,7 +69,7 @@ function ActivateInner() {
 
   if (state === "loading") {
     return (
-      <main className="grid min-h-screen place-items-center text-white/70">
+      <main className="grid min-h-screen place-items-center text-[var(--text-secondary)]">
         <Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none" />
       </main>
     );
@@ -86,8 +86,8 @@ function ActivateInner() {
       <main className="grid min-h-screen place-items-center px-6 text-center">
         <div className="max-w-md space-y-3">
           <CheckCircle2 className="mx-auto h-12 w-12 text-primary" />
-          <p className="text-2xl font-semibold text-white">Готово ✅</p>
-          <p className="text-white/70">
+          <p className="text-2xl font-semibold text-[var(--ink)]">Готово ✅</p>
+          <p className="text-[var(--text-secondary)]">
             Код активирован. Передайте его ребёнку — он войдёт сам, вам больше ничего делать не нужно.
           </p>
         </div>
@@ -100,16 +100,16 @@ function ActivateInner() {
       <div className="w-full max-w-md space-y-6">
         <div className="space-y-2 text-center">
           <ShieldCheck className="mx-auto h-10 w-10 text-primary" />
-          <h1 className="text-2xl font-semibold text-white">Разрешение для ребёнка</h1>
-          <p className="text-sm text-white/60">
-            Вы даёте согласие для аккаунта <strong className="text-white">{email}</strong>. Ребёнок будет
+          <h1 className="text-2xl font-semibold text-[var(--ink)]">Разрешение для ребёнка</h1>
+          <p className="text-sm text-[var(--text-muted)]">
+            Вы даёте согласие для аккаунта <strong className="text-[var(--ink)]">{email}</strong>. Ребёнок будет
             заниматься сам; вам нужно подтвердить только один раз.
           </p>
         </div>
 
         <fieldset className="space-y-3">
-          <legend className="mb-3 text-sm font-medium text-white/80">Согласия на обработку данных</legend>
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
+          <legend className="mb-3 text-sm font-medium text-[var(--text-secondary)]">Согласия на обработку данных</legend>
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm leading-6 text-[var(--ink)]/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
             <input
               type="checkbox"
               checked={optA}
@@ -118,7 +118,7 @@ function ActivateInner() {
             />
             <span>{OPT_A}</span>
           </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4 text-sm leading-6 text-white/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4 text-sm leading-6 text-[var(--ink)]/78 has-[:checked]:border-primary/50 has-[:checked]:bg-primary/[0.08]">
             <input
               type="checkbox"
               checked={optB}
@@ -139,7 +139,7 @@ function ActivateInner() {
           type="button"
           onClick={submit}
           disabled={busy || !optA || !optB}
-          className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <CheckCircle2 className="h-4 w-4" />}
           Подтвердить и активировать код
@@ -153,7 +153,7 @@ export default function ActivatePage() {
   return (
     <Suspense
       fallback={
-        <main className="grid min-h-screen place-items-center text-white/70">
+        <main className="grid min-h-screen place-items-center text-[var(--text-secondary)]">
           <Loader2 className="h-6 w-6 animate-spin motion-reduce:animate-none" />
         </main>
       }

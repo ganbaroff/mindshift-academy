@@ -10,20 +10,20 @@ export function OperatorContactLine({ className = "" }: { className?: string }) 
   return (
     <p
       data-testid="operator-contact"
-      className={`text-sm leading-6 text-white/70 ${className}`.trim()}
+      className={`text-sm leading-6 text-[var(--text-secondary)] ${className}`.trim()}
     >
       Связь с оператором: {name}
       {" · "}
       <a
         href={`mailto:${email}`}
-        className="font-medium text-primary-soft underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="font-medium text-[var(--color-secondary-dark)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {email}
       </a>
       {" · "}
       <a
         href={telHref}
-        className="font-medium text-primary-soft underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="font-medium text-[var(--color-secondary-dark)] underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         {phone}
       </a>

@@ -25,10 +25,10 @@ const ITEM_DISPLAY: Record<string, { emoji: string; label: string; rarity: strin
 };
 
 const RARITY_COLORS: Record<string, string> = {
-  "Обычный": "text-gray-400 bg-gray-500/10 border-gray-500/20",
-  "Редкий": "text-violet-400 bg-violet-500/10 border-violet-500/20",
+  "Обычный": "text-[var(--text-muted)] bg-gray-500/10 border-gray-500/20",
+  "Редкий": "text-violet-400 bg-[var(--surface-strong)] border-violet-500/20",
   "Эпический": "text-cyan-400 bg-cyan-500/10 border-cyan-500/20",
-  "Легендарный": "text-amber-400 bg-amber-500/10 border-amber-500/20",
+  "Легендарный": "text-amber-400 bg-[var(--color-accent)] border-[var(--color-accent-dark)]",
 };
 
 export const InventoryGrid = ({ items }: InventoryGridProps) => {
@@ -36,10 +36,10 @@ export const InventoryGrid = ({ items }: InventoryGridProps) => {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.02] p-6 text-center">
-        <Package className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-        <p className="text-sm font-semibold text-gray-400">Инвентарь пуст</p>
-        <p className="text-xs text-gray-500 mt-1">
+      <div className="rounded-[20px] border border-dashed border-[var(--border-color)] bg-[var(--surface-strong)] p-6 text-center">
+        <Package className="w-8 h-8 text-[var(--text-muted)] mx-auto mb-3" />
+        <p className="text-sm font-semibold text-[var(--text-muted)]">Инвентарь пуст</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">
           Заходи каждый день, чтобы получать награды через Календарь Наград!
         </p>
       </div>
@@ -50,7 +50,7 @@ export const InventoryGrid = ({ items }: InventoryGridProps) => {
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-violet-400" />
-        <h3 className="text-xs font-bold uppercase tracking-widest text-white/50">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--text-muted)]">
           Коллекция ({items.length})
         </h3>
       </div>
@@ -70,17 +70,17 @@ export const InventoryGrid = ({ items }: InventoryGridProps) => {
               initial={shouldReduceMotion ? false : { opacity: 0, y: 8 }}
               animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
               transition={shouldReduceMotion ? undefined : { delay: idx * 0.08, duration: 0.3 }}
-              className="rounded-2xl border border-white/8 bg-white/[0.03] p-3 flex flex-col items-center gap-2 hover:bg-white/[0.06] transition-colors"
+              className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 flex flex-col items-center gap-2 hover:bg-[var(--surface-strong)] transition-colors"
             >
               <span className="text-2xl" aria-hidden="true">{display.emoji}</span>
-              <span className="text-[11px] font-bold text-white/80 text-center leading-tight">
+              <span className="text-[11px] font-bold text-[var(--text-secondary)] text-center leading-tight">
                 {display.label}
               </span>
               <span className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${rarityClass}`}>
                 {display.rarity}
               </span>
               {item.itemType === "skin_shard" && (
-                <span className="text-[9px] text-gray-500 font-bold">Осколок</span>
+                <span className="text-[9px] text-[var(--text-muted)] font-bold">Осколок</span>
               )}
             </motion.div>
           );

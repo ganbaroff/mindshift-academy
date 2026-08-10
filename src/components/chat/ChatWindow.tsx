@@ -25,7 +25,7 @@ export const ChatWindow = () => {
       aria-live="polite"
       aria-relevant="additions"
       aria-label="Чат с питомцем"
-      className="flex-grow border border-white/5 bg-black/20 rounded-xl p-4 flex flex-col gap-4 overflow-y-auto max-h-[380px] min-h-[300px]"
+      className="flex-grow border border-[var(--border-color)] bg-[var(--surface-strong)] rounded-xl p-4 flex flex-col gap-4 overflow-y-auto max-h-[380px] min-h-[300px]"
     >
       {messages.map((msg) => (
         <div 
@@ -34,8 +34,8 @@ export const ChatWindow = () => {
         >
           <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0 overflow-hidden ${
             msg.sender === "user" 
-              ? "bg-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.3)] text-white" 
-              : "bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)] text-white"
+              ? "bg-[var(--color-primary)] shadow-[0_0_10px_rgba(139,92,246,0.3)] text-white" 
+              : "bg-cyan-500/10 border border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.1)] text-[var(--ink)]"
           }`}>
             {msg.sender === "user" ? (
               msg.avatar
@@ -45,7 +45,7 @@ export const ChatWindow = () => {
           </div>
           <div className={`p-3 rounded-2xl border text-sm leading-relaxed min-w-0 break-words ${
             msg.sender === "user"
-              ? "bg-violet-500/10 border-violet-500/20"
+              ? "bg-[var(--surface-strong)] border-violet-500/20"
               : "bg-cyan-500/5 border-cyan-500/10"
           }`}>
             {msg.text}

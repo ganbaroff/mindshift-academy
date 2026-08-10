@@ -425,7 +425,7 @@ export default function ThinkingSessionPage() {
             {lockedPrereq ? (
               <Link
                 href={`/session/${lockedPrereq}`}
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-violet-600 px-6 font-semibold hover:bg-[var(--color-primary)]"
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-primary)] px-6 font-semibold hover:bg-[var(--color-primary)]"
               >
                 Открыть предыдущую сессию
               </Link>
@@ -492,7 +492,7 @@ export default function ThinkingSessionPage() {
               type="button"
               disabled={formulationBusy}
               data-testid="formulation-submit"
-              className="min-h-11 w-full px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold disabled:opacity-50"
+              className="min-h-11 w-full px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold disabled:opacity-50"
               onClick={async () => {
                 setFormulationBusy(true);
                 setFormulationError(null);
@@ -545,7 +545,7 @@ export default function ThinkingSessionPage() {
               <button
                 type="button"
                 onClick={() => router.push(`/session/${nextSessionId}`)}
-                className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold"
+                className="min-h-11 px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold"
               >
                 Следующая сессия
               </button>
@@ -582,7 +582,7 @@ export default function ThinkingSessionPage() {
               setTaskIndex(firstOpen >= 0 ? firstOpen : 0);
               resetAttemptView();
             }}
-            className="min-h-11 px-6 py-3 rounded-full bg-violet-600 hover:bg-[var(--color-primary)] font-semibold"
+            className="min-h-11 px-6 py-3 rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary)] font-semibold"
           >
             Вернуться к заданиям
           </button>

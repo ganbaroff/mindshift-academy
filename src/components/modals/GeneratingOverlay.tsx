@@ -20,8 +20,8 @@ export const GeneratingOverlay = () => {
         <div className="absolute inset-0 rounded-full border-4 border-t-amber-500 border-r-cyan-400 border-b-violet-500 border-l-transparent animate-spin motion-reduce:animate-none duration-1000" />
         <span className="text-4xl animate-pulse motion-reduce:animate-none" aria-hidden="true">{activeSkin}</span>
       </div>
-      <h3 className="font-extrabold text-xl text-white mt-8 tracking-wide">Магия ИИ в процессе…</h3>
-      <p className="text-gray-400 text-sm mt-2 max-w-xs text-center leading-relaxed">
+      <h3 className="font-extrabold text-xl text-[var(--ink)] mt-8 tracking-wide">Магия ИИ в процессе…</h3>
+      <p className="text-[var(--text-muted)] text-sm mt-2 max-w-xs text-center leading-relaxed">
         DALL-E генерирует уникальное 3D-изображение твоего питомца <strong>{activeMonsterName}</strong>. Подожди немного!
       </p>
     </div>

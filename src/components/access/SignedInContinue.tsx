@@ -50,13 +50,13 @@ export function SignedInContinue({
   if (variant === "replace-form") {
     return (
       <div className="w-full max-w-md space-y-6 text-center" data-testid="signed-in-continue">
-        <h1 className="text-2xl font-semibold text-white">Ты уже внутри</h1>
-        <p className="text-sm text-white/70">
+        <h1 className="text-2xl font-semibold text-[var(--ink)]">Ты уже внутри</h1>
+        <p className="text-sm text-[var(--text-secondary)]">
           Код не нужен — можно продолжить с того места, где остановились.
         </p>
         <Link
           href={href}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90"
         >
           {labelRu}
           <ArrowRight className="h-4 w-4" />
@@ -70,10 +70,10 @@ export function SignedInContinue({
       className="relative z-10 mx-auto mb-2 flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-6 lg:px-8"
       data-testid="signed-in-continue"
     >
-      <p className="text-sm text-white/70">Вы уже вошли — можно продолжить обучение.</p>
+      <p className="text-sm text-[var(--text-secondary)]">Вы уже вошли — можно продолжить обучение.</p>
       <Link
         href={href}
-        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white"
+        className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-[var(--ink)]"
       >
         {labelRu}
         <ArrowRight className="h-4 w-4" />

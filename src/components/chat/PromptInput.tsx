@@ -271,16 +271,16 @@ export const PromptInput = () => {
 
   if (steps[4]?.status === "completed" && !generatedMonster) {
     return (
-      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-amber-500/10 border-2 border-dashed border-amber-500/40 text-center">
+      <div className="flex flex-col gap-4 p-5 rounded-2xl bg-[var(--color-accent)] border-2 border-dashed border-amber-500/40 text-center">
         <h3 className="font-extrabold text-lg text-amber-500 flex items-center justify-center gap-2">
           <CheckCircle2 className="w-5 h-5 text-amber-500 fill-amber-500/20" /> Все задания выполнены!
         </h3>
-        <p className="text-sm text-gray-300">
+        <p className="text-sm text-[var(--text-secondary)]">
           Твой ИИ-питомец {activeMonsterName} полностью настроен. Давай создадим его постоянную цифровую карточку!
         </p>
         <button 
           onClick={handleGenerateMonster}
-          className="w-full transform rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg transition-[transform,box-shadow,background-color] [@media(hover:hover)]:hover:scale-[1.02] hover:bg-[var(--color-primary-violet)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="w-full transform rounded-full bg-[var(--color-primary)] px-6 py-3.5 text-sm font-extrabold uppercase tracking-wider text-white shadow-lg transition-[transform,box-shadow,background-color] [@media(hover:hover)]:hover:scale-[1.02] hover:bg-[var(--color-primary-violet)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary-dark)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           ✨ Оживить и получить карточку монстра! ✨
         </button>
@@ -315,11 +315,11 @@ export const PromptInput = () => {
             ? "Исправь зрение монстра… (например: 'Это не кошка, это собака!')"
             : "Помоги дракончику пройти лабиринт! Напиши промпт с условием… (например: 'Если впереди стена, то поверни налево')"
         }
-        className="h-20 w-full resize-none rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white placeholder-gray-500 transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+        className="h-20 w-full resize-none rounded-xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm text-[var(--ink)] placeholder-gray-500 transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:border-violet-500 focus-visible:ring-1 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
       />
 
       <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4 text-xs text-gray-400">
+        <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
           <button
             onClick={toggleVoice}
             type="button"
@@ -328,7 +328,7 @@ export const PromptInput = () => {
             className={`flex h-8 w-8 items-center justify-center rounded-full border transition-[colors,border-color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
               isVoiceActive
                 ? "bg-cyan-500/20 border-cyan-500 text-cyan-400"
-                : "bg-white/5 border-white/10 text-gray-400 hover:text-white"
+                : "bg-[var(--surface-strong)] border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--ink)]"
             }`}
             title="Включить озвучку ответов роботом"
           >
@@ -342,7 +342,7 @@ export const PromptInput = () => {
           type="button"
           disabled={inputLocked || isSending}
           aria-busy={isSending}
-          className="flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-[var(--color-primary-violet)] hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+          className="flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-6 py-2.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-[transform,box-shadow,background-color] hover:-translate-y-0.5 hover:bg-[var(--color-primary-violet)] hover:shadow-violet-500/30 active:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-secondary-dark)] focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
           <span>{isSending ? "Отправка…" : "Отправить промпт"}</span>
           {isSending ? (

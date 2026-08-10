@@ -71,14 +71,14 @@ export function ManageConsent() {
 
   if (deleted) {
     return (
-      <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
-        <h2 className="text-2xl font-semibold text-white">Данные Academy удалены</h2>
-        <p role="status" className="mt-3 text-sm leading-6 text-white/64">
+      <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+        <h2 className="text-2xl font-semibold text-[var(--ink)]">Данные Academy удалены</h2>
+        <p role="status" className="mt-3 text-sm leading-6 text-[var(--ink)]/64">
           Прогресс, питомец, инвентарь и записи согласия удалены. Ваш родительский аккаунт Clerk не удалён.
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex min-h-[44px] items-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+          className="mt-6 inline-flex min-h-[44px] items-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
         >
           На главную
         </Link>
@@ -87,13 +87,13 @@ export function ManageConsent() {
   }
 
   return (
-    <section className="rounded-[28px] border border-white/10 bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
+    <section className="rounded-[28px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-white/45">
+          <p className="text-xs font-medium uppercase tracking-[0.28em] text-[var(--ink)]/45">
             Родительское согласие
           </p>
-          <h2 className="mt-2 text-2xl font-semibold text-white">Управление доступом ребёнка</h2>
+          <h2 className="mt-2 text-2xl font-semibold text-[var(--ink)]">Управление доступом ребёнка</h2>
         </div>
         {valid ? (
           <ShieldCheck className="h-5 w-5 text-secondary" aria-hidden />
@@ -102,7 +102,7 @@ export function ManageConsent() {
         )}
       </div>
 
-      <p className="mt-4 text-sm leading-6 text-white/64">
+      <p className="mt-4 text-sm leading-6 text-[var(--ink)]/64">
         {valid
           ? `Согласие активно${status?.parentEmail ? ` (${status.parentEmail})` : ""}. Чат ребёнка включён. Вы можете отозвать согласие в любой момент — тогда чат сразу отключится.`
           : status?.revoked
@@ -127,7 +127,7 @@ export function ManageConsent() {
                 type="button"
                 disabled={busy}
                 onClick={() => setConfirming(false)}
-                className="inline-flex min-h-[44px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08]"
+                className="inline-flex min-h-[44px] items-center rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-strong)]"
               >
                 Отмена
               </button>
@@ -136,7 +136,7 @@ export function ManageConsent() {
             <button
               type="button"
               onClick={() => setConfirming(true)}
-              className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+              className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-strong)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
               <ShieldOff className="h-4 w-4" />
               Отозвать согласие
@@ -145,7 +145,7 @@ export function ManageConsent() {
         ) : (
           <Link
             href="/consent"
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-[var(--ink)] transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
           >
             <ShieldCheck className="h-4 w-4" />
             Подтвердить согласие
@@ -153,9 +153,9 @@ export function ManageConsent() {
         )}
       </div>
 
-      <div className="mt-6 border-t border-white/10 pt-6">
-        <p className="text-sm font-semibold text-white">Удалить данные ребёнка</p>
-        <p className="mt-2 text-sm leading-6 text-white/58">
+      <div className="mt-6 border-t border-[var(--border-color)] pt-6">
+        <p className="text-sm font-semibold text-[var(--ink)]">Удалить данные ребёнка</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--ink)]/58">
           Удалятся прогресс, питомец, инвентарь и записи согласия в Academy. Родительский аккаунт останется, но это действие нельзя отменить.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -174,7 +174,7 @@ export function ManageConsent() {
                 type="button"
                 disabled={deleteBusy}
                 onClick={() => setDeleteConfirming(false)}
-                className="inline-flex min-h-[44px] items-center rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white/80 transition-colors hover:bg-white/[0.08]"
+                className="inline-flex min-h-[44px] items-center rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-strong)]"
               >
                 Отмена
               </button>

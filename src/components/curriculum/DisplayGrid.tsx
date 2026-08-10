@@ -71,7 +71,7 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
           } else if (isTarget) {
             cellClass += "border-cyan-400/40 bg-cyan-500/10";
           } else {
-            cellClass += "border-[var(--border-color)] bg-white/[0.03]";
+            cellClass += "border-[var(--border-color)] bg-[var(--surface-strong)]";
           }
 
           return <div key={k} className={cellClass} aria-hidden="true" tabIndex={-1} />;

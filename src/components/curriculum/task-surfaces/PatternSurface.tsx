@@ -70,7 +70,7 @@ export function PatternSurface({
         </div>
       ) : (
         <label className="grid gap-2 font-medium">Элементы короткого цикла через запятую
-          <input aria-label="Элементы короткого цикла" value={cycle} onChange={(event) => setCycle(event.target.value)} disabled={disabled} placeholder="красный, синий" className="min-h-11 rounded-xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 text-[var(--ink)] placeholder:text-slate-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]" />
+          <input aria-label="Элементы короткого цикла" value={cycle} onChange={(event) => setCycle(event.target.value)} disabled={disabled} placeholder="красный, синий" className="min-h-11 rounded-xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 text-[var(--ink)] placeholder:text-[var(--text-muted)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]" />
           <span className="text-sm font-normal text-[var(--text-muted)]">Монстр повторит правило {expandCount} раз. Не перечисляй готовый ответ целиком.</span>
         </label>
       )}

@@ -24,7 +24,7 @@ export const Header = () => {
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-[var(--border-color)] bg-[var(--color-bg-base)]/80 px-4 py-2.5 backdrop-blur-xl sm:px-8 sm:py-4">
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] text-lg font-extrabold text-white sm:h-10 sm:w-10 sm:text-xl">
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] text-lg font-extrabold text-[var(--ink)] sm:h-10 sm:w-10 sm:text-xl">
           {isChild ? "З" : "M"}
         </div>
         {/* Was a white→violet gradient clipped to the text, which on cream paper rendered
@@ -41,7 +41,7 @@ export const Header = () => {
         </div>
         
         <div className="hidden w-[150px] flex-col gap-1 sm:flex">
-          <div className="flex justify-between text-[11px] font-bold text-gray-400">
+          <div className="flex justify-between text-[11px] font-bold text-[var(--text-muted)]">
             <span>Уровень 2</span>
             <span className="tabular-nums">{totalXp} / 1000 XP</span>
           </div>
@@ -60,7 +60,7 @@ export const Header = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-amber-500/20 bg-[var(--surface-strong)] px-2 py-2 text-sm font-semibold text-amber-400 sm:px-4">
+        <div className="flex items-center gap-2 rounded-full border border-[var(--color-accent-dark)] bg-[var(--surface-strong)] px-2 py-2 text-sm font-semibold text-amber-400 sm:px-4">
           <span aria-hidden="true">💎</span>
           <span className="tabular-nums" suppressHydrationWarning>
             {crystals}

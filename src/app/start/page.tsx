@@ -64,10 +64,10 @@ export default function StartGuidePage() {
         <p className="text-xs font-medium uppercase tracking-[0.24em] text-warning">
           Закрытый тест · инструкция для семьи
         </p>
-        <h1 className="mt-3 text-balance text-3xl font-semibold text-white sm:text-4xl">
+        <h1 className="mt-3 text-balance text-3xl font-semibold text-[var(--ink)] sm:text-4xl">
           Как начать за три шага
         </h1>
-        <p className="mt-3 text-base leading-7 text-white/70">
+        <p className="mt-3 text-base leading-7 text-[var(--text-secondary)]">
           MindShift Academy — курс мышления для детей 8-11 лет. Ребёнок учит своего монстра точным
           командам и сам видит, что из этого выходит. Всё на русском, участие бесплатное.
         </p>
@@ -78,50 +78,50 @@ export default function StartGuidePage() {
             return (
               <li
                 key={step.title}
-                className="rounded-[22px] border border-white/10 bg-surface/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
+                className="rounded-[22px] border border-[var(--border-color)] bg-surface/90 p-6 shadow-[0_18px_60px_rgba(0,0,0,0.18)]"
               >
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/15 text-sm font-semibold text-primary-soft">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-primary/15 text-sm font-semibold text-[var(--color-secondary-dark)]">
                     {index + 1}
                   </span>
                   <div>
-                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-white/45">
+                    <p className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--ink)]/45">
                       {step.tag}
                     </p>
-                    <h2 className="mt-1 flex items-center gap-2 text-lg font-semibold text-white">
+                    <h2 className="mt-1 flex items-center gap-2 text-lg font-semibold text-[var(--ink)]">
                       <Icon className="h-4 w-4 text-warning" aria-hidden="true" />
                       {step.title}
                     </h2>
                   </div>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-white/68">{step.body}</p>
+                <p className="mt-3 text-sm leading-6 text-[var(--text-secondary)]">{step.body}</p>
               </li>
             );
           })}
         </ol>
 
         <section aria-labelledby="faq-title" className="mt-10">
-          <h2 id="faq-title" className="text-xl font-semibold text-white">
+          <h2 id="faq-title" className="text-xl font-semibold text-[var(--ink)]">
             Частые вопросы
           </h2>
           <dl className="mt-4 space-y-4">
             {answers.map((item) => (
-              <div key={item.q} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <dt className="text-sm font-semibold text-white">{item.q}</dt>
-                <dd className="mt-1.5 text-sm leading-6 text-white/65">{item.a}</dd>
+              <div key={item.q} className="rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-4">
+                <dt className="text-sm font-semibold text-[var(--ink)]">{item.q}</dt>
+                <dd className="mt-1.5 text-sm leading-6 text-[var(--text-secondary)]">{item.a}</dd>
               </div>
             ))}
           </dl>
         </section>
 
         <section className="mt-10 rounded-2xl border border-primary/20 bg-primary/[0.08] p-5">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-white">
-            <ShieldCheck className="h-4 w-4 text-primary-soft" aria-hidden="true" />
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-[var(--ink)]">
+            <ShieldCheck className="h-4 w-4 text-[var(--color-secondary-dark)]" aria-hidden="true" />
             Если письма нет
           </h2>
-          <p className="mt-2 text-sm leading-6 text-white/72">
+          <p className="mt-2 text-sm leading-6 text-[var(--ink)]/72">
             Проверьте папку «Спам». Если письма нет и там — оставьте{" "}
-            <Link href="/request-access" className="font-medium text-primary-soft underline-offset-4 hover:underline">
+            <Link href="/request-access" className="font-medium text-[var(--color-secondary-dark)] underline-offset-4 hover:underline">
               заявку
             </Link>{" "}
             или напишите оператору: мы открываем доступ вручную, небольшими группами.
@@ -131,7 +131,7 @@ export default function StartGuidePage() {
           </div>
         </section>
 
-        <p className="mt-8 text-xs leading-5 text-white/45">
+        <p className="mt-8 text-xs leading-5 text-[var(--ink)]/45">
           Эта страница не содержит вашего кода и вашей ссылки — их присылают только письмом.
           Страницу можно распечатать или сохранить.
         </p>
