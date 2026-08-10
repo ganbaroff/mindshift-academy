@@ -554,7 +554,34 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
      * what it says.
      */
     await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
-    await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 180000 });
+    try {
+      await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 180000 });
+    } catch (error) {
+      // A bare timeout here says "the workspace never appeared" and nothing else, which
+      // is indistinguishable between a slow compile, a failing API, a crashed bundle and
+      // a redirect. Make the first failure carry its own diagnosis.
+      const probe = await page.evaluate(async () => {
+        const out = {};
+        for (const path of ["/api/tasks/session/w1-s1", "/api/user"]) {
+          try {
+            const r = await fetch(path);
+            out[path] = { status: r.status, body: (await r.text()).slice(0, 300) };
+          } catch (e) {
+            out[path] = { error: String(e) };
+          }
+        }
+        return out;
+      });
+      throw new Error(
+        `warm-up: workspace never rendered.\n` +
+          `url=${page.url()}\n` +
+          `title=${await page.title()}\n` +
+          `body=${(await page.locator("body").innerText()).slice(0, 400)}\n` +
+          `api=${JSON.stringify(probe)}\n` +
+          `pageErrors=${pageErrors.join(" | ") || "(none)"}\n` +
+          `cause=${error instanceof Error ? error.message : String(error)}`
+      );
+    }
 
     // Before the drive: w1-s1 is the only session guaranteed open, and the drive would
     // destroy this state by passing every task in it.
