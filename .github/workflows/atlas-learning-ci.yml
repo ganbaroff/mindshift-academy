@@ -83,7 +83,13 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npx playwright install --with-deps chromium firefox webkit
+      # Public by design — this exact value ships to every browser — so it is a repository
+      # variable, not a secret. Without it ClerkProvider throws during render and the
+      # suite exits BLOCKED with instructions rather than pretending to have certified
+      # anything. Set it at Settings → Secrets and variables → Actions → Variables.
       - run: npm run test:e2e:current-sessions
+        env:
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       - name: Upload browser evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -144,6 +144,13 @@ function startServer(port, databaseUrl) {
       // precondition for turning the flag on in production; a run with the flag off
       // would certify the old screen and prove nothing about the new one.
       NEXT_PUBLIC_UX_V11: "1",
+      /**
+       * No placeholder Clerk key here, and that was tried: a syntactically valid but
+       * fake `pk_test_…` is WORSE than none. The key encodes the Clerk instance host, so
+       * the middleware dutifully proxies every request to a domain that does not exist
+       * and the whole app answers 404 — a failure that looks like a broken product.
+       * The suite refuses to start without a real publishable key instead (see below).
+       */
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -771,6 +778,44 @@ export async function runCurrentSessionUiSuite(options = {}) {
   let browser = null;
 
   try {
+    /**
+     * BLOCKED, not FAIL, when the app cannot even boot.
+     *
+     * Every page is wrapped in `ClerkProvider`, which throws during render without a
+     * publishable key. On a developer machine `next dev` reads one from an untracked
+     * `.env.local`, so this suite silently depended on one person's filesystem; on a
+     * clean CI checkout it does not exist and the run reported "the workspace never
+     * appeared", which reads like a product defect. It is a configuration gap.
+     *
+     * A publishable key is public by design — it ships to every browser — so this
+     * belongs in a repository *variable*, not a secret. Until one is set, say so in the
+     * verdict rather than dressing an unconfigured runner as a red gate or, worse, a
+     * green one.
+     */
+    // Two legitimate sources: the runner's environment (CI) or an untracked `.env.local`
+    // that `next dev` loads itself (a developer machine). Existence only — this never
+    // reads the file, so no key value can reach a log.
+    const bootable =
+      Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim()) ||
+      existsSync(join(root, ".env.local")) ||
+      existsSync(join(root, ".env"));
+    if (!bootable) {
+      const receipt = {
+        verdict: "BLOCKED",
+        startedAt,
+        finishedAt: new Date().toISOString(),
+        reason:
+          "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is not set. Every page renders through " +
+          "ClerkProvider, so the app cannot boot without it and nothing can be certified. " +
+          "Set it as a GitHub Actions repository variable (it is public by design — the " +
+          "same value ships to every browser). A fake key does not work: it encodes the " +
+          "Clerk instance host, so the middleware proxies to a domain that does not exist.",
+      };
+      persistReceipt(outDir, receipt);
+      console.error(`CURRENT_SESSION_UI BLOCKED: ${receipt.reason}`);
+      return receipt;
+    }
+
     assert.equal(hasDevTestBypass(new Headers({ "x-test-bypass": "true" }), "production"), false, "production rejects the test seam");
     await prepareDatabase(databaseUrl, process.env);
     const port = await freePort();
