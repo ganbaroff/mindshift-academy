@@ -1,0 +1,1737 @@
+{
+  "nodes": [
+    {
+      "id": "t-w1s1-collision",
+      "type": "file",
+      "file": "Задачи/w1s1-collision.md",
+      "x": 1400,
+      "y": 0,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-p1",
+      "type": "file",
+      "file": "Задачи/w1s1-p1.md",
+      "x": 1400,
+      "y": 82,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-p2",
+      "type": "file",
+      "file": "Задачи/w1s1-p2.md",
+      "x": 1400,
+      "y": 164,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-p3",
+      "type": "file",
+      "file": "Задачи/w1s1-p3.md",
+      "x": 1400,
+      "y": 246,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-p4",
+      "type": "file",
+      "file": "Задачи/w1s1-p4.md",
+      "x": 1400,
+      "y": 328,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-p5",
+      "type": "file",
+      "file": "Задачи/w1s1-p5.md",
+      "x": 1400,
+      "y": 410,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s1-transfer",
+      "type": "file",
+      "file": "Задачи/w1s1-transfer.md",
+      "x": 1400,
+      "y": 492,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "s-w1-s1",
+      "type": "file",
+      "file": "Сессии/w1-s1.md",
+      "x": 900,
+      "y": 238,
+      "width": 300,
+      "height": 80,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-collision",
+      "type": "file",
+      "file": "Задачи/w1s2-collision.md",
+      "x": 1400,
+      "y": 610,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-p1",
+      "type": "file",
+      "file": "Задачи/w1s2-p1.md",
+      "x": 1400,
+      "y": 692,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-p2",
+      "type": "file",
+      "file": "Задачи/w1s2-p2.md",
+      "x": 1400,
+      "y": 774,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-p3",
+      "type": "file",
+      "file": "Задачи/w1s2-p3.md",
+      "x": 1400,
+      "y": 856,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-p4",
+      "type": "file",
+      "file": "Задачи/w1s2-p4.md",
+      "x": 1400,
+      "y": 938,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-p5",
+      "type": "file",
+      "file": "Задачи/w1s2-p5.md",
+      "x": 1400,
+      "y": 1020,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s2-transfer",
+      "type": "file",
+      "file": "Задачи/w1s2-transfer.md",
+      "x": 1400,
+      "y": 1102,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "s-w1-s2",
+      "type": "file",
+      "file": "Сессии/w1-s2.md",
+      "x": 900,
+      "y": 848,
+      "width": 300,
+      "height": 80,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-collision",
+      "type": "file",
+      "file": "Задачи/w1s3-collision.md",
+      "x": 1400,
+      "y": 1220,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-p1",
+      "type": "file",
+      "file": "Задачи/w1s3-p1.md",
+      "x": 1400,
+      "y": 1302,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-p2",
+      "type": "file",
+      "file": "Задачи/w1s3-p2.md",
+      "x": 1400,
+      "y": 1384,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-p3",
+      "type": "file",
+      "file": "Задачи/w1s3-p3.md",
+      "x": 1400,
+      "y": 1466,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-p4",
+      "type": "file",
+      "file": "Задачи/w1s3-p4.md",
+      "x": 1400,
+      "y": 1548,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-p5",
+      "type": "file",
+      "file": "Задачи/w1s3-p5.md",
+      "x": 1400,
+      "y": 1630,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "t-w1s3-transfer",
+      "type": "file",
+      "file": "Задачи/w1s3-transfer.md",
+      "x": 1400,
+      "y": 1712,
+      "width": 340,
+      "height": 64,
+      "color": "1"
+    },
+    {
+      "id": "s-w1-s3",
+      "type": "file",
+      "file": "Сессии/w1-s3.md",
+      "x": 900,
+      "y": 1458,
+      "width": 300,
+      "height": 80,
+      "color": "1"
+    },
+    {
+      "id": "w-1",
+      "type": "file",
+      "file": "Недели/Неделя 1.md",
+      "x": 460,
+      "y": 848,
+      "width": 260,
+      "height": 90,
+      "color": "1"
+    },
+    {
+      "id": "t-w2s1-collision",
+      "type": "file",
+      "file": "Задачи/w2s1-collision.md",
+      "x": 1400,
+      "y": 1830,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s1-p1",
+      "type": "file",
+      "file": "Задачи/w2s1-p1.md",
+      "x": 1400,
+      "y": 1912,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s1-p2",
+      "type": "file",
+      "file": "Задачи/w2s1-p2.md",
+      "x": 1400,
+      "y": 1994,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s1-p3",
+      "type": "file",
+      "file": "Задачи/w2s1-p3.md",
+      "x": 1400,
+      "y": 2076,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s1-transfer",
+      "type": "file",
+      "file": "Задачи/w2s1-transfer.md",
+      "x": 1400,
+      "y": 2158,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "s-w2-s1",
+      "type": "file",
+      "file": "Сессии/w2-s1.md",
+      "x": 900,
+      "y": 1986,
+      "width": 300,
+      "height": 80,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s2-collision",
+      "type": "file",
+      "file": "Задачи/w2s2-collision.md",
+      "x": 1400,
+      "y": 2276,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s2-p1",
+      "type": "file",
+      "file": "Задачи/w2s2-p1.md",
+      "x": 1400,
+      "y": 2358,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s2-p2",
+      "type": "file",
+      "file": "Задачи/w2s2-p2.md",
+      "x": 1400,
+      "y": 2440,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s2-p3",
+      "type": "file",
+      "file": "Задачи/w2s2-p3.md",
+      "x": 1400,
+      "y": 2522,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s2-transfer",
+      "type": "file",
+      "file": "Задачи/w2s2-transfer.md",
+      "x": 1400,
+      "y": 2604,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "s-w2-s2",
+      "type": "file",
+      "file": "Сессии/w2-s2.md",
+      "x": 900,
+      "y": 2432,
+      "width": 300,
+      "height": 80,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s3-collision",
+      "type": "file",
+      "file": "Задачи/w2s3-collision.md",
+      "x": 1400,
+      "y": 2722,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s3-p1",
+      "type": "file",
+      "file": "Задачи/w2s3-p1.md",
+      "x": 1400,
+      "y": 2804,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s3-p2",
+      "type": "file",
+      "file": "Задачи/w2s3-p2.md",
+      "x": 1400,
+      "y": 2886,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s3-p3",
+      "type": "file",
+      "file": "Задачи/w2s3-p3.md",
+      "x": 1400,
+      "y": 2968,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "t-w2s3-transfer",
+      "type": "file",
+      "file": "Задачи/w2s3-transfer.md",
+      "x": 1400,
+      "y": 3050,
+      "width": 340,
+      "height": 64,
+      "color": "2"
+    },
+    {
+      "id": "s-w2-s3",
+      "type": "file",
+      "file": "Сессии/w2-s3.md",
+      "x": 900,
+      "y": 2878,
+      "width": 300,
+      "height": 80,
+      "color": "2"
+    },
+    {
+      "id": "w-2",
+      "type": "file",
+      "file": "Недели/Неделя 2.md",
+      "x": 460,
+      "y": 2432,
+      "width": 260,
+      "height": 90,
+      "color": "2"
+    },
+    {
+      "id": "t-w3s1-collision",
+      "type": "file",
+      "file": "Задачи/w3s1-collision.md",
+      "x": 1400,
+      "y": 3168,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s1-p1",
+      "type": "file",
+      "file": "Задачи/w3s1-p1.md",
+      "x": 1400,
+      "y": 3250,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s1-p2",
+      "type": "file",
+      "file": "Задачи/w3s1-p2.md",
+      "x": 1400,
+      "y": 3332,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s1-p3",
+      "type": "file",
+      "file": "Задачи/w3s1-p3.md",
+      "x": 1400,
+      "y": 3414,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s1-transfer",
+      "type": "file",
+      "file": "Задачи/w3s1-transfer.md",
+      "x": 1400,
+      "y": 3496,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "s-w3-s1",
+      "type": "file",
+      "file": "Сессии/w3-s1.md",
+      "x": 900,
+      "y": 3324,
+      "width": 300,
+      "height": 80,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s2-collision",
+      "type": "file",
+      "file": "Задачи/w3s2-collision.md",
+      "x": 1400,
+      "y": 3614,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s2-p1",
+      "type": "file",
+      "file": "Задачи/w3s2-p1.md",
+      "x": 1400,
+      "y": 3696,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s2-p2",
+      "type": "file",
+      "file": "Задачи/w3s2-p2.md",
+      "x": 1400,
+      "y": 3778,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s2-p3",
+      "type": "file",
+      "file": "Задачи/w3s2-p3.md",
+      "x": 1400,
+      "y": 3860,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s2-transfer",
+      "type": "file",
+      "file": "Задачи/w3s2-transfer.md",
+      "x": 1400,
+      "y": 3942,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "s-w3-s2",
+      "type": "file",
+      "file": "Сессии/w3-s2.md",
+      "x": 900,
+      "y": 3770,
+      "width": 300,
+      "height": 80,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s3-collision",
+      "type": "file",
+      "file": "Задачи/w3s3-collision.md",
+      "x": 1400,
+      "y": 4060,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s3-p1",
+      "type": "file",
+      "file": "Задачи/w3s3-p1.md",
+      "x": 1400,
+      "y": 4142,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s3-p2",
+      "type": "file",
+      "file": "Задачи/w3s3-p2.md",
+      "x": 1400,
+      "y": 4224,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s3-p3",
+      "type": "file",
+      "file": "Задачи/w3s3-p3.md",
+      "x": 1400,
+      "y": 4306,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "t-w3s3-transfer",
+      "type": "file",
+      "file": "Задачи/w3s3-transfer.md",
+      "x": 1400,
+      "y": 4388,
+      "width": 340,
+      "height": 64,
+      "color": "3"
+    },
+    {
+      "id": "s-w3-s3",
+      "type": "file",
+      "file": "Сессии/w3-s3.md",
+      "x": 900,
+      "y": 4216,
+      "width": 300,
+      "height": 80,
+      "color": "3"
+    },
+    {
+      "id": "w-3",
+      "type": "file",
+      "file": "Недели/Неделя 3.md",
+      "x": 460,
+      "y": 3770,
+      "width": 260,
+      "height": 90,
+      "color": "3"
+    },
+    {
+      "id": "t-w4s1-collision",
+      "type": "file",
+      "file": "Задачи/w4s1-collision.md",
+      "x": 1400,
+      "y": 4506,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s1-p1",
+      "type": "file",
+      "file": "Задачи/w4s1-p1.md",
+      "x": 1400,
+      "y": 4588,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s1-p2",
+      "type": "file",
+      "file": "Задачи/w4s1-p2.md",
+      "x": 1400,
+      "y": 4670,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s1-p3",
+      "type": "file",
+      "file": "Задачи/w4s1-p3.md",
+      "x": 1400,
+      "y": 4752,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s1-transfer",
+      "type": "file",
+      "file": "Задачи/w4s1-transfer.md",
+      "x": 1400,
+      "y": 4834,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "s-w4-s1",
+      "type": "file",
+      "file": "Сессии/w4-s1.md",
+      "x": 900,
+      "y": 4662,
+      "width": 300,
+      "height": 80,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s2-collision",
+      "type": "file",
+      "file": "Задачи/w4s2-collision.md",
+      "x": 1400,
+      "y": 4952,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s2-p1",
+      "type": "file",
+      "file": "Задачи/w4s2-p1.md",
+      "x": 1400,
+      "y": 5034,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s2-p2",
+      "type": "file",
+      "file": "Задачи/w4s2-p2.md",
+      "x": 1400,
+      "y": 5116,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s2-p3",
+      "type": "file",
+      "file": "Задачи/w4s2-p3.md",
+      "x": 1400,
+      "y": 5198,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s2-transfer",
+      "type": "file",
+      "file": "Задачи/w4s2-transfer.md",
+      "x": 1400,
+      "y": 5280,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "s-w4-s2",
+      "type": "file",
+      "file": "Сессии/w4-s2.md",
+      "x": 900,
+      "y": 5108,
+      "width": 300,
+      "height": 80,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s3-collision",
+      "type": "file",
+      "file": "Задачи/w4s3-collision.md",
+      "x": 1400,
+      "y": 5398,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s3-p1",
+      "type": "file",
+      "file": "Задачи/w4s3-p1.md",
+      "x": 1400,
+      "y": 5480,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s3-p2",
+      "type": "file",
+      "file": "Задачи/w4s3-p2.md",
+      "x": 1400,
+      "y": 5562,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s3-p3",
+      "type": "file",
+      "file": "Задачи/w4s3-p3.md",
+      "x": 1400,
+      "y": 5644,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "t-w4s3-transfer",
+      "type": "file",
+      "file": "Задачи/w4s3-transfer.md",
+      "x": 1400,
+      "y": 5726,
+      "width": 340,
+      "height": 64,
+      "color": "4"
+    },
+    {
+      "id": "s-w4-s3",
+      "type": "file",
+      "file": "Сессии/w4-s3.md",
+      "x": 900,
+      "y": 5554,
+      "width": 300,
+      "height": 80,
+      "color": "4"
+    },
+    {
+      "id": "w-4",
+      "type": "file",
+      "file": "Недели/Неделя 4.md",
+      "x": 460,
+      "y": 5108,
+      "width": 260,
+      "height": 90,
+      "color": "4"
+    },
+    {
+      "id": "t-w5s1-collision",
+      "type": "file",
+      "file": "Задачи/w5s1-collision.md",
+      "x": 1400,
+      "y": 5844,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s1-p1",
+      "type": "file",
+      "file": "Задачи/w5s1-p1.md",
+      "x": 1400,
+      "y": 5926,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s1-p2",
+      "type": "file",
+      "file": "Задачи/w5s1-p2.md",
+      "x": 1400,
+      "y": 6008,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s1-p3",
+      "type": "file",
+      "file": "Задачи/w5s1-p3.md",
+      "x": 1400,
+      "y": 6090,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s1-transfer",
+      "type": "file",
+      "file": "Задачи/w5s1-transfer.md",
+      "x": 1400,
+      "y": 6172,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "s-w5-s1",
+      "type": "file",
+      "file": "Сессии/w5-s1.md",
+      "x": 900,
+      "y": 6000,
+      "width": 300,
+      "height": 80,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s2-collision",
+      "type": "file",
+      "file": "Задачи/w5s2-collision.md",
+      "x": 1400,
+      "y": 6290,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s2-p1",
+      "type": "file",
+      "file": "Задачи/w5s2-p1.md",
+      "x": 1400,
+      "y": 6372,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s2-p2",
+      "type": "file",
+      "file": "Задачи/w5s2-p2.md",
+      "x": 1400,
+      "y": 6454,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s2-p3",
+      "type": "file",
+      "file": "Задачи/w5s2-p3.md",
+      "x": 1400,
+      "y": 6536,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s2-transfer",
+      "type": "file",
+      "file": "Задачи/w5s2-transfer.md",
+      "x": 1400,
+      "y": 6618,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "s-w5-s2",
+      "type": "file",
+      "file": "Сессии/w5-s2.md",
+      "x": 900,
+      "y": 6446,
+      "width": 300,
+      "height": 80,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s3-act1",
+      "type": "file",
+      "file": "Задачи/w5s3-act1.md",
+      "x": 1400,
+      "y": 6736,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s3-act1-prediction",
+      "type": "file",
+      "file": "Задачи/w5s3-act1-prediction.md",
+      "x": 1400,
+      "y": 6818,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s3-act1-practice",
+      "type": "file",
+      "file": "Задачи/w5s3-act1-practice.md",
+      "x": 1400,
+      "y": 6900,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s3-act2",
+      "type": "file",
+      "file": "Задачи/w5s3-act2.md",
+      "x": 1400,
+      "y": 6982,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "t-w5s3-act3",
+      "type": "file",
+      "file": "Задачи/w5s3-act3.md",
+      "x": 1400,
+      "y": 7064,
+      "width": 340,
+      "height": 64,
+      "color": "6"
+    },
+    {
+      "id": "s-w5-s3",
+      "type": "file",
+      "file": "Сессии/w5-s3.md",
+      "x": 900,
+      "y": 6892,
+      "width": 300,
+      "height": 80,
+      "color": "6"
+    },
+    {
+      "id": "w-5",
+      "type": "file",
+      "file": "Недели/Неделя 5.md",
+      "x": 460,
+      "y": 6446,
+      "width": 260,
+      "height": 90,
+      "color": "6"
+    },
+    {
+      "id": "root",
+      "type": "file",
+      "file": "00 Курс.md",
+      "x": 0,
+      "y": 3647,
+      "width": 260,
+      "height": 90
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-w1-s1-w1s1-collision",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-p1",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-p2",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-p3",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-p4",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-p4",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-p5",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-p5",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s1-w1s1-transfer",
+      "fromNode": "s-w1-s1",
+      "fromSide": "right",
+      "toNode": "t-w1s1-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-collision",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-p1",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-p2",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-p3",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-p4",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-p4",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-p5",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-p5",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s2-w1s2-transfer",
+      "fromNode": "s-w1-s2",
+      "fromSide": "right",
+      "toNode": "t-w1s2-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-collision",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-p1",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-p2",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-p3",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-p4",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-p4",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-p5",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-p5",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-s3-w1s3-transfer",
+      "fromNode": "s-w1-s3",
+      "fromSide": "right",
+      "toNode": "t-w1s3-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-w1-s1",
+      "fromNode": "w-1",
+      "fromSide": "right",
+      "toNode": "s-w1-s1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-w1-s2",
+      "fromNode": "w-1",
+      "fromSide": "right",
+      "toNode": "s-w1-s2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w1-w1-s3",
+      "fromNode": "w-1",
+      "fromSide": "right",
+      "toNode": "s-w1-s3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s1-w2s1-collision",
+      "fromNode": "s-w2-s1",
+      "fromSide": "right",
+      "toNode": "t-w2s1-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s1-w2s1-p1",
+      "fromNode": "s-w2-s1",
+      "fromSide": "right",
+      "toNode": "t-w2s1-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s1-w2s1-p2",
+      "fromNode": "s-w2-s1",
+      "fromSide": "right",
+      "toNode": "t-w2s1-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s1-w2s1-p3",
+      "fromNode": "s-w2-s1",
+      "fromSide": "right",
+      "toNode": "t-w2s1-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s1-w2s1-transfer",
+      "fromNode": "s-w2-s1",
+      "fromSide": "right",
+      "toNode": "t-w2s1-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s2-w2s2-collision",
+      "fromNode": "s-w2-s2",
+      "fromSide": "right",
+      "toNode": "t-w2s2-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s2-w2s2-p1",
+      "fromNode": "s-w2-s2",
+      "fromSide": "right",
+      "toNode": "t-w2s2-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s2-w2s2-p2",
+      "fromNode": "s-w2-s2",
+      "fromSide": "right",
+      "toNode": "t-w2s2-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s2-w2s2-p3",
+      "fromNode": "s-w2-s2",
+      "fromSide": "right",
+      "toNode": "t-w2s2-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s2-w2s2-transfer",
+      "fromNode": "s-w2-s2",
+      "fromSide": "right",
+      "toNode": "t-w2s2-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s3-w2s3-collision",
+      "fromNode": "s-w2-s3",
+      "fromSide": "right",
+      "toNode": "t-w2s3-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s3-w2s3-p1",
+      "fromNode": "s-w2-s3",
+      "fromSide": "right",
+      "toNode": "t-w2s3-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s3-w2s3-p2",
+      "fromNode": "s-w2-s3",
+      "fromSide": "right",
+      "toNode": "t-w2s3-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s3-w2s3-p3",
+      "fromNode": "s-w2-s3",
+      "fromSide": "right",
+      "toNode": "t-w2s3-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-s3-w2s3-transfer",
+      "fromNode": "s-w2-s3",
+      "fromSide": "right",
+      "toNode": "t-w2s3-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-w2-s1",
+      "fromNode": "w-2",
+      "fromSide": "right",
+      "toNode": "s-w2-s1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-w2-s2",
+      "fromNode": "w-2",
+      "fromSide": "right",
+      "toNode": "s-w2-s2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w2-w2-s3",
+      "fromNode": "w-2",
+      "fromSide": "right",
+      "toNode": "s-w2-s3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s1-w3s1-collision",
+      "fromNode": "s-w3-s1",
+      "fromSide": "right",
+      "toNode": "t-w3s1-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s1-w3s1-p1",
+      "fromNode": "s-w3-s1",
+      "fromSide": "right",
+      "toNode": "t-w3s1-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s1-w3s1-p2",
+      "fromNode": "s-w3-s1",
+      "fromSide": "right",
+      "toNode": "t-w3s1-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s1-w3s1-p3",
+      "fromNode": "s-w3-s1",
+      "fromSide": "right",
+      "toNode": "t-w3s1-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s1-w3s1-transfer",
+      "fromNode": "s-w3-s1",
+      "fromSide": "right",
+      "toNode": "t-w3s1-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s2-w3s2-collision",
+      "fromNode": "s-w3-s2",
+      "fromSide": "right",
+      "toNode": "t-w3s2-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s2-w3s2-p1",
+      "fromNode": "s-w3-s2",
+      "fromSide": "right",
+      "toNode": "t-w3s2-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s2-w3s2-p2",
+      "fromNode": "s-w3-s2",
+      "fromSide": "right",
+      "toNode": "t-w3s2-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s2-w3s2-p3",
+      "fromNode": "s-w3-s2",
+      "fromSide": "right",
+      "toNode": "t-w3s2-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s2-w3s2-transfer",
+      "fromNode": "s-w3-s2",
+      "fromSide": "right",
+      "toNode": "t-w3s2-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s3-w3s3-collision",
+      "fromNode": "s-w3-s3",
+      "fromSide": "right",
+      "toNode": "t-w3s3-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s3-w3s3-p1",
+      "fromNode": "s-w3-s3",
+      "fromSide": "right",
+      "toNode": "t-w3s3-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s3-w3s3-p2",
+      "fromNode": "s-w3-s3",
+      "fromSide": "right",
+      "toNode": "t-w3s3-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s3-w3s3-p3",
+      "fromNode": "s-w3-s3",
+      "fromSide": "right",
+      "toNode": "t-w3s3-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-s3-w3s3-transfer",
+      "fromNode": "s-w3-s3",
+      "fromSide": "right",
+      "toNode": "t-w3s3-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-w3-s1",
+      "fromNode": "w-3",
+      "fromSide": "right",
+      "toNode": "s-w3-s1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-w3-s2",
+      "fromNode": "w-3",
+      "fromSide": "right",
+      "toNode": "s-w3-s2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w3-w3-s3",
+      "fromNode": "w-3",
+      "fromSide": "right",
+      "toNode": "s-w3-s3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s1-w4s1-collision",
+      "fromNode": "s-w4-s1",
+      "fromSide": "right",
+      "toNode": "t-w4s1-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s1-w4s1-p1",
+      "fromNode": "s-w4-s1",
+      "fromSide": "right",
+      "toNode": "t-w4s1-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s1-w4s1-p2",
+      "fromNode": "s-w4-s1",
+      "fromSide": "right",
+      "toNode": "t-w4s1-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s1-w4s1-p3",
+      "fromNode": "s-w4-s1",
+      "fromSide": "right",
+      "toNode": "t-w4s1-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s1-w4s1-transfer",
+      "fromNode": "s-w4-s1",
+      "fromSide": "right",
+      "toNode": "t-w4s1-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s2-w4s2-collision",
+      "fromNode": "s-w4-s2",
+      "fromSide": "right",
+      "toNode": "t-w4s2-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s2-w4s2-p1",
+      "fromNode": "s-w4-s2",
+      "fromSide": "right",
+      "toNode": "t-w4s2-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s2-w4s2-p2",
+      "fromNode": "s-w4-s2",
+      "fromSide": "right",
+      "toNode": "t-w4s2-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s2-w4s2-p3",
+      "fromNode": "s-w4-s2",
+      "fromSide": "right",
+      "toNode": "t-w4s2-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s2-w4s2-transfer",
+      "fromNode": "s-w4-s2",
+      "fromSide": "right",
+      "toNode": "t-w4s2-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s3-w4s3-collision",
+      "fromNode": "s-w4-s3",
+      "fromSide": "right",
+      "toNode": "t-w4s3-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s3-w4s3-p1",
+      "fromNode": "s-w4-s3",
+      "fromSide": "right",
+      "toNode": "t-w4s3-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s3-w4s3-p2",
+      "fromNode": "s-w4-s3",
+      "fromSide": "right",
+      "toNode": "t-w4s3-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s3-w4s3-p3",
+      "fromNode": "s-w4-s3",
+      "fromSide": "right",
+      "toNode": "t-w4s3-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-s3-w4s3-transfer",
+      "fromNode": "s-w4-s3",
+      "fromSide": "right",
+      "toNode": "t-w4s3-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-w4-s1",
+      "fromNode": "w-4",
+      "fromSide": "right",
+      "toNode": "s-w4-s1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-w4-s2",
+      "fromNode": "w-4",
+      "fromSide": "right",
+      "toNode": "s-w4-s2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w4-w4-s3",
+      "fromNode": "w-4",
+      "fromSide": "right",
+      "toNode": "s-w4-s3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s1-w5s1-collision",
+      "fromNode": "s-w5-s1",
+      "fromSide": "right",
+      "toNode": "t-w5s1-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s1-w5s1-p1",
+      "fromNode": "s-w5-s1",
+      "fromSide": "right",
+      "toNode": "t-w5s1-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s1-w5s1-p2",
+      "fromNode": "s-w5-s1",
+      "fromSide": "right",
+      "toNode": "t-w5s1-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s1-w5s1-p3",
+      "fromNode": "s-w5-s1",
+      "fromSide": "right",
+      "toNode": "t-w5s1-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s1-w5s1-transfer",
+      "fromNode": "s-w5-s1",
+      "fromSide": "right",
+      "toNode": "t-w5s1-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s2-w5s2-collision",
+      "fromNode": "s-w5-s2",
+      "fromSide": "right",
+      "toNode": "t-w5s2-collision",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s2-w5s2-p1",
+      "fromNode": "s-w5-s2",
+      "fromSide": "right",
+      "toNode": "t-w5s2-p1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s2-w5s2-p2",
+      "fromNode": "s-w5-s2",
+      "fromSide": "right",
+      "toNode": "t-w5s2-p2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s2-w5s2-p3",
+      "fromNode": "s-w5-s2",
+      "fromSide": "right",
+      "toNode": "t-w5s2-p3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s2-w5s2-transfer",
+      "fromNode": "s-w5-s2",
+      "fromSide": "right",
+      "toNode": "t-w5s2-transfer",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s3-w5s3-act1",
+      "fromNode": "s-w5-s3",
+      "fromSide": "right",
+      "toNode": "t-w5s3-act1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s3-w5s3-act1-prediction",
+      "fromNode": "s-w5-s3",
+      "fromSide": "right",
+      "toNode": "t-w5s3-act1-prediction",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s3-w5s3-act1-practice",
+      "fromNode": "s-w5-s3",
+      "fromSide": "right",
+      "toNode": "t-w5s3-act1-practice",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s3-w5s3-act2",
+      "fromNode": "s-w5-s3",
+      "fromSide": "right",
+      "toNode": "t-w5s3-act2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-s3-w5s3-act3",
+      "fromNode": "s-w5-s3",
+      "fromSide": "right",
+      "toNode": "t-w5s3-act3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-w5-s1",
+      "fromNode": "w-5",
+      "fromSide": "right",
+      "toNode": "s-w5-s1",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-w5-s2",
+      "fromNode": "w-5",
+      "fromSide": "right",
+      "toNode": "s-w5-s2",
+      "toSide": "left"
+    },
+    {
+      "id": "e-w5-w5-s3",
+      "fromNode": "w-5",
+      "fromSide": "right",
+      "toNode": "s-w5-s3",
+      "toSide": "left"
+    },
+    {
+      "id": "e-root-w1",
+      "fromNode": "root",
+      "fromSide": "right",
+      "toNode": "w-1",
+      "toSide": "left",
+      "label": "Точность → уши"
+    },
+    {
+      "id": "e-root-w2",
+      "fromNode": "root",
+      "fromSide": "right",
+      "toNode": "w-2",
+      "toSide": "left",
+      "label": "Порядок → руки"
+    },
+    {
+      "id": "e-root-w3",
+      "fromNode": "root",
+      "fromSide": "right",
+      "toNode": "w-3",
+      "toSide": "left",
+      "label": "Правило → рог"
+    },
+    {
+      "id": "e-root-w4",
+      "fromNode": "root",
+      "fromSide": "right",
+      "toNode": "w-4",
+      "toSide": "left",
+      "label": "Образец → узор на спине"
+    },
+    {
+      "id": "e-root-w5",
+      "fromNode": "root",
+      "fromSide": "right",
+      "toNode": "w-5",
+      "toSide": "left",
+      "label": "Перенос → крылья"
+    }
+  ]
+}
