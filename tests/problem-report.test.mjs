@@ -123,6 +123,16 @@ console.log("\n=== the route enforces it, not the button ===");
   check("and points somewhere real", button.includes("report-problem-anonymous"));
 }
 
+// Every screen a child can be standing on must classify as one, or `noteAllowed` hands
+// them a free-text box that exists only for a consenting adult. /map and /continue shipped
+// on the wrong side of that line.
+for (const path of ["/map", "/continue", "/session/w1-s1", "/onboarding"]) {
+  check(`${path} is a child screen`, classifySurface(path) === "child");
+  check(`${path} offers no note field`, noteAllowed(classifySurface(path)) === false);
+}
+check("the parent dashboard is still a parent screen", classifySurface("/dashboard") === "parent");
+check("and a parent may still write a note", noteAllowed(classifySurface("/dashboard")) === true);
+
 console.log(
   `\n${fail === 0 ? "PROBLEM REPORT: all passed" : `PROBLEM REPORT: ${fail} FAILED`} (${pass} passed)\n`
 );

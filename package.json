@@ -62,7 +62,8 @@
     "test:ux-v11": "npx tsx tests/ux-v11-monster-journey.test.mjs",
     "test:feedback": "npx tsx tests/problem-report.test.mjs",
     "test:motion": "npx tsx scripts/e2e/motion-check.mjs",
-    "test:touch-targets": "npx tsx scripts/e2e/touch-target-check.mjs"
+    "test:touch-targets": "npx tsx scripts/e2e/touch-target-check.mjs",
+    "test:map": "npx tsx scripts/e2e/map-check.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.8.2",
