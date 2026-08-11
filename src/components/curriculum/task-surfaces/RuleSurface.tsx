@@ -13,14 +13,19 @@ type Props = TaskPrimaryActionProps & {
 };
 
 const TILE_LABELS = { wall: "стена", open: "свободно", trap: "ловушка", goal: "цель" } as const;
-const ACTION_LABELS: Record<RuleAction, string> = {
+// A literal, not `Record<RuleAction, string>`: an action id is now any string a world
+// declares, so a Record would type this as an index signature and lose the five keys.
+const ACTION_LABELS = {
   step: "шагнуть",
   turn_left: "повернуть налево",
   turn_right: "повернуть направо",
   wait: "подождать",
   stop: "остановиться",
-};
-const ACTIONS = Object.keys(ACTION_LABELS) as RuleAction[];
+} as const;
+type CorridorAction = keyof typeof ACTION_LABELS;
+const ACTIONS = Object.keys(ACTION_LABELS) as CorridorAction[];
+const actionLabel = (action: string): string =>
+  (ACTION_LABELS as Record<string, string>)[action] ?? action;
 type RuleChoice = RuleAction | "otherwise";
 
 export function buildRuleProgram(
@@ -53,7 +58,16 @@ export function RuleSurface({
   disabled,
   onSubmit,
 }: Props) {
-  const tiles = [...new Set(maps.map((map) => map.ahead))];
+  // A map now carries a signal bag; `ahead` is the corridor's one signal. Read the bag
+  // first so this keeps working when a world declares a second signal, and drop anything
+  // that has no `ahead` at all rather than rendering an undefined row.
+  const tiles = [
+    ...new Set(
+      maps
+        .map((map) => (map.signals?.ahead ?? map.ahead) as RuleMapCell | undefined)
+        .filter((tile): tile is RuleMapCell => Boolean(tile))
+    ),
+  ];
   const [actions, setActions] = useState<Partial<Record<RuleMapCell, RuleChoice>>>({});
   const [fallback, setFallback] = useState<RuleAction | "">("");
   const complete =
@@ -89,7 +103,7 @@ export function RuleSurface({
             className="min-h-11 rounded-lg border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
           >
             <option value="">Выбрать действие</option>
-            {ACTIONS.map((action) => <option key={action} value={action}>{ACTION_LABELS[action]}</option>)}
+            {ACTIONS.map((action) => <option key={action} value={action}>{actionLabel(action)}</option>)}
           </select>
         </label>
         <p className="text-sm text-[var(--text-secondary)]">Для каждого случая выбери отдельное действие или ветку «иначе». Нужны оба вида.</p>
@@ -104,7 +118,7 @@ export function RuleSurface({
             >
               <option value="">Выбрать действие</option>
               <option value="otherwise">Использовать ветку «иначе»</option>
-              {ACTIONS.map((action) => <option key={action} value={action}>{ACTION_LABELS[action]}</option>)}
+              {ACTIONS.map((action) => <option key={action} value={action}>{actionLabel(action)}</option>)}
             </select>
             <span className="sr-only">Случай {index + 1}</span>
           </label>

@@ -59,3 +59,90 @@ render sorted by label.
 5. **`grid-draw`, `rule-runner`, `pattern-expand`, `claim-check` are already data-driven** —
    targets, maps, patterns and claims live in content. Those four need authoring, not
    engineering. `sequence-world` was the only family that needed the engine opened up.
+
+---
+
+# The plan for weeks 1, 3, 4, 5
+
+## The rule the old course broke
+
+A task varies along three axes: the **world** (what the monster is doing), the **thinking**
+(what the child has to decide), and the **tier** (how much help is withdrawn). The old course
+varied only the tier. Week 2's sandwich was the loudest case, but week 1 repeats one sentence
+six times for the same reason.
+
+So, for every week from here:
+
+- **The world changes between sessions.** Not a reskin — a different situation with different
+  consequences. Week 2's plant world exists because a forgotten step there is invisible until
+  the end, which the kitchen cannot teach.
+- **The thinking escalates inside a session.** Collision → practice → transfer must each ask
+  for something the previous one did not.
+- **The transfer task always leaves the world it practised.** This is now enforced for week 2
+  and will be enforced for all five.
+- **A prompt names the finished thing.** «Сделай так, чтобы совпало» names nothing. «Собери
+  лестницу из трёх ступенек» does.
+
+## What each week becomes
+
+**Week 1 · точность · `grid-draw` · 4×4 grid (`GRID_SIZE = 4`), 21 tasks today.**
+Sixteen cells cannot carry twenty-one distinct tasks, which is why six of them open with the
+same sentence. Cut to 5–6 per session (matching every other week), and give each session a
+picture world that says what is being built: s1 rooms of a house (solid blocks, easy to
+describe), s2 letters and signs (scattered cells — hard to describe without «кроме»), s3 a
+path across the grid (order and adjacency matter). Precision is the skill, so difficulty comes
+from how hard the picture is to SAY, not from how many cells it has.
+
+**Week 3 · правило · `rule-runner`, 15 tasks.**
+The corridor is hardcoded the way the sandwich was: conditions are one tile ahead
+(`open|wall|trap|goal`), actions are five verbs. **Decision point, not an agent's call:**
+either (a) content-only — rename the situation per session (робот в коридоре → поливальная
+машина, где ловушка это клумба → курьер на четырёх дорогах) and carry the variety in the maps,
+or (b) open the engine as week 2's was, adding a second condition kind (fuel, cargo, time) so
+the rule itself gets harder. (a) is one day and risks being a costume; (b) is three days and
+is the honest fix. Default if nobody chooses: (a) plus more maps, including hidden ones, and
+say plainly in the PR that it is a reskin.
+
+**Week 4 · образец · `pattern-expand`, 15 tasks.**
+`PatternRule` is `arithmetic{start,step}` or `cycle{items}` — content is entirely free. Nothing
+blocks variety here; it was simply never written. Numbers, colours, days of the week, dance
+steps, drum beats. Lowest risk, so it goes first as the pattern-setter for the rest.
+
+**Week 5 · перенос · `claim-check` + `rule-runner`, 15 tasks.**
+Claims are free text with truth labels — fully authorable. The capstone should pull its claims
+from the four worlds the child has actually been in (sandwich, plant, leaving, and week 1's
+pictures), which is what makes it a capstone rather than a sixth week.
+
+## Order of work, and why this order
+
+1. **The invariant test first, red.** `tests/curriculum-variety.test.mjs` asserting: no week
+   uses one world for all three sessions; every transfer leaves its practised world; no prompt
+   sentence appears twice in a week; every session carries the brief. It fails on four weeks.
+   Then each week's PR turns part of it green. Curriculum by red-green, not by opinion.
+2. **Week 4** — pure authoring, no engine, no schema change. Proves the shape of the work.
+3. **Week 1** — the trim is the risky part (see below), so it goes second while attention is high.
+4. **Week 5** — depends on 1 and 4 existing, because its claims quote them.
+5. **Week 3** — last, because it is the one that may need an engineering decision.
+6. **Sweep** — briefs everywhere, and every session's `explanationRu` naming the part the
+   monster grows that week. Right now nothing in a task ever mentions the monster.
+
+**One PR per week.** The content is Russian prose aimed at eight-year-olds; the founder should
+be able to read one week and reject it without unpicking five.
+
+## Risks, named before they bite
+
+- **Cutting week 1 from 21 tasks to ~16 changes the economy.** 3 crystals per first pass and
+  hints cost 5. Fewer tasks means fewer crystals before the first hint a child wants. Check
+  `STARTER_CRYSTALS`/`TASK_PASS_CRYSTAL_REWARD` against the new count, in the same PR.
+- **The browser gate asserts 81 tasks.** It is a coverage receipt, not a constant to protect —
+  update it in the same commit that changes the count, never separately.
+- **`practiceRequired`, `minTier`, `requireCollision`, `requirePrediction`** are per session and
+  are what `sessionComplete` uses. Changing task counts without them is how a session becomes
+  impossible to finish.
+- **Deleting tasks orphans progress.** `TaskAttempt` rows reference `taskId`. A child mid-pilot
+  who passed `w1s1-p5` keeps a row pointing at a task that no longer exists;
+  `isCurriculumSessionComplete` recomputes from the CURRENT task list, so their session can
+  silently un-complete. Either keep ids stable and only rewrite text, or accept the reset and
+  say so. **Default: keep every task id that survives, and never renumber.**
+- **Reskinning is not variety.** If a session's story changes but the child's decision does
+  not, the PR must say so in those words rather than claim a rework.

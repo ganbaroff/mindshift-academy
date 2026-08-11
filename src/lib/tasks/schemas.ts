@@ -30,9 +30,22 @@ export const sequenceProgramSchema = z.discriminatedUnion("status", [
   }),
 ]);
 
-const ruleActionSchema = z.enum(["step", "turn_left", "turn_right", "wait", "stop"]);
+// An action id is whatever the task's rule world declares, so the shape is validated here
+// and the VOCABULARY is checked against that world in `parseRuleProgram` — the same split
+// the sequence family uses. A bare `z.string()` here would let anything through, so it is
+// bounded: short, and no whitespace or punctuation an id never contains.
+const ruleActionSchema = z
+  .string()
+  .min(1)
+  .max(32)
+  .regex(/^[a-z][a-z0-9_]*$/, "action id");
 const ruleConditionSchema = z.union([
   z.object({ kind: z.literal("tile"), value: z.enum(["wall", "open", "trap", "goal"]) }),
+  z.object({
+    kind: z.literal("signal"),
+    signal: z.string().min(1).max(32).regex(/^[a-z][a-z0-9_]*$/, "signal id"),
+    value: z.string().min(1).max(32).regex(/^[a-z][a-z0-9_]*$/, "signal value"),
+  }),
   z.object({ kind: z.literal("always") }),
 ]);
 

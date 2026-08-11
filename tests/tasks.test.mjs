@@ -197,6 +197,88 @@ console.log("\n=== 7. claim-check executor (edge cases) ===");
 }
 
 // ---------------------------------------------------------------------------
+// Rule worlds — the engine stopped deciding what the right answer was
+// ---------------------------------------------------------------------------
+{
+  /**
+   * The pre-2026-08-11 engine, copied verbatim in behaviour, so "the shim changes nothing"
+   * is a proof and not a promise. It is the ONLY place the three old success regimes still
+   * exist; when the last legacy map is rewritten, this and the shim both go.
+   */
+  const legacyPass = (map, action) => {
+    const avoid = action === "stop" || action === "wait" || action === "turn_left" || action === "turn_right";
+    if (map.successWhen === "goal") {
+      if (map.ahead === "goal") return action === "step";
+      if (map.ahead === "wall" || map.ahead === "trap") return avoid;
+      return action === "step";
+    }
+    if (map.successWhen === "stop_on_trap") {
+      if (map.ahead === "trap") return avoid;
+      return action === "step";
+    }
+    if (map.ahead === "wall") return avoid;
+    return action === "step";
+  };
+
+  const legacyMaps = loadCurriculum()
+    .flatMap((session) => session.tasks)
+    .flatMap((task) => task.ruleMaps ?? [])
+    .filter((map) => typeof map.ahead === "string");
+  check("the course still has legacy maps to protect", legacyMaps.length >= 70, String(legacyMaps.length));
+
+  let mismatches = 0;
+  for (const map of legacyMaps) {
+    for (const action of ["step", "turn_left", "turn_right", "wait", "stop"]) {
+      const program = { rules: [{ if: { kind: "always" }, then: action }] };
+      const now = checkRuleRunner(executeRuleRunner(program, [map])).pass;
+      if (now !== legacyPass(map, action)) mismatches += 1;
+    }
+  }
+  check(
+    `every legacy map keeps its old verdict for every action (${legacyMaps.length} maps × 5)`,
+    mismatches === 0,
+    `${mismatches} verdicts changed`
+  );
+
+  // The answer moved into content: a map can now say what counts as right.
+  const authored = {
+    id: "m-authored",
+    signals: { ahead: "trap" },
+    expect: ["wait"],
+    okRu: "я подождал у ловушки",
+    missRu: "я не подождал",
+  };
+  const waited = executeRuleRunner({ rules: [{ if: { kind: "always" }, then: "wait" }] }, [authored]);
+  check("an authored map accepts exactly what it says", checkRuleRunner(waited).pass);
+  const stopped = executeRuleRunner({ rules: [{ if: { kind: "always" }, then: "stop" }] }, [authored]);
+  check(
+    "and refuses what the old engine would have accepted",
+    !checkRuleRunner(stopped).pass,
+    "stop passed a map that expects wait"
+  );
+  check("the monster uses the map's own words", waited.results[0].note.includes("я подождал у ловушки"));
+
+  // Conditions can name a signal now, not only «что впереди».
+  const bySignal = executeRuleRunner(
+    { rules: [{ if: { kind: "signal", signal: "ahead", value: "trap" }, then: "wait" }] },
+    [authored]
+  );
+  check("a signal condition matches the same situation", checkRuleRunner(bySignal).pass);
+
+  // An action id reaching this engine came through the interpreter, so it is
+  // model-influenced. It must never be printed back to a child verbatim.
+  const bogus = executeRuleRunner({ rules: [{ if: { kind: "always" }, then: "delete_all" }] }, [authored]);
+  check("an unknown action does not pass", !checkRuleRunner(bogus).pass);
+  check(
+    "and is never echoed to the child",
+    !bogus.results[0].note.includes("delete_all"),
+    bogus.results[0].note
+  );
+
+  check("no rules at all is still not a pass", !checkRuleRunner(executeRuleRunner({ rules: [] }, [authored])).pass);
+}
+
+// ---------------------------------------------------------------------------
 // Sequence worlds — the week-2 family stopped being one hardcoded sandwich
 // ---------------------------------------------------------------------------
 {

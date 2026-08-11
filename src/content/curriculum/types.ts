@@ -1,5 +1,5 @@
 import type { TaskFamilyId } from "@/lib/tasks/types";
-import type { RuleMap } from "@/lib/tasks/rule-runner";
+import { normalizeRuleMap, type RuleMap } from "@/lib/tasks/rule-runner";
 import type { Claim } from "@/lib/tasks/claim-check";
 
 /** Crystal cost to reveal one task's scaffold hint. */
@@ -84,7 +84,18 @@ export type SessionContent = {
 
 /** Public claim — ground-truth stripped (never send answer key to client). */
 export type PublicClaim = Omit<Claim, "truth">;
-export type PublicRuleMap = Omit<RuleMap, "successWhen">;
+/**
+ * What a map may tell the browser: the situation, never the answer.
+ *
+ * `expect` — the set of actions that count as right — is the answer key and stays on the
+ * server, exactly like a sequence world's requirements. `ahead` is kept alongside `signals`
+ * because the current surface is a corridor and reads it directly.
+ */
+export type PublicRuleMap = {
+  id: string;
+  signals: Record<string, string>;
+  ahead?: string;
+};
 
 /** Public session payload — hints stripped until purchased. */
 export type PublicContentTask = Omit<
@@ -112,7 +123,16 @@ export function toPublicSession(session: SessionContent): PublicSessionContent {
             ? { claims: claims.map((claim) => ({ id: claim.id, text: claim.text })) }
             : {}),
           ...(ruleMaps
-            ? { ruleMaps: ruleMaps.map(({ id, ahead }) => ({ id, ahead })) }
+            ? {
+                ruleMaps: ruleMaps.map((map) => {
+                  const situation = normalizeRuleMap(map);
+                  return {
+                    id: situation.id,
+                    signals: situation.signals,
+                    ahead: situation.signals.ahead,
+                  };
+                }),
+              }
             : {}),
           hintAvailable: Boolean(hintRu.trim()),
         };
