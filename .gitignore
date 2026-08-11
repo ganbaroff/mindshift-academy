@@ -93,3 +93,6 @@ docs/release/_w4_drill_workspace/drill-console.log
 
 # Screenshots produced by test:map — evidence, not source.
 /evidence/
+
+# Drift check scratch dir for `npm run vault:check`.
+/.vault-check/

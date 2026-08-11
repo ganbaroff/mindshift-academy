@@ -1,0 +1,3 @@
+# The vault is generated with LF. Without this, Windows checkout rewrites it to CRLF and
+# `npm run vault:check` reports drift on every file that never changed.
+curriculum-vault/** text eol=lf
