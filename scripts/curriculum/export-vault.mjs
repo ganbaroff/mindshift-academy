@@ -84,6 +84,46 @@ function note(frontmatter, body) {
   return `---\n${yaml}\n---\n\n${body.trim()}\n`;
 }
 
+/** The answer key for one task, as markdown lines. Shared by the notes and the HTML tree. */
+function answerBlock(task) {
+  const answer = [];
+  if (task.target) {
+    answer.push(`## Ответ: поле ${GRID_SIZE}×${GRID_SIZE}`);
+    const filled = new Set(task.target.map(([r, c]) => `${r},${c}`));
+    answer.push("```");
+    for (let r = 0; r < GRID_SIZE; r += 1) {
+      answer.push(
+        Array.from({ length: GRID_SIZE }, (_, c) => (filled.has(`${r},${c}`) ? "██" : "··")).join(" ")
+      );
+    }
+    answer.push("```");
+    answer.push(`Координаты (0-based): \`${JSON.stringify(task.target)}\``);
+  }
+  if (task.ruleMaps) {
+    answer.push("## Ответ: карты правил");
+    answer.push("| карта | ситуация | верные действия |");
+    answer.push("|---|---|---|");
+    for (const map of task.ruleMaps) {
+      const s = normalizeRuleMap(map);
+      answer.push(`| ${s.id} | ${JSON.stringify(s.signals)} | ${s.expect.join(" / ")} |`);
+    }
+  }
+  if (task.patternExpected) {
+    answer.push("## Ответ: ряд");
+    answer.push(task.patternExpected.join(" → "));
+    answer.push(`Членов развернуть: ${task.patternExpandCount ?? task.patternExpected.length}`);
+  }
+  if (task.claims) {
+    answer.push("## Ответ: утверждения");
+    answer.push("| утверждение | правда? |");
+    answer.push("|---|---|");
+    for (const claim of task.claims) {
+      answer.push(`| ${claim.text} | ${claim.truth ? "да" : "**нет**"} |`);
+    }
+  }
+  return answer;
+}
+
 function write(relative, contents) {
   const path = join(outDir, relative);
   mkdirSync(dirname(path), { recursive: true });
@@ -236,42 +276,7 @@ ${issues.length ? `## Валидатор ругается\n${issues.map((i) => `
   );
 
   for (const task of session.tasks) {
-    const answer = [];
-    if (task.target) {
-      answer.push(`## Ответ: поле ${GRID_SIZE}×${GRID_SIZE}`);
-      const filled = new Set(task.target.map(([r, c]) => `${r},${c}`));
-      answer.push("```");
-      for (let r = 0; r < GRID_SIZE; r += 1) {
-        answer.push(
-          Array.from({ length: GRID_SIZE }, (_, c) => (filled.has(`${r},${c}`) ? "██" : "··")).join(" ")
-        );
-      }
-      answer.push("```");
-      answer.push(`Координаты (0-based): \`${JSON.stringify(task.target)}\``);
-    }
-    if (task.ruleMaps) {
-      answer.push("## Ответ: карты правил");
-      answer.push("| карта | ситуация | верные действия |");
-      answer.push("|---|---|---|");
-      for (const map of task.ruleMaps) {
-        const s = normalizeRuleMap(map);
-        answer.push(`| ${s.id} | ${JSON.stringify(s.signals)} | ${s.expect.join(" / ")} |`);
-      }
-    }
-    if (task.patternExpected) {
-      answer.push("## Ответ: ряд");
-      answer.push(task.patternExpected.join(" → "));
-      answer.push(`Членов развернуть: ${task.patternExpandCount ?? task.patternExpected.length}`);
-    }
-    if (task.claims) {
-      answer.push("## Ответ: утверждения");
-      answer.push("| утверждение | правда? |");
-      answer.push("|---|---|");
-      for (const claim of task.claims) {
-        answer.push(`| ${claim.text} | ${claim.truth ? "да" : "**нет**"} |`);
-      }
-    }
-
+    const answer = answerBlock(task);
     write(
       `Задачи/${task.id}.md`,
       note(
@@ -516,6 +521,176 @@ for (const week of COURSE_WEEKS) {
 }
 
 write("Курс.canvas", `${JSON.stringify({ nodes, edges }, null, 2)}\n`);
+
+// ── animated tree ───────────────────────────────────────────────────────────
+// One self-contained file: no CDN, no build, no Obsidian. Double-click it and the whole
+// course unfolds. Canvas needs Obsidian and does not animate; this opens on a phone.
+//
+// The expansion animates `grid-template-rows: 0fr → 1fr`, which is the only way to animate
+// to a height nobody knows in advance without measuring in JS. Children stagger in behind
+// it. Under prefers-reduced-motion everything still opens — instantly, because the point is
+// seeing the course, not watching it move.
+const model = COURSE_WEEKS.map((week) => ({
+  week: week.week,
+  ideaRu: week.ideaRu,
+  partGrownRu: week.partGrownRu,
+  partMeaningRu: week.partMeaningRu,
+  sessions: curriculum
+    .filter((s) => s.week === week.week)
+    .map((session) => ({
+      id: session.id,
+      titleRu: session.titleRu,
+      misconception: session.misconception,
+      explanationRu: session.explanationRu,
+      dinnerQuestionRu: session.dinnerQuestionRu,
+      tasks: session.tasks.map((task) => ({
+        id: task.id,
+        role: task.role,
+        roleRu: ROLE_RU[task.role] ?? task.role,
+        family: task.family,
+        worldId: task.worldId ?? null,
+        tier: task.tier,
+        goalRu: task.goalRu ?? null,
+        givenRu: task.givenRu ?? null,
+        doneWhenRu: task.doneWhenRu ?? null,
+        promptRu: task.promptRu,
+        hintRu: task.hintRu,
+        answer: answerBlock(task).join("\n"),
+      })),
+    })),
+}));
+
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+const treeHtml = model
+  .map(
+    (week, wi) => `<details class="week" style="--i:${wi}" data-color="${wi}">
+  <summary><span class="chev"></span><b>Неделя ${week.week}</b> · ${esc(week.ideaRu)}
+    <span class="grow">${esc(week.partGrownRu)}</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">${esc(week.partMeaningRu)}</p>
+    ${week.sessions
+      .map(
+        (session, si) => `<details class="session" style="--i:${si}">
+      <summary><span class="chev"></span>${esc(session.id)} · ${esc(session.titleRu)}
+        <span class="count">${session.tasks.length}</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> ${esc(session.misconception)}</p>
+        <p>${esc(session.explanationRu)}</p>
+        <p class="dinner"><b>За ужином:</b> ${esc(session.dinnerQuestionRu)}</p>
+        ${session.tasks
+          .map(
+            (task, ti) => `<details class="task ${task.role}" style="--i:${ti}">
+          <summary><span class="chev"></span><code>${esc(task.id)}</code>
+            <span class="tag">${esc(task.role)}</span>
+            <span class="tag ghost">${esc(task.family)}${task.worldId ? " · " + esc(task.worldId) : ""}</span>
+            <span class="tag ghost">tier ${task.tier}</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">${esc(task.roleRu)}</p>
+            ${task.goalRu ? `<p><b>Цель:</b> ${esc(task.goalRu)}</p>` : ""}
+            ${task.givenRu ? `<p><b>Дано:</b> ${esc(task.givenRu.join(" · "))}</p>` : ""}
+            ${task.doneWhenRu ? `<p><b>Готово, когда:</b> ${esc(task.doneWhenRu)}</p>` : ""}
+            <p><b>Формулировка:</b> ${esc(task.promptRu)}</p>
+            <p class="hint"><b>Подсказка (${HINT_CRYSTAL_COST}💎):</b> ${esc(task.hintRu)}</p>
+            ${task.answer ? `<pre class="answer">${esc(task.answer)}</pre>` : ""}
+          </div></div>
+        </details>`
+          )
+          .join("\n")}
+      </div></div>
+    </details>`
+      )
+      .join("\n")}
+  </div></div>
+</details>`
+  )
+  .join("\n");
+
+write(
+  "Курс.html",
+  `<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Курс целиком — ${curriculum.length} сессий, ${totalTasks} задач</title>
+<style>
+:root{
+  --paper:#FBF1E0;--surface:#FFFDF8;--ink:#2B2320;--muted:rgba(43,35,32,.55);
+  --line:rgba(43,35,32,.14);--ease:cubic-bezier(.23,1,.32,1);
+  --c0:#FF6B4A;--c1:#1FA398;--c2:#8B6BFF;--c3:#3FB37F;--c4:#E0A700;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px 80px;background:var(--paper);color:var(--ink);
+  font:16px/1.5 ui-rounded,"Nunito",system-ui,sans-serif}
+header{max-width:820px;margin:0 auto 20px}
+h1{font-size:26px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+main{max-width:820px;margin:0 auto}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:999px;padding:8px 16px;min-height:44px;cursor:pointer;
+  transition:transform 160ms var(--ease)}
+button:active{transform:scale(.97)}
+details{border-radius:16px;margin:8px 0;background:var(--surface);border:1px solid var(--line);
+  animation:rise 320ms var(--ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;min-height:44px;border-radius:16px}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:rgba(43,35,32,.03)}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+  transform:rotate(-45deg);transition:transform 220ms var(--ease);flex:none;margin-right:2px}
+details[open]>summary .chev{transform:rotate(45deg)}
+/* 0fr → 1fr is the only way to animate to a height nobody measured. */
+.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms var(--ease)}
+details[open]>.wrap{grid-template-rows:1fr}
+.inner{overflow:hidden;padding:0 14px}
+details[open]>.wrap>.inner{padding-bottom:12px}
+.week{border-left:4px solid var(--c0)}
+.week[data-color="1"]{border-left-color:var(--c1)}
+.week[data-color="2"]{border-left-color:var(--c2)}
+.week[data-color="3"]{border-left-color:var(--c3)}
+.week[data-color="4"]{border-left-color:var(--c4)}
+.session{background:rgba(255,255,255,.6)}
+.task{background:var(--paper)}
+.task.transfer{outline:1px dashed var(--c2)}
+.grow,.count,.tag{font-size:12px;font-weight:700;color:var(--muted);
+  background:rgba(43,35,32,.06);border-radius:999px;padding:3px 9px}
+.grow{margin-left:auto}
+.tag.ghost{background:none;border:1px solid var(--line)}
+code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+p{margin:8px 0}
+.why,.role,.mis,.dinner,.hint{color:var(--muted);font-size:14px}
+.answer{background:rgba(43,35,32,.05);border-radius:12px;padding:10px 12px;overflow-x:auto;
+  font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+@media (prefers-reduced-motion:reduce){
+  details{animation:none}
+  .wrap{transition:none}
+  .chev{transition:none}
+}
+</style></head>
+<body>
+<header>
+  <h1>Курс целиком</h1>
+  <p class="sub">${COURSE_WEEKS.length} недели · ${curriculum.length} сессий · ${totalTasks} задач · сгенерировано из кода, не написано руками</p>
+  <p><button id="all">Развернуть всё</button></p>
+</header>
+<main id="tree">
+${treeHtml}
+</main>
+<script>
+const all = document.getElementById("all");
+let open = false;
+all.addEventListener("click", () => {
+  open = !open;
+  // Staggered so a hundred panels do not slam open at once.
+  document.querySelectorAll("details").forEach((d, i) => {
+    setTimeout(() => { d.open = open; }, open ? Math.min(i * 8, 400) : 0);
+  });
+  all.textContent = open ? "Свернуть всё" : "Развернуть всё";
+});
+</script>
+</body></html>
+`
+);
 
 console.log(
   `\nVAULT: ${written.length} файлов в ${outDir}\n` +
