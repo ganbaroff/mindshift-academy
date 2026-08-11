@@ -45,6 +45,13 @@ export type WeekMeta = {
   part: MonsterPartId;
   /** How the part is named to the child. */
   partRu: string;
+  /**
+   * The whole arrival phrase, not a noun glued to a verb at the call site. Russian
+   * disagrees across these five parts — «выросли уши» but «вырос рог» and «появился
+   * узор» — so a single template would print broken Russian to a child on three of the
+   * five weeks. The sentence is content, so it lives with the content.
+   */
+  partGrownRu: string;
   /** What the new part lets the monster do — the reason the child earned it. */
   partMeaningRu: string;
 };
@@ -55,6 +62,7 @@ export const COURSE_WEEKS: readonly WeekMeta[] = [
     ideaRu: "Точность",
     part: "ears",
     partRu: "уши",
+    partGrownRu: "выросли уши",
     partMeaningRu: "Теперь он слышит тебя точнее.",
   },
   {
@@ -62,6 +70,7 @@ export const COURSE_WEEKS: readonly WeekMeta[] = [
     ideaRu: "Порядок",
     part: "arms",
     partRu: "руки",
+    partGrownRu: "выросли руки",
     partMeaningRu: "Теперь он может делать шаги по порядку.",
   },
   {
@@ -69,6 +78,7 @@ export const COURSE_WEEKS: readonly WeekMeta[] = [
     ideaRu: "Правило",
     part: "horn",
     partRu: "рог",
+    partGrownRu: "вырос рог",
     partMeaningRu: "Теперь он держит правило и не забывает его.",
   },
   {
@@ -76,6 +86,7 @@ export const COURSE_WEEKS: readonly WeekMeta[] = [
     ideaRu: "Образец",
     part: "backPattern",
     partRu: "узор на спине",
+    partGrownRu: "появился узор на спине",
     partMeaningRu: "Теперь он повторяет образец сам.",
   },
   {
@@ -83,6 +94,7 @@ export const COURSE_WEEKS: readonly WeekMeta[] = [
     ideaRu: "Перенос",
     part: "wings",
     partRu: "крылья",
+    partGrownRu: "выросли крылья",
     partMeaningRu: "Теперь он уносит то, чему научился, в новое место.",
   },
 ] as const;
@@ -156,6 +168,36 @@ export function earnedMonsterParts(
     parts.push(meta.part);
   }
   return parts;
+}
+
+/**
+ * The week a just-finished session closes — the growth moment — or null when the week
+ * is still open and nothing grew.
+ *
+ * This is derivable from the session id alone because the course is strictly ordered:
+ * `src/app/api/tasks/session/[id]/route.ts:76` refuses to serve a session whose
+ * prerequisite is unfinished ("Сначала заверши предыдущую сессию."). Under that gate,
+ * finishing the last session of week N means all three of week N are done, so week N's
+ * part is exactly what was earned. Every other session closes nothing — a part is never
+ * awarded early, and the last session of a week is the only place one can be awarded.
+ *
+ * `earnedMonsterParts` stays the source of truth for what the monster *has*; this only
+ * answers what just *arrived*.
+ */
+export function weekClosedBy(sessionId: string): WeekMeta | null {
+  const week = weekOfSession(sessionId);
+  if (week === null) return null;
+  const last = sessionsOfWeek(week).at(-1);
+  return sessionId === last ? weekMeta(week) : null;
+}
+
+/**
+ * Every part the monster wears once week `week` is closed, in growth order.
+ * The celebration draws the monster from this, so it can never show a silhouette the
+ * map would disagree with.
+ */
+export function monsterPartsThroughWeek(week: WeekNumber): MonsterPartId[] {
+  return COURSE_WEEKS.filter((w) => w.week <= week).map((w) => w.part);
 }
 
 export type CourseStopState = "done" | "current" | "locked";

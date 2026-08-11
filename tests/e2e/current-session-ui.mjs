@@ -13,6 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "../..");
 const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { hasDevTestBypass } = require(join(root, "src/lib/request-access.ts"));
+const { weekClosedBy } = require(join(root, "src/lib/tasks/course-map.ts"));
 
 const SESSION_IDS = [
   "w1-s1", "w1-s2", "w1-s3",
@@ -105,6 +106,31 @@ function seedUnlockedCapstone(databaseUrl) {
         );
       }
     }
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * A child with no Monster row is a state production cannot reach — `/map` sends them to
+ * onboarding. This suite ran without one anyway, so every screen quietly fell back to the
+ * game store's default violet and nothing could catch a screen drawing a stranger's
+ * monster instead of the child's. Seeding one makes that catchable.
+ *
+ * The colour is a real species colour, deliberately not the store default, so the
+ * gradient id in the rendered SVG (`monster-grad-3FB37F`) is proof of whose monster it is.
+ */
+const FIXTURE_MONSTER_COLOR = "#3FB37F";
+
+function seedMonster(databaseUrl) {
+  const db = new SQLiteDatabase(databaseUrl.replace(/^file:/, ""));
+  try {
+    db.prepare("INSERT OR IGNORE INTO User (id, clerkId, username) VALUES (?, ?, ?)")
+      .run("monster-fixture-user", "test_user_id", "Monster Fixture");
+    const user = db.prepare("SELECT id FROM User WHERE clerkId = ?").get("test_user_id");
+    db.prepare(
+      "INSERT OR IGNORE INTO Monster (id, userId, name, emoji, color, promptUsed) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("monster-fixture", user.id, "Крепыш", "🐲", FIXTURE_MONSTER_COLOR, "e2e fixture");
   } finally {
     db.close();
   }
@@ -605,7 +631,12 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
       assert.ok(session, `curriculum contains ${sessionId}`);
       const navigation = await page.goto(`${baseUrl}/session/${sessionId}?demo=1`, { waitUntil: "domcontentloaded" });
       try {
-        await page.getByTestId(`task-workspace-${session.tasks[0].family}`).waitFor({ timeout: 20000 });
+        // 45s, not 20s: this is the FIRST paint of a route the dev server has not
+        // compiled yet, and webpack's cold compile of a workspace family can outrun 20s
+        // on a loaded machine. Two runs of this gate died here on a route that was fine —
+        // a gate that cries wolf gets ignored, which is worse than a slow gate. A real
+        // breakage still fails, just later.
+        await page.getByTestId(`task-workspace-${session.tasks[0].family}`).waitFor({ timeout: 45000 });
       } catch (error) {
         await page.screenshot({ path: join(outDir, "desktop-session-failure.png"), fullPage: true }).catch(() => {});
         const apiProbe = await page.evaluate(async () => {
@@ -640,6 +671,44 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
         await page.getByTestId("capstone-calm-closure").waitFor({ timeout: 20000 });
       } else {
         await page.getByRole("heading", { name: "Сессия пройдена!" }).waitFor({ timeout: 20000 });
+      }
+
+      // The growth moment. A part must arrive where the child actually is — the third
+      // session of a week — and must NOT appear on the other two, or the reward stops
+      // meaning "you finished something". w5-s3 exits through the capstone, so this
+      // also proves the wings are not lost on the one screen that takes a different path.
+      const closed = weekClosedBy(sessionId);
+      const growth = page.getByTestId("monster-growth");
+      if (closed) {
+        await growth.waitFor({ timeout: 20000 });
+        const text = await growth.innerText();
+        assert.ok(
+          text.includes(closed.partGrownRu),
+          `${sessionId}: growth card must announce "${closed.partGrownRu}", got: ${text.slice(0, 160)}`
+        );
+        assert.ok(
+          text.includes(closed.partMeaningRu),
+          `${sessionId}: growth card must give the reason, not just the part`
+        );
+        // Whose monster is it? The gradient id is derived from the fill colour, so this
+        // fails if the card falls back to the store's default instead of the child's own
+        // monster — the exact bug the server hydration on this page exists to prevent.
+        assert.equal(
+          await growth.locator(`#monster-grad-${FIXTURE_MONSTER_COLOR.slice(1)}`).count(),
+          1,
+          `${sessionId}: growth card must draw the child's own monster, not the store default`
+        );
+        // One frame of the first growth, kept as evidence: a text assertion cannot tell
+        // anyone whether the monster is clipped, off-palette, or drawn without its part.
+        if (sessionId === "w1-s3") {
+          await page.screenshot({ path: join(outDir, "desktop-w1-s3-growth.png"), fullPage: true });
+        }
+      } else {
+        assert.equal(
+          await growth.count(),
+          0,
+          `${sessionId} closes no week, so it must not congratulate a growth`
+        );
       }
     }
 
@@ -833,6 +902,7 @@ export async function runCurrentSessionUiSuite(options = {}) {
 
     assert.equal(hasDevTestBypass(new Headers({ "x-test-bypass": "true" }), "production"), false, "production rejects the test seam");
     await prepareDatabase(databaseUrl, process.env);
+    seedMonster(databaseUrl);
     const port = await freePort();
     const running = startServer(port, databaseUrl);
     server = running.child;

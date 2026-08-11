@@ -10,12 +10,14 @@ import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
 import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
+import { MonsterGrowth } from "@/components/companion/MonsterGrowth";
 import { SessionCoach } from "@/components/guide/SessionCoach";
 import { TapHint } from "@/components/guide/TapHint";
 import { useIdleNudge } from "@/components/guide/useIdleNudge";
 import { MascotCue } from "@/components/guide/MascotCue";
 import { CalmClosure } from "@/components/capstone/CalmClosure";
 import { sessionComplete } from "@/lib/tasks/session";
+import { weekClosedBy } from "@/lib/tasks/course-map";
 import type { PublicSessionContent, PublicContentTask } from "@/content/curriculum";
 import { HINT_CRYSTAL_COST } from "@/content/curriculum";
 import type { Cell } from "@/lib/tasks/types";
@@ -64,6 +66,8 @@ export default function ThinkingSessionPage() {
   const sessionId = typeof params.id === "string" ? params.id : "";
   const setCrystals = useGameStore((s) => s.setCrystals);
   const crystals = useGameStore((s) => s.crystals);
+  const monsterColor = useGameStore((s) => s.monsterColor);
+  const setActiveSkin = useGameStore((s) => s.setActiveSkin);
 
   const [session, setSession] = useState<PublicSessionContent | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -183,9 +187,21 @@ export default function ThinkingSessionPage() {
           if (typeof body.crystals === "number") setCrystals(body.crystals);
         }
         if (userRes.ok) {
-          const user = (await userRes.json()) as { crystals?: number };
+          const user = (await userRes.json()) as {
+            crystals?: number;
+            monster?: { emoji?: string; name?: string; color?: string } | null;
+          };
           if (!cancelled && typeof user.crystals === "number" && typeof body.crystals !== "number") {
             setCrystals(user.crystals);
+          }
+          // The child's real monster, from the database — the same record `/map` draws.
+          // Only the legacy `/lesson` route ever hydrated this, and that route is off in
+          // production, so the store sat on its default violet: the growth celebration
+          // would have congratulated a child with a stranger's monster. All three fields
+          // are required together, so a half-answer never blanks the name in the header.
+          const m = user.monster;
+          if (!cancelled && m && typeof m.emoji === "string" && typeof m.name === "string" && typeof m.color === "string") {
+            setActiveSkin(m.emoji, m.name, m.color);
           }
         }
       } catch (err) {
@@ -197,7 +213,7 @@ export default function ThinkingSessionPage() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId, setCrystals]);
+  }, [sessionId, setCrystals, setActiveSkin]);
 
   const resetAttemptView = useCallback(() => {
     setFeedback(null);
@@ -358,7 +374,9 @@ export default function ThinkingSessionPage() {
         setFailStreak(0);
         soundEngine.play("success");
         if (!prefersReducedMotion) {
-          confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#a78bfa", "#22d3ee"] });
+          // Warm-paper palette, not the neon the app wore before the redesign — this
+          // and the calm-closure avatar were the last two places it still shipped.
+          confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 }, colors: ["#FF6B4A", "#FFC93C", "#3FB37F"] });
         }
       } else {
         setFailStreak((n) => n + 1);
@@ -396,7 +414,10 @@ export default function ThinkingSessionPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center p-8">
           <div className="text-center space-y-5 max-w-md">
-            <MonsterAvatar mood="thinking" color="#a78bfa" size={96} />
+            {/* The child's own monster, not a hardcoded violet. This screen appears the
+                moment a parent closes access — the least welcome moment to be met by a
+                stranger's monster. */}
+            <MonsterAvatar mood="thinking" color={monsterColor} size={96} />
             <h1 className="text-2xl font-semibold">Сессия завершена</h1>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
               Родитель закрыл доступ к обучению. Это спокойная пауза — прогресс
@@ -459,6 +480,12 @@ export default function ThinkingSessionPage() {
       return (
         <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
           <Header />
+          {/* w5-s3 closes week 5 AND the whole course, and it exits through the capstone
+              rather than the ordinary "Сессия пройдена!" screen. Without this the child
+              earns the wings — the last and largest part — and never sees them arrive. */}
+          <div className="px-6 pt-8">
+            <MonsterGrowth sessionId={sessionId} color={monsterColor} />
+          </div>
           <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
         </div>
       );
@@ -534,7 +561,15 @@ export default function ThinkingSessionPage() {
       <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)]">
         <Header />
         <main className="max-w-2xl mx-auto px-6 py-12 space-y-8 text-center">
-          <MonsterAvatar mood="happy" size={120} />
+          {/* On the last session of a week the monster itself is the reward, so it
+              replaces the generic happy avatar rather than sitting next to it. On the
+              other two sessions MonsterGrowth renders nothing and this screen is
+              unchanged. */}
+          {weekClosedBy(sessionId) ? (
+            <MonsterGrowth sessionId={sessionId} color={monsterColor} />
+          ) : (
+            <MonsterAvatar mood="happy" size={120} />
+          )}
           <h1 className="text-3xl font-bold">Сессия пройдена!</h1>
           <p className="text-[var(--text-secondary)]">{session.titleRu}</p>
           <p className="text-sm text-[var(--color-primary-dark)]/80 bg-[var(--surface-strong)] rounded-2xl p-4 border border-[var(--border-color)]">

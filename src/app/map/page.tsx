@@ -89,7 +89,7 @@ export default async function MapPage() {
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--color-success)] text-xs font-extrabold text-white">
             ✓
           </span>
-          неделя {w.week} · {w.ideaRu} — выросли {w.partRu}
+          неделя {w.week} · {w.ideaRu} — {w.partGrownRu}
         </div>
       ))}
 
