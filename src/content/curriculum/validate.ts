@@ -1,3 +1,4 @@
+import { PUBLIC_SEQUENCE_WORLDS } from "@/lib/tasks/sequence-worlds-public";
 import type { ContentTask, SessionContent } from "./types";
 
 export type ContentIssue = { sessionId: string; message: string };
@@ -74,7 +75,22 @@ export function validateSession(session: SessionContent): ContentIssue[] {
         }
         break;
       case "sequence-world":
-        // Success is pure execute→served; no extra payload required.
+        // Success is pure execute→goal reached, so there is no answer key to demand. What
+        // IS demanded is the world: without it every sequence task silently falls back to
+        // the sandwich, which is exactly how week 2 came to teach one procedure fifteen
+        // times. An author now has to choose, and choosing a world that does not exist
+        // fails the build rather than the child.
+        if (!task.worldId?.trim()) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: sequence-world needs worldId`,
+          });
+        } else if (!PUBLIC_SEQUENCE_WORLDS[task.worldId]) {
+          issues.push({
+            sessionId: id,
+            message: `task ${task.id}: unknown sequence world "${task.worldId}"`,
+          });
+        }
         break;
       case "rule-runner":
         if (!task.ruleMaps?.length) {

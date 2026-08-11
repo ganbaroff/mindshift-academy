@@ -4,7 +4,7 @@
  */
 
 import { checkGrid, executeGrid, renderGridDiff } from "./grid-draw";
-import { checkSequence, executeSequence, renderSequenceDiff } from "./sequence-world";
+import { checkSequence, executeSequence, renderSequenceDiff, sequenceWorld } from "./sequence-world";
 import {
   checkRuleRunner,
   executeRuleRunner,
@@ -79,11 +79,14 @@ export function resolveGridAttempt(
   };
 }
 
-export function resolveSequenceAttempt(program: SequenceProgram): AttemptOutcome {
+export function resolveSequenceAttempt(
+  program: SequenceProgram,
+  worldId?: string | null
+): AttemptOutcome {
   if (program.status !== "ok") {
     return unclearOutcome("sequence-world", program.reasonCode);
   }
-  const result = executeSequence(program);
+  const result = executeSequence(program, sequenceWorld(worldId));
   const verdict = checkSequence(result);
   return {
     family: "sequence-world",

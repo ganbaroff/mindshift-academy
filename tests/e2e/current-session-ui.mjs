@@ -15,6 +15,7 @@ const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts")
 const { hasDevTestBypass } = require(join(root, "src/lib/request-access.ts"));
 const { weekClosedBy } = require(join(root, "src/lib/tasks/course-map.ts"));
 const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
+const { sequenceWorld } = require(join(root, "src/lib/tasks/sequence-world.ts"));
 
 const SESSION_IDS = [
   "w1-s1", "w1-s2", "w1-s3",
@@ -24,22 +25,6 @@ const SESSION_IDS = [
   "w5-s1", "w5-s2", "w5-s3",
 ];
 
-const SEQUENCE_LABELS = {
-  взять_нож: "Взять нож",
-  положить_хлеб: "Положить хлеб",
-  намазать_масло: "Намазать масло",
-  положить_сыр: "Положить сыр",
-  накрыть_хлебом: "Накрыть хлебом",
-  подать: "Подать",
-};
-const CORRECT_SEQUENCE = [
-  "взять_нож",
-  "положить_хлеб",
-  "намазать_масло",
-  "положить_сыр",
-  "накрыть_хлебом",
-  "подать",
-];
 const TILE_LABELS = { wall: "стена", open: "свободно", trap: "ловушка", goal: "цель" };
 
 function evidenceDirectory() {
@@ -342,10 +327,16 @@ async function driveGrid(page, task) {
   }
 }
 
-async function driveSequence(page) {
+async function driveSequence(page, task) {
   const workspace = page.getByTestId("task-workspace-sequence-world");
-  for (const action of CORRECT_SEQUENCE) {
-    await workspace.getByRole("button", { name: `Добавить действие: ${SEQUENCE_LABELS[action]}`, exact: true }).click();
+  // Week 2 has three worlds now, so the solution cannot be a constant. `world.actions` is
+  // declared in a valid order — an invariant `tests/tasks.test.mjs` proves for every world
+  // — while the buttons render sorted by label, so this clicks by name, never by position.
+  const world = sequenceWorld(task.worldId);
+  for (const action of world.actions) {
+    await workspace
+      .getByRole("button", { name: `Добавить действие: ${world.labelsRu[action]}`, exact: true })
+      .click();
   }
 }
 
@@ -415,7 +406,7 @@ async function driveTask(page, task) {
     );
   }
   if (task.family === "grid-draw") await driveGrid(page, task);
-  else if (task.family === "sequence-world") await driveSequence(page);
+  else if (task.family === "sequence-world") await driveSequence(page, task);
   else if (task.family === "rule-runner") await driveRule(page, task);
   else if (task.family === "pattern-expand") await drivePattern(page, task);
   else await driveClaims(page, task);

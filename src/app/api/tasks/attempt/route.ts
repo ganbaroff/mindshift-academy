@@ -264,7 +264,7 @@ export async function POST(req: Request) {
     let interpreted: Interpreted;
     try {
       if (fakeActive || fakeMode === "ok") {
-        const program = fakeInterpretUtterance(family, forModel);
+        const program = fakeInterpretUtterance(family, forModel, task.worldId);
         interpreted = {
           family,
           program: program as Interpreted["program"],
@@ -272,7 +272,7 @@ export async function POST(req: Request) {
           latencyMs: 0,
         };
       } else {
-        const live = await interpretUtterance(family, forModel);
+        const live = await interpretUtterance(family, forModel, undefined, task.worldId);
         interpreted = {
           family: live.family,
           program: live.program as Interpreted["program"],
@@ -337,7 +337,7 @@ export async function POST(req: Request) {
 function resolveProgram(
   family: string,
   program: GridProgram | SequenceProgram | RuleProgram | PatternProgram | ClaimCheckProgram,
-  task: { role: string; ruleMaps?: unknown; patternExpected?: string[]; patternExpandCount?: number; claims?: unknown },
+  task: { role: string; worldId?: string; ruleMaps?: unknown; patternExpected?: string[]; patternExpandCount?: number; claims?: unknown },
   target: Cell[] | undefined
 ) {
   return family === "grid-draw"
@@ -345,7 +345,7 @@ function resolveProgram(
         hideTargetPanel: task.role === "collision",
       })
     : family === "sequence-world"
-      ? resolveSequenceAttempt(program as SequenceProgram)
+      ? resolveSequenceAttempt(program as SequenceProgram, task.worldId)
       : family === "rule-runner"
         ? resolveRuleAttempt(program as RuleProgram, task.ruleMaps as never)
         : family === "pattern-expand"

@@ -46,6 +46,12 @@ export type ContentTask = {
   doneWhenRu?: string;
   /** The same condition with its reasoning, revealed as an expansion after a miss. */
   doneWhenFullRu?: string;
+  /**
+   * sequence-world: which micro-world this task runs in. Required by `validateSession`
+   * for that family — the engine used to hardcode one sandwich, which is how a whole week
+   * came to teach the same six steps three sessions running.
+   */
+  worldId?: string;
   /** grid-draw: 0-based target cells. */
   target?: [number, number][];
   /** rule-runner: maps the child's rule must pass. */

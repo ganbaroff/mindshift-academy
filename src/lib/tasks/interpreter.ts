@@ -11,7 +11,7 @@ import type OpenAI from "openai";
 import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import { getChatClient } from "@/lib/ai-provider";
 import { GRID_SIZE, GRID_WORLD_PROMPT } from "./grid-draw";
-import { SEQUENCE_ACTIONS, SEQUENCE_WORLD_PROMPT } from "./sequence-world";
+import { sequenceWorld, sequenceWorldPrompt } from "./sequence-world";
 import { RULE_RUNNER_PROMPT } from "./rule-runner";
 import { hasExplicitPatternRule, PATTERN_EXPAND_PROMPT } from "./pattern-expand";
 import { CLAIM_CHECK_PROMPT } from "./claim-check";
@@ -107,15 +107,19 @@ const FEWSHOT: Record<TaskFamilyId, { in: string; out: Record<string, unknown> }
   ],
 };
 
-function worldFor(family: TaskFamilyId): { prompt: string; schema: string } {
+function worldFor(family: TaskFamilyId, worldId?: string | null): { prompt: string; schema: string } {
   switch (family) {
     case "grid-draw":
       return { prompt: GRID_WORLD_PROMPT, schema: GRID_OUTPUT };
-    case "sequence-world":
+    case "sequence-world": {
+      // The task's own world, not a global one: the model is told which table the monster
+      // is standing at, and its vocabulary is that world's whitelist and nothing else.
+      const world = sequenceWorld(worldId);
       return {
-        prompt: `${SEQUENCE_WORLD_PROMPT}\nДействия: ${SEQUENCE_ACTIONS.join(", ")}`,
+        prompt: `${sequenceWorldPrompt(world)}\nДействия: ${world.actions.join(", ")}`,
         schema: SEQ_OUTPUT,
       };
+    }
     case "rule-runner":
       return { prompt: RULE_RUNNER_PROMPT, schema: RULE_OUTPUT };
     case "pattern-expand":
@@ -206,14 +210,15 @@ export function parseGridProgram(raw: unknown): GridProgram {
   return parsed.data as GridProgram;
 }
 
-export function parseSequenceProgram(raw: unknown): SequenceProgram {
+export function parseSequenceProgram(raw: unknown, worldId?: string | null): SequenceProgram {
   const coerced = coerceRawProgram("sequence-world", raw);
   const parsed = sequenceProgramSchema.safeParse(coerced);
   if (!parsed.success) {
     return { status: "unclear", reasonCode: "ambiguous_steps" };
   }
   if (parsed.data.status === "ok") {
-    const unknown = parsed.data.steps.find((s) => !(SEQUENCE_ACTIONS as readonly string[]).includes(s));
+    const vocabulary = sequenceWorld(worldId).actions as readonly string[];
+    const unknown = parsed.data.steps.find((s) => !vocabulary.includes(s));
     if (unknown) return { status: "unclear", reasonCode: "out_of_vocabulary" };
   }
   return parsed.data as SequenceProgram;
@@ -254,7 +259,8 @@ export type InterpretResult =
 export async function interpretUtterance(
   family: TaskFamilyId,
   utterance: string,
-  conn: ChatConn | null = getChatClient()
+  conn: ChatConn | null = getChatClient(),
+  worldId?: string | null
 ): Promise<InterpretResult> {
   if (family === "pattern-expand" && !hasExplicitPatternRule(utterance)) {
     return {
@@ -268,7 +274,7 @@ export async function interpretUtterance(
     throw new Error("NO_CHAT_PROVIDER");
   }
 
-  const { prompt, schema } = worldFor(family);
+  const { prompt, schema } = worldFor(family, worldId);
   const messages: ChatCompletionMessageParam[] = [
     {
       role: "system",

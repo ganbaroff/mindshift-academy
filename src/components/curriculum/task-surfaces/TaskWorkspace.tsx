@@ -71,7 +71,7 @@ export function TaskWorkspace({
   const surface = task.family === "grid-draw"
     ? <GridDrawSurface {...surfaceProps} />
     : task.family === "sequence-world"
-      ? <SequenceSurface {...surfaceProps} />
+      ? <SequenceSurface {...surfaceProps} worldId={task.worldId} />
       : task.family === "rule-runner"
         ? <RuleSurface {...surfaceProps} maps={task.ruleMaps ?? []} />
         : task.family === "pattern-expand"

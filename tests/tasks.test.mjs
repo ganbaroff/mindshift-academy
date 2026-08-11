@@ -21,7 +21,14 @@ import {
   resolvePatternAttempt,
   renderRuleDiff,
   renderSequenceDiff,
+  SEQUENCE_WORLDS,
+  sequenceWorld,
 } from "../src/lib/tasks/index.ts";
+import {
+  PUBLIC_SEQUENCE_WORLDS,
+  displayOrder,
+} from "../src/lib/tasks/sequence-worlds-public.ts";
+import { loadCurriculum } from "../src/content/curriculum/index.ts";
 
 let pass = 0;
 let fail = 0;
@@ -187,6 +194,112 @@ console.log("\n=== 7. claim-check executor (edge cases) ===");
 
   const ctext = renderClaimDiff(missFalse, v);
   check("claim diff shame-free", !/ошибк|неправильн|провал/i.test(ctext));
+}
+
+// ---------------------------------------------------------------------------
+// Sequence worlds — the week-2 family stopped being one hardcoded sandwich
+// ---------------------------------------------------------------------------
+{
+  const ids = Object.keys(SEQUENCE_WORLDS);
+  check("more than one world exists at all", ids.length >= 3, ids.join(", "));
+
+  for (const world of Object.values(SEQUENCE_WORLDS)) {
+    // THE invariant. Content, tests and the browser harness all lean on it: the declared
+    // action order is a valid solution, so every world has one canonical answer to drive.
+    const verdict = checkSequence(executeSequence({ steps: [...world.actions] }, world));
+    check(
+      `${world.id}: declared action order solves the world`,
+      verdict.pass,
+      JSON.stringify(verdict.failure)
+    );
+
+    // A world that can be authored can be authored wrong. These catch the ways.
+    check(
+      `${world.id}: every action has a rule`,
+      world.actions.every((a) => Boolean(world.rules[a]))
+    );
+    check(
+      `${world.id}: every rule belongs to an action`,
+      Object.keys(world.rules).every((a) => world.actions.includes(a))
+    );
+    const counters = new Set(Object.keys(world.initial));
+    check(
+      `${world.id}: every counter a rule touches starts somewhere`,
+      Object.values(world.rules).every(
+        (rule) =>
+          (rule.requires ?? []).every((r) => counters.has(r.key)) &&
+          Object.keys(rule.effects).every((k) => counters.has(k))
+      )
+    );
+    check(`${world.id}: the goal counter exists`, counters.has(world.goalKey));
+    check(
+      `${world.id}: every failure a rule can raise has words`,
+      Object.values(world.rules).every((rule) =>
+        (rule.requires ?? []).every((r) => Boolean(world.failureRu[r.failure]))
+      )
+    );
+
+    // Doing nothing is never success, and the monster says what is still undone.
+    const empty = executeSequence({ steps: [] }, world);
+    check(`${world.id}: an empty plan does not pass`, !checkSequence(empty).pass);
+    check(
+      `${world.id}: and the monster names what is missing`,
+      renderSequenceDiff(empty, checkSequence(empty)).includes("Шаги закончились")
+    );
+
+    // The buttons must not spell the answer. The old surface listed actions in solution
+    // order, which turned week 2 into a top-to-bottom click.
+    const shown = displayOrder(PUBLIC_SEQUENCE_WORLDS[world.id]);
+    check(
+      `${world.id}: the buttons are not the answer in order`,
+      JSON.stringify(shown) !== JSON.stringify([...world.actions])
+    );
+    check(
+      `${world.id}: the buttons still offer every action`,
+      shown.length === world.actions.length && shown.every((a) => world.actions.includes(a))
+    );
+  }
+
+  // Vocabulary is per world, so one world's plan is meaningless in another.
+  const sandwichPlan = { steps: [...SEQUENCE_WORLDS.sandwich.actions] };
+  const inPlant = executeSequence(sandwichPlan, SEQUENCE_WORLDS.plant);
+  check(
+    "a sandwich plan is refused in the plant world",
+    !checkSequence(inPlant).pass && inPlant.failure?.code === "неизвестное_действие"
+  );
+
+  check(
+    "an unknown world id falls back rather than throwing",
+    sequenceWorld("no-such-world").id === "sandwich"
+  );
+
+  // The solution must not be in the browser bundle: the public module carries the scene,
+  // the vocabulary and the labels, and nothing that reveals the order.
+  for (const shown of Object.values(PUBLIC_SEQUENCE_WORLDS)) {
+    check(
+      `${shown.id}: the public world hides the rules`,
+      !("rules" in shown) && !("initial" in shown) && !("goalKey" in shown)
+    );
+  }
+
+  // Week 2 must never again be one world three sessions running.
+  const week2 = loadCurriculum().filter((s) => s.week === 2);
+  check(
+    "every week-2 task names a world",
+    week2.every((s) => s.tasks.every((t) => Boolean(t.worldId)))
+  );
+  check(
+    "the three sessions of week 2 do not share one world",
+    new Set(week2.map((s) => s.tasks.find((t) => t.role === "collision")?.worldId)).size === 3
+  );
+  check(
+    "every session's transfer task leaves the world it practised",
+    week2.every((s) => {
+      const transfer = s.tasks.find((t) => t.role === "transfer");
+      const practised = s.tasks.filter((t) => t.role !== "transfer").map((t) => t.worldId);
+      return transfer && !practised.includes(transfer.worldId);
+    })
+  );
 }
 
 console.log(`\n${fail === 0 ? "TASK ENGINE: all checks passed" : `TASK ENGINE: ${fail} FAILED`} (${pass} passed)\n`);

@@ -26,7 +26,8 @@ export type FakeProgram =
 
 export function fakeInterpretUtterance(
   family: TaskFamilyId,
-  utterance: string
+  utterance: string,
+  worldId?: string | null
 ): FakeProgram {
   const key = norm(utterance);
 
@@ -49,7 +50,8 @@ export function fakeInterpretUtterance(
     if (fx.expect.status === "not-ok") {
       return { status: "unclear", reasonCode: "ambiguous_steps" };
     }
-    const program = parseSequenceProgram({ status: "ok", steps: fx.expect.steps });
+    // Vocabulary is per world now: a sandwich fixture must not pass in the plant world.
+    const program = parseSequenceProgram({ status: "ok", steps: fx.expect.steps }, worldId);
     if (program.status !== "ok") return { status: "unclear", reasonCode: "ambiguous_steps" };
     return { status: "ok", steps: program.steps };
   }
