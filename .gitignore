@@ -90,3 +90,6 @@ docs/release/_w4_drill_workspace/drill-console.log
 /invite-preview-*.html
 /public/_invite-preview.html
 /clerk-prod-config.json
+
+# Screenshots produced by test:map — evidence, not source.
+/evidence/

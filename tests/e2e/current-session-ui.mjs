@@ -14,6 +14,7 @@ const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { hasDevTestBypass } = require(join(root, "src/lib/request-access.ts"));
 const { weekClosedBy } = require(join(root, "src/lib/tasks/course-map.ts"));
+const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 
 const SESSION_IDS = [
   "w1-s1", "w1-s2", "w1-s3",
@@ -122,7 +123,7 @@ function seedUnlockedCapstone(databaseUrl) {
  */
 const FIXTURE_MONSTER_COLOR = "#3FB37F";
 
-function seedMonster(databaseUrl) {
+function seedChildFixture(databaseUrl) {
   const db = new SQLiteDatabase(databaseUrl.replace(/^file:/, ""));
   try {
     db.prepare("INSERT OR IGNORE INTO User (id, clerkId, username) VALUES (?, ?, ?)")
@@ -131,6 +132,18 @@ function seedMonster(databaseUrl) {
     db.prepare(
       "INSERT OR IGNORE INTO Monster (id, userId, name, emoji, color, promptUsed) VALUES (?, ?, ?, ?, ?, ?)"
     ).run("monster-fixture", user.id, "Крепыш", "🐲", FIXTURE_MONSTER_COLOR, "e2e fixture");
+
+    // Consent is fail-closed, so a child without a verified row cannot reach /map at all.
+    // CONSENT_VERSION is imported rather than typed out: a policy bump must break this
+    // fixture loudly instead of quietly redirecting the gate to /consent forever.
+    // CURRENT_TIMESTAMP, not a JS date — it is the exact format Prisma's own createdAt
+    // default writes into these DATETIME columns.
+    db.prepare(
+      `INSERT OR IGNORE INTO ParentalConsent
+         (id, clerkId, parentEmail, method, serviceConsent, externalAiConsent,
+          consentVersion, verifiedAt, updatedAt)
+       VALUES (?, ?, ?, 'email-plus', 1, 1, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+    ).run("consent-fixture", "test_user_id", "e2e-parent@example.test", CONSENT_VERSION);
   } finally {
     db.close();
   }
@@ -181,13 +194,33 @@ function startServer(port, databaseUrl) {
     stdio: ["ignore", "pipe", "pipe"],
   });
   let output = "";
+  let settling = null;
   const ready = new Promise((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error(`Next dev readiness timeout: ${output.slice(-4000)}`)), 120000);
     const consume = (chunk) => {
       output = `${output}${chunk}`.slice(-12000);
-      if (/Ready in/.test(output)) {
+      // Next 16 prints "Ready in" and only THEN refuses to run beside another dev server
+      // in the same directory. Resolving on "Ready in" alone hands Playwright a port that
+      // answers ECONNRESET, or worse, a half-alive server sharing a poisoned .next — which
+      // is how this gate spent 2026-08-11 failing at a route that was fine. Leftover dev
+      // servers survive SIGTERM on Windows, so this is not a rare state.
+      if (/Another next dev server is already running/.test(output)) {
         clearTimeout(timeout);
-        resolve();
+        clearTimeout(settling);
+        reject(
+          new Error(
+            `a dev server is already running in ${root} — kill it before running this gate:\n${output.slice(-600)}`
+          )
+        );
+        return;
+      }
+      // Settle a moment AFTER "Ready in" rather than on it, so the refusal above — which
+      // Next prints second — is still allowed to win.
+      if (/Ready in/.test(output) && !settling) {
+        settling = setTimeout(() => {
+          clearTimeout(timeout);
+          resolve();
+        }, 750);
       }
     };
     child.stdout.on("data", consume);
@@ -568,6 +601,9 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
   const pageErrors = [];
   let taskCount = 0;
   const families = new Set();
+  // Sessions whose first paint needed a reload. Reported, never swallowed: a number that
+  // starts climbing is the signal that the dev-server race has become a real regression.
+  const reloads = [];
   await context.tracing.start({ screenshots: true, snapshots: true });
   try {
     await installAcademyBrowserRoutes(context);
@@ -630,27 +666,54 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
       const session = curriculum.find((candidate) => candidate.id === sessionId);
       assert.ok(session, `curriculum contains ${sessionId}`);
       const navigation = await page.goto(`${baseUrl}/session/${sessionId}?demo=1`, { waitUntil: "domcontentloaded" });
+      const workspace = page.getByTestId(`task-workspace-${session.tasks[0].family}`);
       try {
         // 45s, not 20s: this is the FIRST paint of a route the dev server has not
         // compiled yet, and webpack's cold compile of a workspace family can outrun 20s
         // on a loaded machine. Two runs of this gate died here on a route that was fine —
         // a gate that cries wolf gets ignored, which is worse than a slow gate. A real
         // breakage still fails, just later.
-        await page.getByTestId(`task-workspace-${session.tasks[0].family}`).waitFor({ timeout: 45000 });
-      } catch (error) {
+        await workspace.waitFor({ timeout: 45000 });
+      } catch (firstAttempt) {
+        // Exactly one reload, and it is counted.
+        //
+        // Measured on 2026-08-11: when this timed out, the page was sitting on its own
+        // server-rendered loading state while `/api/tasks/session/<id>` answered 200 in
+        // 125ms from that same page. The API was healthy and the client bundle had not
+        // booted — a webpack dev-server compile race, not a product defect. Failing there
+        // certifies nothing and blocks work; retrying silently would hide a real hydration
+        // regression. So: retry once, record it, and let the second failure be fatal.
+        reloads.push(sessionId);
+        await page.reload({ waitUntil: "domcontentloaded" });
+        try {
+          await workspace.waitFor({ timeout: 45000 });
+        } catch (error) {
+          await failWithDiagnosis(error);
+        }
+      }
+
+      async function failWithDiagnosis(error) {
         await page.screenshot({ path: join(outDir, "desktop-session-failure.png"), fullPage: true }).catch(() => {});
-        const apiProbe = await page.evaluate(async () => {
+        // Probe the session that ACTUALLY failed, not a hardcoded w1-s1. The old probe
+        // reported w1-s1 = 200 while the run died on w2-s1, which is a diagnosis of the
+        // wrong patient: it hid whether the real route was locked, erroring, or hanging.
+        const apiProbe = await page.evaluate(async (id) => {
           const result = {};
-          for (const path of ["/api/tasks/session/w1-s1", "/api/user"]) {
+          for (const path of [`/api/tasks/session/${id}`, "/api/user"]) {
             try {
+              const started = Date.now();
               const response = await fetch(path);
-              result[path] = { status: response.status };
+              result[path] = {
+                status: response.status,
+                ms: Date.now() - started,
+                body: (await response.text()).slice(0, 200),
+              };
             } catch (probeError) {
               result[path] = { error: String(probeError) };
             }
           }
           return result;
-        });
+        }, sessionId);
         throw new Error(`desktop workspace unavailable for ${sessionId}: status=${navigation?.status() ?? "none"} url=${page.url()} title=${await page.title()} body=${(await page.locator("body").innerText()).slice(0, 300)} api=${JSON.stringify(apiProbe)} diagnostics=${pageErrors.join(" | ")} cause=${error instanceof Error ? error.message : String(error)}`);
       }
       if (sessionId === "w1-s1") {
@@ -714,7 +777,8 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
 
     assert.deepEqual([...families].sort(), ["claim-check", "grid-draw", "pattern-expand", "rule-runner", "sequence-world"]);
     assert.equal(pageErrors.length, 0, pageErrors.join("\n"));
-    return { sessions: SESSION_IDS.length, tasks: taskCount, families: families.size };
+    if (reloads.length) console.log(`  NOTE  first paint needed a reload on: ${reloads.join(", ")}`);
+    return { sessions: SESSION_IDS.length, tasks: taskCount, families: families.size, reloads };
   } finally {
     await context.tracing.stop({ path: join(outDir, "current-session-chromium-trace.zip") });
     await context.close();
@@ -902,7 +966,7 @@ export async function runCurrentSessionUiSuite(options = {}) {
 
     assert.equal(hasDevTestBypass(new Headers({ "x-test-bypass": "true" }), "production"), false, "production rejects the test seam");
     await prepareDatabase(databaseUrl, process.env);
-    seedMonster(databaseUrl);
+    seedChildFixture(databaseUrl);
     const port = await freePort();
     const running = startServer(port, databaseUrl);
     server = running.child;

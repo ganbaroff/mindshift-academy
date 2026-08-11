@@ -31,6 +31,13 @@ const CHILD_PATH_PREFIXES = [
   "/enter-code",
   "/certificate",
   "/start",
+  // Added 2026-08-11. Both shipped as child screens and were classified as parent ones,
+  // which is not cosmetic: `noteAllowed` opens the free-text field on a parent surface, so
+  // the map and the resume door were offering an eight-year-old a box to type into that
+  // exists only for a consenting adult. The wordmark reading «MindShift Academy» at them
+  // was the visible half of the same bug.
+  "/map",
+  "/continue",
 ] as const;
 
 export function classifySurface(path: string): ReportSurface {
