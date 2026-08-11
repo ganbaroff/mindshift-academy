@@ -1,0 +1,1796 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Курс целиком — 15 сессий, 81 задач</title>
+<style>
+:root{
+  --paper:#FBF1E0;--surface:#FFFDF8;--ink:#2B2320;--muted:rgba(43,35,32,.55);
+  --line:rgba(43,35,32,.14);--ease:cubic-bezier(.23,1,.32,1);
+  --c0:#FF6B4A;--c1:#1FA398;--c2:#8B6BFF;--c3:#3FB37F;--c4:#E0A700;
+}
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px 80px;background:var(--paper);color:var(--ink);
+  font:16px/1.5 ui-rounded,"Nunito",system-ui,sans-serif}
+header{max-width:820px;margin:0 auto 20px}
+h1{font-size:26px;margin:0 0 4px}
+.sub{color:var(--muted);font-size:14px;margin:0}
+main{max-width:820px;margin:0 auto}
+button{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:999px;padding:8px 16px;min-height:44px;cursor:pointer;
+  transition:transform 160ms var(--ease)}
+button:active{transform:scale(.97)}
+details{border-radius:16px;margin:8px 0;background:var(--surface);border:1px solid var(--line);
+  animation:rise 320ms var(--ease) both;animation-delay:calc(var(--i,0) * 45ms)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;gap:8px;align-items:center;
+  flex-wrap:wrap;min-height:44px;border-radius:16px}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:rgba(43,35,32,.03)}
+.chev{width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+  transform:rotate(-45deg);transition:transform 220ms var(--ease);flex:none;margin-right:2px}
+details[open]>summary .chev{transform:rotate(45deg)}
+/* 0fr → 1fr is the only way to animate to a height nobody measured. */
+.wrap{display:grid;grid-template-rows:0fr;transition:grid-template-rows 320ms var(--ease)}
+details[open]>.wrap{grid-template-rows:1fr}
+.inner{overflow:hidden;padding:0 14px}
+details[open]>.wrap>.inner{padding-bottom:12px}
+.week{border-left:4px solid var(--c0)}
+.week[data-color="1"]{border-left-color:var(--c1)}
+.week[data-color="2"]{border-left-color:var(--c2)}
+.week[data-color="3"]{border-left-color:var(--c3)}
+.week[data-color="4"]{border-left-color:var(--c4)}
+.session{background:rgba(255,255,255,.6)}
+.task{background:var(--paper)}
+.task.transfer{outline:1px dashed var(--c2)}
+.grow,.count,.tag{font-size:12px;font-weight:700;color:var(--muted);
+  background:rgba(43,35,32,.06);border-radius:999px;padding:3px 9px}
+.grow{margin-left:auto}
+.tag.ghost{background:none;border:1px solid var(--line)}
+code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace}
+p{margin:8px 0}
+.why,.role,.mis,.dinner,.hint{color:var(--muted);font-size:14px}
+.answer{background:rgba(43,35,32,.05);border-radius:12px;padding:10px 12px;overflow-x:auto;
+  font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+@media (prefers-reduced-motion:reduce){
+  details{animation:none}
+  .wrap{transition:none}
+  .chev{transition:none}
+}
+</style></head>
+<body>
+<header>
+  <h1>Курс целиком</h1>
+  <p class="sub">5 недели · 15 сессий · 81 задач · сгенерировано из кода, не написано руками</p>
+  <p><button id="all">Развернуть всё</button></p>
+</header>
+<main id="tree">
+<details class="week" style="--i:0" data-color="0">
+  <summary><span class="chev"></span><b>Неделя 1</b> · Точность
+    <span class="grow">выросли уши</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">Теперь он слышит тебя точнее.</p>
+    <details class="session" style="--i:0">
+      <summary><span class="chev"></span>w1-s1 · Монстр слышит только то, что сказано
+        <span class="count">7</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> Если сказать общее слово вроде «домик», монстр сам догадается.</p>
+        <p>Монстр не угадывает. Он делает ровно то, что ты назвал — клетку за клеткой. Если чего-то не хватает, картинка будет неполной, и это нормально: так видно, что ещё нужно сказать.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси ребёнка описать дорогу до кухни так, чтобы робот не ошибся ни на один шаг. Где он был недостаточно точен?</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w1s1-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            <p><b>Цель:</b> закрасить на поле те же клетки, что на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · слова: ряд, столбец, клетка</p>
+            <p><b>Готово, когда:</b> получится, когда поле совпадёт с картинкой клетка в клетку</p>
+            <p><b>Формулировка:</b> Выбери на поле клетки, которые нужно закрасить. Совпади с целью.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Можно назвать целый ряд: верхний, нижний — или целый столбец: левый, правый. Монстр не угадывает «домик».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ██ ██ ██
+·· ·· ·· ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[0,1],[0,2],[0,3]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w1s1-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> закрасить на поле те же клетки, что на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · слова: столбец, левый, правый</p>
+            <p><b>Готово, когда:</b> получится, когда поле совпадёт с картинкой клетка в клетку</p>
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой. Выбери нужные клетки на поле.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Посмотри на картинку: иногда нужен весь столбец сверху вниз. Назови его сторону — левый или правый.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ·· ·· ··
+██ ·· ·· ··
+██ ·· ·· ··
+██ ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[1,0],[2,0],[3,0]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w1s1-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> закрасить на поле те же клетки, что на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · слова: ряд, верхний, нижний</p>
+            <p><b>Готово, когда:</b> получится, когда поле совпадёт с картинкой клетка в клетку</p>
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой. Выбери нужные клетки на поле.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Посмотри, где лежат нужные клетки: иногда это целый ряд слева направо. Назови — верхний или нижний.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ·· ·· ··
+·· ·· ·· ··
+██ ██ ██ ██
+```
+Координаты (0-based): `[[3,0],[3,1],[3,2],[3,3]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w1s1-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> закрасить на поле те же две клетки, что на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · номера строк 1…4 · номера столбцов 1…4</p>
+            <p><b>Готово, когда:</b> получится, когда закрашены ровно две клетки — те самые</p>
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой. Выбери две клетки на поле.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Можно сказать номер строки и столбца для каждой клетки. Строки сверху вниз: 1…4. Столбцы слева направо: 1…4.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+██ ██ ·· ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,0],[1,1]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:4">
+          <summary><span class="chev"></span><code>w1s1-p4</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> закрасить часть ряда — так же, как на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · слова: ряд, слева, справа, сколько клеток</p>
+            <p><b>Готово, когда:</b> получится, когда закрашена часть ряда, а не весь ряд</p>
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Часть ряда — не весь ряд.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Назови ряд, потом сколько клеток и с какой стороны: «слева три» или «справа две».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ██ ██ ··
+·· ·· ·· ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[0,1],[0,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:5">
+          <summary><span class="chev"></span><code>w1s1-p5</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> закрасить клетки фигуры — так же, как на картинке</p>
+            <p><b>Дано:</b> поле 4×4 · картинка-цель · слова: номер ряда, слева, справа, сколько подряд</p>
+            <p><b>Готово, когда:</b> получится, когда клетки стоят там же, где на картинке</p>
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Выбери клетки фигуры на поле.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Укажи номер ряда, потом сторону: «справа» или «слева», и сколько клеток подряд.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ·· ██ ██
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,2],[1,3]]`</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:6">
+          <summary><span class="chev"></span><code>w1s1-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            <p><b>Цель:</b> закрасить новую картинку клетка в клетку</p>
+            <p><b>Дано:</b> поле 4×4 · новая картинка-цель · слова: ряд, столбец, левый, правый</p>
+            <p><b>Готово, когда:</b> получится, когда поле совпадёт с новой картинкой</p>
+            <p><b>Формулировка:</b> Новая картинка. Выбери клетки так, чтобы совпало клетка в клетку.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Если линия идёт сверху вниз у края поля — это столбец. Назови сторону: левый или правый.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ██
+·· ·· ·· ██
+·· ·· ·· ██
+·· ·· ·· ██
+```
+Координаты (0-based): `[[0,3],[1,3],[2,3],[3,3]]`</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:1">
+      <summary><span class="chev"></span>w1-s2 · Фигура по частям
+        <span class="count">7</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> Слово «квадратик» или «домик» достаточно — монстр сам поймёт форму.</p>
+        <p>Большую фигуру нужно назвать по клеткам или по правилу. «Квадратик посередине» монстр не угадывает — он слышит только то, что ты перечислил.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси описать, как нарисовать букву «Г» на клетчатой бумаге, не используя слово «буква». Где описание было слишком коротким?</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w1s2-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Выбери клетки на поле. Собери фигуру без готовой формулы.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Большую фигуру лучше разбить на части и назвать клетки — одно слово «квадрат» монстр не угадает.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ██ ██ ··
+·· ██ ██ ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,1],[1,2],[2,1],[2,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w1s2-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Две соседние клетки в одном ряду: назови ряд и два столбца подряд.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ██ ██ ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,1],[1,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w1s2-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Между клетками может быть пропуск.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Если клетки в одном ряду, но не рядом — назови каждую отдельно (номера столбцов).</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+██ ·· ██ ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,0],[1,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w1s2-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Фигура из трёх клеток.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Можно описать угол: часть столбца вниз + часть ряда в сторону. Перечисли все клетки.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ██ ·· ··
+██ ·· ·· ··
+·· ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[0,1],[1,0]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:4">
+          <summary><span class="chev"></span><code>w1s2-p4</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Маленький квадрат из клеток — назови все четыре пары (строка, столбец), не одно слово «квадрат».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ██ ██ ··
+·· ██ ██ ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,1],[1,2],[2,1],[2,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:5">
+          <summary><span class="chev"></span><code>w1s2-p5</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 3</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Начни не с края поля.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Скажи, с какой строки начать, потом направление (вниз/вправо) и сколько клеток.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ·· ·· ██
+·· ·· ·· ██
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,3],[2,3]]`</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:6">
+          <summary><span class="chev"></span><code>w1s2-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Новая картинка. Выбери клетки так, чтобы совпало клетка в клетку.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Если клетки идут наискосок — назови каждую пару (строка, столбец) по порядку, без слова «диагональ» как единственной команды.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ·· ·· ··
+·· ██ ·· ··
+·· ·· ██ ··
+·· ·· ·· ██
+```
+Координаты (0-based): `[[0,0],[1,1],[2,2],[3,3]]`</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:2">
+      <summary><span class="chev"></span>w1-s3 · Клетка в клетку
+        <span class="count">7</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> Если почти совпало — монстр «догадается» про оставшиеся клетки.</p>
+        <p>Почти совпало — ещё не совпало. Монстр не достраивает фигуру за тебя. Каждая нужная клетка должна быть названа явно или правилом без дырок.</p>
+        <p class="dinner"><b>За ужином:</b> Предложи ребёнку объяснить, как поставить 4 стула вокруг стола, чтобы ни один не был «лишним». Где инструкция была неточной?</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w1s3-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Выбери клетки на поле. Собери фигуру без подсказки.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Сложная фигура — не одно слово. Разбей на части: горизонталь + вертикаль, и перечисли клетки каждой части.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ██ ██ ··
+██ ██ ██ ██
+·· ██ ██ ··
+```
+Координаты (0-based): `[[1,1],[1,2],[2,0],[2,1],[2,2],[2,3],[3,1],[3,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w1s3-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало с картинкой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Угол поля: назови первую клетку, потом сколько клеток вниз в том же столбце.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ·· ·· ··
+██ ·· ·· ··
+██ ·· ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[1,0],[2,0]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w1s3-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Часть одного ряда.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Назови номер ряда, потом «три клетки подряд, начиная со столбца …».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ·· ·· ··
+██ ██ ██ ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[2,0],[2,1],[2,2]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w1s3-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Два края поля.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Два края поля: назови каждый край целиком (какой ряд или столбец), без слова «рамка».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ██ ██ ██
+·· ·· ·· ··
+·· ·· ·· ··
+██ ██ ██ ██
+```
+Координаты (0-based): `[[0,0],[0,1],[0,2],[0,3],[3,0],[3,1],[3,2],[3,3]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:4">
+          <summary><span class="chev"></span><code>w1s3-p4</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 3</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Четыре клетки.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Фигура из четырёх клеток: разбей на части и перечисли все пары (строка, столбец) — не одно имя буквы.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ·· ·· ··
+██ ·· ·· ··
+██ ██ ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[0,0],[1,0],[2,0],[2,1]]`</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:5">
+          <summary><span class="chev"></span><code>w1s3-p5</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 3</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сделай так, чтобы совпало. Пропуск сверху возможен.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Скажи, какую строку пропустить, потом что закрасить во второй и третьей.</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+·· ·· ·· ··
+·· ██ ██ ··
+·· ██ ·· ··
+·· ·· ·· ··
+```
+Координаты (0-based): `[[1,1],[1,2],[2,1]]`</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:6">
+          <summary><span class="chev"></span><code>w1s3-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">grid-draw</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Другое поле. Выбери клетки так, чтобы совпало клетка в клетку.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Сложная фигура: разбей на горизонталь и вертикаль. Перечисли клетки каждой части — монстр не узнает «букву».</p>
+            <pre class="answer">## Ответ: поле 4×4
+```
+██ ██ ██ ██
+·· ██ ·· ··
+·· ██ ·· ··
+·· ██ ·· ··
+```
+Координаты (0-based): `[[0,0],[0,1],[0,2],[0,3],[1,1],[2,1],[3,1]]`</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+  </div></div>
+</details>
+<details class="week" style="--i:1" data-color="1">
+  <summary><span class="chev"></span><b>Неделя 2</b> · Порядок
+    <span class="grow">выросли руки</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">Теперь он может делать шаги по порядку.</p>
+    <details class="session" style="--i:0">
+      <summary><span class="chev"></span>w2-s1 · Сначала — потом
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> шаги можно перечислить в любом порядке, и так понятно</p>
+        <p>Порядок шагов меняет результат. Если сказать «намазать масло» раньше «взять нож», монстр остановится с пустой рукой — он делает шаги строго по списку и не догадывается.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси ребёнка рассказать утренний распорядок так, чтобы робот не перепутал порядок. Где шаги можно было сказать в любом порядке — и почему так нельзя?</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w2s1-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">sequence-world · sandwich</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            <p><b>Цель:</b> собрать сэндвич из того, что лежит на столе</p>
+            <p><b>Дано:</b> хлеб — два ломтика · масло · сыр · нож</p>
+            <p><b>Готово, когда:</b> получится, когда я дойду до «подать» и не застряну</p>
+            <p><b>Формулировка:</b> Собери сэндвич из того, что лежит на столе.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что должно случиться РАНЬШЕ, чтобы получилось потом?</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w2s1-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · sandwich</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> поставить «взять нож» на верное место в порядке</p>
+            <p><b>Дано:</b> хлеб — два ломтика · масло · сыр · нож</p>
+            <p><b>Готово, когда:</b> получится, когда до масла нож уже будет в руке</p>
+            <p><b>Формулировка:</b> Скажи порядок так, чтобы я взял нож не раньше и не позже, чем нужно.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Нож нужен для масла. Значит, он должен быть в руке до масла — но не обязательно самым первым.</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w2s1-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · sandwich</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> уложиться в два ломтика хлеба</p>
+            <p><b>Дано:</b> хлеб — два ломтика · масло · сыр · нож</p>
+            <p><b>Готово, когда:</b> получится, когда сыр окажется внутри, а не сверху</p>
+            <p><b>Формулировка:</b> Хлеба всего два ломтика. Скажи порядок, в котором обоим найдётся место.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Один ломтик — низ, второй — крышка. Что должно оказаться между ними до того, как накроешь?</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w2s1-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · sandwich</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> назвать полный план от первого шага до подачи</p>
+            <p><b>Дано:</b> хлеб — два ломтика · масло · сыр · нож · тарелка</p>
+            <p><b>Готово, когда:</b> получится, когда я пройду весь план и подам</p>
+            <p><b>Формулировка:</b> Скажи весь план целиком: от первого шага до подачи.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Проверь про себя: каждый следующий шаг возможен сразу после предыдущего?</p>
+            
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w2s1-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">sequence-world · plant</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            <p><b>Цель:</b> посадить семечко и оставить горшок на свету</p>
+            <p><b>Дано:</b> пустой горшок · мешок земли · одно семечко · лейка с водой · подставка на свету</p>
+            <p><b>Готово, когда:</b> получится, когда горшок окажется на свету, а семечко — в мокрой земле</p>
+            <p><b>Формулировка:</b> Стол закончился — теперь подоконник. Посади семечко, чтобы оно росло.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> То же правило, что и с сэндвичем: спроси себя, что должно быть готово РАНЬШЕ.</p>
+            
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:1">
+      <summary><span class="chev"></span>w2-s2 · Пропущенный шаг
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> если шагов много, один пропущенный всё равно ничего не изменит</p>
+        <p>Пропущенный шаг редко виден сразу. Монстр спокойно делает всё, что ты сказал, и упирается в конце: земля сухая, а он уже несёт горшок на свет. Дыра была в середине, а остановка — в конце.</p>
+        <p class="dinner"><b>За ужином:</b> Спроси ребёнка: если в рецепте пропустить шаг, это видно сразу или только в конце? Пусть придумает случай, где ошибку замечают самым последним.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w2s2-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">sequence-world · plant</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            <p><b>Цель:</b> увидеть, чем кончается план без полива</p>
+            <p><b>Дано:</b> пустой горшок · мешок земли · одно семечко · лейка с водой · подставка на свету</p>
+            <p><b>Готово, когда:</b> получится, когда я всё-таки донесу горшок до света</p>
+            <p><b>Формулировка:</b> Посади семечко, но не поливай. Досмотри, где я остановлюсь.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Смотри не на тот шаг, где я встал, а на тот, которого не было раньше.</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w2s2-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · plant</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> добавить пропущенный шаг в план посадки</p>
+            <p><b>Дано:</b> пустой горшок · мешок земли · одно семечко · лейка с водой · подставка на свету</p>
+            <p><b>Готово, когда:</b> получится, когда я дойду до света и не застряну</p>
+            <p><b>Формулировка:</b> Вставь недостающий шаг так, чтобы я дошёл до конца.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Полить можно, как только в горшке есть земля. Раньше — лить некуда.</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w2s2-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · plant</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> довести единственное семечко до закопанной ямки</p>
+            <p><b>Дано:</b> пустой горшок · мешок земли · одно семечко · лейка с водой · подставка на свету</p>
+            <p><b>Готово, когда:</b> получится, когда семечко будет закопано, а не лежать сверху</p>
+            <p><b>Формулировка:</b> Семечко одно. Скажи порядок, в котором оно точно окажется в ямке.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Ямку копают в земле, а не в пустом горшке. Что должно быть до ямки?</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w2s2-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · plant</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> починить план одной вставкой</p>
+            <p><b>Дано:</b> пустой горшок · мешок земли · одно семечко · лейка с водой · подставка на свету</p>
+            <p><b>Готово, когда:</b> получится, когда план дойдёт до конца, а шагов станет ровно на один больше</p>
+            <p><b>Формулировка:</b> Найди дыру в почти готовом плане и почини её одной вставкой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Не переписывай всё. Найди один шаг, без которого следующий невозможен.</p>
+            
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w2s2-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">sequence-world · leaving</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            <p><b>Цель:</b> выйти на улицу и запереть дверь</p>
+            <p><b>Дано:</b> куртка · ботинки · рюкзак · ключи на полке · закрытая дверь</p>
+            <p><b>Готово, когда:</b> получится, когда я окажусь на улице и дверь будет заперта</p>
+            <p><b>Формулировка:</b> Подоконник закончился. Собери меня на улицу так, чтобы дверь осталась запертой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Здесь тоже есть шаг, который вспоминают последним — и уже с той стороны двери.</p>
+            
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:2">
+      <summary><span class="chev"></span>w2-s3 · Большое дело — маленькие шаги
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> большую цель можно назвать одним шагом — «собраться и выйти»</p>
+        <p>«Выйти на улицу» — не шаг, а название пяти шагов. Монстр не умеет собираться: он умеет надеть, взять, открыть, выйти, закрыть. Большая цель работает только тогда, когда разложена на то, что он умеет.</p>
+        <p class="dinner"><b>За ужином:</b> Спроси ребёнка, из скольких шагов состоит «собраться в школу». Пусть назовёт их вслух, а потом найдёт два, которые можно поменять местами без вреда — и один, который нельзя.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w2s3-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">sequence-world · leaving</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            <p><b>Цель:</b> разложить «собраться и выйти» на шаги, которые монстр умеет</p>
+            <p><b>Дано:</b> куртка · ботинки · рюкзак · ключи на полке · закрытая дверь</p>
+            <p><b>Готово, когда:</b> получится, когда я выйду и запру дверь</p>
+            <p><b>Формулировка:</b> Скажи мне «собраться и выйти» шагами. Я умею только то, что на кнопках.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Возьми большую цель и спроси: из чего она состоит? Каждый кусок — отдельный шаг.</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w2s3-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · leaving</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> запереть дверь снаружи</p>
+            <p><b>Дано:</b> куртка · ботинки · рюкзак · ключи на полке · закрытая дверь</p>
+            <p><b>Готово, когда:</b> получится, когда ключи будут у меня раньше, чем я выйду</p>
+            <p><b>Формулировка:</b> Ключи лежат на полке в прихожей. Скажи порядок, в котором дверь окажется запертой.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Спроси себя: где я буду стоять, когда захочу запереть дверь — и что должно быть у меня в руках уже тогда?</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w2s3-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · leaving</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> надеть и куртку, и рюкзак</p>
+            <p><b>Дано:</b> куртка · ботинки · рюкзак · ключи на полке · закрытая дверь</p>
+            <p><b>Готово, когда:</b> получится, когда куртка окажется на мне раньше рюкзака</p>
+            <p><b>Формулировка:</b> Рюкзак надевают поверх куртки. Скажи порядок, в котором оба окажутся на мне.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Два шага, которые кажутся независимыми, на самом деле спорят друг с другом. Кто из них первый?</p>
+            
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w2s3-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">sequence-world · leaving</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            <p><b>Цель:</b> назвать полный план от прихожей до запертой двери</p>
+            <p><b>Дано:</b> куртка · ботинки · рюкзак · ключи на полке · закрытая дверь</p>
+            <p><b>Готово, когда:</b> получится, когда я пройду весь план и запру дверь</p>
+            <p><b>Формулировка:</b> Скажи весь план от прихожей до запертой двери.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Проверь план с конца: чтобы запереть — надо выйти; чтобы выйти — надо открыть и одеться.</p>
+            
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w2s3-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">sequence-world · sandwich</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            <p><b>Цель:</b> разложить «сделать обед» на шаги, которые монстр умеет</p>
+            <p><b>Дано:</b> хлеб — два ломтика · масло · сыр · нож · тарелка</p>
+            <p><b>Готово, когда:</b> получится, когда я дойду до «подать»</p>
+            <p><b>Формулировка:</b> Дверь заперта, мы вернулись на кухню. Разложи «сделать обед» на шаги.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Большая цель снова названа одним словом. Из чего она состоит здесь?</p>
+            
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+  </div></div>
+</details>
+<details class="week" style="--i:2" data-color="2">
+  <summary><span class="chev"></span><b>Неделя 3</b> · Правило
+    <span class="grow">вырос рог</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">Теперь он держит правило и не забывает его.</p>
+    <details class="session" style="--i:0">
+      <summary><span class="chev"></span>w3-s1 · Если — то
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> сработало на одном примере — значит работает всегда</p>
+        <p>Список шагов без условия отлично идёт по одной карте и врезается в стену на другой. Нужно правило ЕСЛИ-ТО, которое смотрит вперёд.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Правило сработало один раз — значит всегда?» Пусть ребёнок придумает случай, где то же правило сломается.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w3s1-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Скажи одно правило ЕСЛИ-ТО для монстра. Оно прогонится на двух картах.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что монстр должен ПРОВЕРИТЬ, прежде чем шагнуть?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w3s1-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Правило: если впереди свободно — шаг, если стена — стой. Скажи его своими словами.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Назови условие и действие явно.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w3s1-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> То же умение: правило должно работать и на открытой клетке, и у стены.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Проверь обе карты одним правилом.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w3s1-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Уточни правило так, чтобы на стене монстр не шагал.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что проверить перед шагом?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w3s1-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Светофор: если «стена» (красный) — стой, иначе шаг. Скажи правило.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что проверить, прежде чем шагнуть?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:1">
+      <summary><span class="chev"></span>w3-s2 · А если нет?
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> сработало на одном примере — значит работает всегда</p>
+        <p>Если правило молчит про неудобный случай, монстр замирает в тупике. Ветка «иначе» закрывает дыру.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Правило сработало один раз — значит всегда?» Пусть ребёнок придумает случай, где то же правило сломается.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w3s2-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Добавь ветку «иначе». Правило прогонится на трёх картах, включая ловушку.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> А что делать, когда условие НЕ выполнилось?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w3s2-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Если ловушка — стой, иначе шаг. Скажи правило с «иначе».</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Назови и «то», и «иначе».</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w3s2-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Правило должно пройти открытую клетку, стену и ловушку.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Без «иначе» на ловушке монстр замирает без инструкции.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w3s2-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Уточни «иначе», чтобы неудобный случай не ломал прогон.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что делать, когда условие не сработало?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w3s2-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Сортировка: есть «лишний» случай. Скажи правило с явной веткой иначе.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> А если условие не подошло — что тогда?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:2">
+      <summary><span class="chev"></span>w3-s3 · Правило для всех дорог
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> сработало на одном примере — значит работает всегда</p>
+        <p>Правило «под одну карту» падает на скрытой. Нужно правило, которое работает на любой дороге из набора.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Правило сработало один раз — значит всегда?» Пусть ребёнок придумает случай, где то же правило сломается.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w3s3-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Одно правило на четыре карты — одна скрыта. Не подгоняй только под видимую.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Твоё правило про ЭТУ карту или про ЛЮБУЮ?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w3s3-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Скажи общее правило: свободно — шаг; стена или ловушка — стой; цель — шаг.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Правило должно держаться и на скрытой карте.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w3s3-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Ещё раз: одно правило для всех дорог, включая скрытую.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Не описывай одну карту — опиши любую.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w3s3-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Уточни правило так, чтобы скрытая цель тоже проходилась.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Про эту карту или про любую?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w3s3-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Предскажи: на какой из видимых карт слабое правило упадёт — и скажи сильное.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Правило для любой дороги, не для одной картинки.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+  </div></div>
+</details>
+<details class="week" style="--i:3" data-color="3">
+  <summary><span class="chev"></span><b>Неделя 4</b> · Образец
+    <span class="grow">появился узор на спине</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">Теперь он повторяет образец сам.</p>
+    <details class="session" style="--i:0">
+      <summary><span class="chev"></span>w4-s1 · Что дальше?
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> описал три элемента — описал закономерность</p>
+        <p>Монстр не угадывает продолжение «1, 2, 3 → банан». Ему нужно правило, из которого получаются следующие члены.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси описать узор (числа, цвета или звуки) как ПРАВИЛО, а не как список «что было нарисовано».</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w4s1-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Скажи правило, которое продолжит ряд на 5 следующих членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как из одного элемента получается следующий?</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5
+Членов развернуть: 5</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w4s1-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Начинай с 1 и каждый раз прибавляй 1 — скажи это как правило.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Назови старт и шаг.</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5
+Членов развернуть: 5</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w4s1-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Правило: старт 2, шаг 2. Пять членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как получается следующий из предыдущего?</p>
+            <pre class="answer">## Ответ: ряд
+2 → 4 → 6 → 8 → 10
+Членов развернуть: 5</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w4s1-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Цвета: повторяй красный, синий. Пять членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Опиши цикл, не список примеров.</p>
+            <pre class="answer">## Ответ: ряд
+красный → синий → красный → синий → красный
+Членов развернуть: 5</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w4s1-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Звуки-цвета: цикл жёлтый–зелёный на 5 членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как из одного получается следующий?</p>
+            <pre class="answer">## Ответ: ряд
+жёлтый → зелёный → жёлтый → зелёный → жёлтый
+Членов развернуть: 5</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:1">
+      <summary><span class="chev"></span>w4-s2 · Правило вместо списка
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> описал три элемента — описал закономерность</p>
+        <p>Список из трёх элементов обрывается на десятом. Правило-генератор продолжает само.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси описать узор (числа, цвета или звуки) как ПРАВИЛО, а не как список «что было нарисовано».</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w4s2-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Не перечисляй — скажи правило, которое даст 10 членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Опиши не ЧТО нарисовано, а КАК это получается.</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+Членов развернуть: 10</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w4s2-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Старт 1, шаг 1 — до 10-го члена.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Генератор, не список.</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10
+Членов развернуть: 10</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w4s2-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Старт 0, шаг 3 — десять членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как получается следующий?</p>
+            <pre class="answer">## Ответ: ряд
+0 → 3 → 6 → 9 → 12 → 15 → 18 → 21 → 24 → 27
+Членов развернуть: 10</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w4s2-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Цикл: а, б, в — разверни на 10 членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Правило повтора, не три слова списком.</p>
+            <pre class="answer">## Ответ: ряд
+а → б → в → а → б → в → а → б → в → а
+Членов развернуть: 10</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w4s2-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Расскажи, как получена дорожка: старт 5, шаг −1, десять членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Опиши КАК получается, не что видно.</p>
+            <pre class="answer">## Ответ: ряд
+5 → 4 → 3 → 2 → 1 → 0 → -1 → -2 → -3 → -4
+Членов развернуть: 10</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:2">
+      <summary><span class="chev"></span>w4-s3 · Сломанный узор
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> описал три элемента — описал закономерность</p>
+        <p>Одна плитка выбилась. Нужно найти разрыв и починить правило минимальной правкой — не переписывать всё заново.</p>
+        <p class="dinner"><b>За ужином:</b> Попроси описать узор (числа, цвета или звуки) как ПРАВИЛО, а не как список «что было нарисовано».</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w4s3-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Узор сломан. Скажи исправленное правило для всей ленты.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Где именно узор перестал слушаться правила?</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5 → 6
+Членов развернуть: 6</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w4s3-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Почини: должно быть +1 от 1. Шесть членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Минимальная правка правила, не новый список.</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5 → 6
+Членов развернуть: 6</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w4s3-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Цикл красный–синий–жёлтый на 6 членов — без сбоя.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Где узор ломался? Почини правило.</p>
+            <pre class="answer">## Ответ: ряд
+красный → синий → жёлтый → красный → синий → жёлтый
+Членов развернуть: 6</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w4s3-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Старт 10, шаг −2, шесть членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Самая маленькая правка, чтобы все члены совпали.</p>
+            <pre class="answer">## Ответ: ряд
+10 → 8 → 6 → 4 → 2 → 0
+Членов развернуть: 6</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w4s3-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">pattern-expand</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Перенос: «почини» последовательность шагов как правило старт 1 шаг 1 на 6 членов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Где узор перестал слушаться?</p>
+            <pre class="answer">## Ответ: ряд
+1 → 2 → 3 → 4 → 5 → 6
+Членов развернуть: 6</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+  </div></div>
+</details>
+<details class="week" style="--i:4" data-color="4">
+  <summary><span class="chev"></span><b>Неделя 5</b> · Перенос
+    <span class="grow">выросли крылья</span></summary>
+  <div class="wrap"><div class="inner">
+    <p class="why">Теперь он уносит то, чему научился, в новое место.</p>
+    <details class="session" style="--i:0">
+      <summary><span class="chev"></span>w5-s1 · Монстр уверен. А ты?
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> если ИИ ответил уверенно, значит правильно</p>
+        <p>Уверенный тон не равен правде. Спроектируй проверку: пометь каждое утверждение верным или ложным.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Если кто-то ответил очень уверенно — как проверить, а не поверить?» Пусть ребёнок предложит одну проверку.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w5s1-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Монстр уверенно говорит про картинку. Пометь каждое утверждение: верно или ложно.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как проверить, а не поверить?</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| В верхнем ряду четыре клетки закрашены. | да |
+| Вся сетка пустая. | **нет** |
+| Есть хотя бы одна закрашенная клетка. | да |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w5s1-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Проверь набор: часть верных, одно уверенно ложное.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Не верь тону — проверь каждое.</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| 2 + 2 = 4 | да |
+| После 1,2,3 всегда идёт «банан». | **нет** |
+| Правило «+1» даёт 1,2,3,4. | да |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w5s1-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Ещё один набор утверждений монстра — пометь все.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как проверить каждое?</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| Открытая клетка — можно шагнуть. | да |
+| В стену всегда нужно шагать. | **нет** |
+| Ловушка — опасный шаг вперёд. | да |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w5s1-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Поймай уверенную ложь среди верных фактов.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Проверка важнее уверенности.</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| Список из трёх чисел — ещё не правило. | да |
+| Если сказано уверенно — всегда верно. | **нет** |
+| Нужно правило, чтобы продолжить ряд. | да |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w5s1-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Перенос: проверь утверждения про закономерность недели 4.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как проверить, а не поверить?</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| Правило start=1 step=1 даёт 1,2,3. | да |
+| Три примера всегда достаточны как правило. | **нет** |
+| Цикл из двух цветов повторяется. | да |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:1">
+      <summary><span class="chev"></span>w5-s2 · Почини, не переписывай
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> если ИИ ответил уверенно, значит правильно</p>
+        <p>Не выбрасывай правило целиком. Найди самую маленькую правку — и все карты снова проходят.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Если кто-то ответил очень уверенно — как проверить, а не поверить?» Пусть ребёнок предложит одну проверку.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w5s2-collision</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Правило почти работает, но падает на одной карте. Почини минимально.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что самое МАЛЕНЬКОЕ можно изменить?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:1">
+          <summary><span class="chev"></span><code>w5s2-p1</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Добавь или уточни одну ветку, чтобы ловушка и стена были безопасны.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Одна маленькая правка, не новое правило с нуля.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w5s2-p2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Прогони починенное правило по всем трём картам.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Минимальное изменение до рабочего прогона.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w5s2-p3</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Ещё раз: почини так, чтобы открытая, стена и ловушка проходили.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Самое маленькое изменение.</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w5s2-transfer</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 1</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Перенос: минимально почини «сломанный план» — скажи рабочее правило для трёх карт.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что самое маленькое можно изменить?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+<details class="session" style="--i:2">
+      <summary><span class="chev"></span>w5-s3 · Выпускной квест
+        <span class="count">5</span></summary>
+      <div class="wrap"><div class="inner">
+        <p class="mis"><b>Ломаем:</b> если ИИ ответил уверенно, значит правильно</p>
+        <p>Три акта без нового материала: точное условное правило на новой карте, поймать уверенную ложь, минимальная починка. Затем своими словами — главное правило мышления.</p>
+        <p class="dinner"><b>За ужином:</b> Спросите: «Если кто-то ответил очень уверенно — как проверить, а не поверить?» Пусть ребёнок предложит одну проверку.</p>
+        <details class="task collision" style="--i:0">
+          <summary><span class="chev"></span><code>w5s3-act1</code>
+            <span class="tag">collision</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">столкновение — показать, что старый способ не работает</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Акт 1: напиши точное условное правило для новой карты и скажи, что должно произойти.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что должно произойти, чтобы получилось именно так?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task prediction" style="--i:1">
+          <summary><span class="chev"></span><code>w5s3-act1-prediction</code>
+            <span class="tag">prediction</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">предсказание — сказать результат до прогона</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Перед следующим прогоном предскажи результат правила: свободно или цель — шаг, стена — ждать, ловушка — стоп.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Для каждой карты сначала посмотри на клетку впереди, затем примени правило буквально.</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| На свободной клетке монстр сделает шаг. | да |
+| Перед стеной монстр сделает шаг. | **нет** |
+| Перед ловушкой монстр остановится. | да |
+| Перед целью монстр сделает шаг. | да |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:2">
+          <summary><span class="chev"></span><code>w5s3-act1-practice</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Акт 1 (практика): уточни правило так, чтобы все четыре карты прошли.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что должно произойти, чтобы получилось именно так?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+<details class="task practice" style="--i:3">
+          <summary><span class="chev"></span><code>w5s3-act2</code>
+            <span class="tag">practice</span>
+            <span class="tag ghost">claim-check</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">практика — то же умение ещё раз, с другой стороны</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Акт 2: монстр уверенно врёт про результат акта 1. Поймай ложное утверждение.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Как проверить, а не поверить?</p>
+            <pre class="answer">## Ответ: утверждения
+| утверждение | правда? |
+|---|---|
+| Правило с проверкой впереди безопаснее слепого шага. | да |
+| На всех четырёх картах можно всегда только шагать. | **нет** |
+| Скрытая карта тоже должна подчиняться тому же правилу. | да |</pre>
+          </div></div>
+        </details>
+<details class="task transfer" style="--i:4">
+          <summary><span class="chev"></span><code>w5s3-act3</code>
+            <span class="tag">transfer</span>
+            <span class="tag ghost">rule-runner</span>
+            <span class="tag ghost">tier 2</span></summary>
+          <div class="wrap"><div class="inner">
+            <p class="role">перенос — то же умение в мире, который не тренировали</p>
+            
+            
+            
+            <p><b>Формулировка:</b> Акт 3: в правиле спрятан дефект. Почини минимальной правкой и прогони все карты.</p>
+            <p class="hint"><b>Подсказка (5💎):</b> Что самое маленькое можно изменить?</p>
+            <pre class="answer">## Ответ: карты правил
+| карта | ситуация | верные действия |
+|---|---|---|
+| m-open | {"ahead":"open"} | step |
+| m-wall | {"ahead":"wall"} | stop / wait / turn_left / turn_right |
+| m-trap | {"ahead":"trap"} | stop / wait / turn_left / turn_right |
+| m-hidden-goal | {"ahead":"goal"} | step |</pre>
+          </div></div>
+        </details>
+      </div></div>
+    </details>
+  </div></div>
+</details>
+</main>
+<script>
+const all = document.getElementById("all");
+let open = false;
+all.addEventListener("click", () => {
+  open = !open;
+  // Staggered so a hundred panels do not slam open at once.
+  document.querySelectorAll("details").forEach((d, i) => {
+    setTimeout(() => { d.open = open; }, open ? Math.min(i * 8, 400) : 0);
+  });
+  all.textContent = open ? "Свернуть всё" : "Развернуть всё";
+});
+</script>
+</body></html>
