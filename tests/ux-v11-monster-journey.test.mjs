@@ -116,7 +116,15 @@ console.log("\n=== step 2 · the task brief (§2, rendered per §10.2) ===");
     !JSON.stringify(week2Session1).includes("в любом порядке — попробуй")
   );
   check("goal names the finished thing", sandwich.goalRu === "собрать сэндвич из того, что лежит на столе");
-  check("given is an explicit list", sandwich.givenRu.join(", ") === "хлеб, сыр, масло, нож");
+  // Was pinned to the exact four words, which made the assertion a copy of the content
+  // rather than a statement about it: rewording the list to name the two-slice constraint
+  // failed a test that has no opinion about wording. §2 asks for an explicit list — no
+  // «и т.д.», nothing the child has to infer — so that is what this checks.
+  check(
+    "given is an explicit list",
+    sandwich.givenRu.length >= 3 &&
+      sandwich.givenRu.every((item) => item.trim() && !/и\s*т\.?\s*д|и\s*др|прочее/i.test(item))
+  );
   check("done-when is one short line in the monster's voice", sandwich.doneWhenRu.length <= 60);
   check("the full condition exists for the after-a-miss expansion", sandwich.doneWhenFullRu.length > 0);
   check("no «и т.д.» in any given list", !JSON.stringify(week2Session1).includes("и т.д"));

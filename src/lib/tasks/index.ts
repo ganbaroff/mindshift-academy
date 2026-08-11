@@ -20,14 +20,25 @@ export {
 export {
   SEQUENCE_ACTIONS,
   SEQUENCE_WORLD_PROMPT,
+  SEQUENCE_WORLDS,
+  SANDWICH_WORLD,
   checkSequence,
   executeSequence,
   normalizeSequenceProgram,
   renderSequenceDiff,
-  type SequenceAction,
+  sequenceWorld,
+  sequenceWorldPrompt,
   type SequenceExecuteResult,
   type SequenceVerdict,
+  type SequenceWorld,
 } from "./sequence-world";
+
+export {
+  PUBLIC_SEQUENCE_WORLDS,
+  displayOrder,
+  publicSequenceWorld,
+  type PublicSequenceWorld,
+} from "./sequence-worlds-public";
 
 export {
   RULE_RUNNER_PROMPT,

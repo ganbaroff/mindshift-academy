@@ -1,22 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SEQUENCE_ACTIONS } from "@/lib/tasks/sequence-world";
+import { displayOrder, publicSequenceWorld } from "@/lib/tasks/sequence-worlds-public";
 import type { StructuredProgram } from "@/lib/tasks/schemas";
 import { PRIMARY_ACTION_HIDDEN, type TaskPrimaryActionProps } from "./primary-action";
 
 type Props = TaskPrimaryActionProps & {
   disabled: boolean;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
-};
-
-const ACTION_LABELS: Record<(typeof SEQUENCE_ACTIONS)[number], string> = {
-  взять_нож: "Взять нож",
-  положить_хлеб: "Положить хлеб",
-  намазать_масло: "Намазать масло",
-  положить_сыр: "Положить сыр",
-  накрыть_хлебом: "Накрыть хлебом",
-  подать: "Подать",
+  /** Which micro-world this task runs in. Falls back to the sandwich. */
+  worldId?: string | null;
 };
 
 export function SequenceSurface({
@@ -25,7 +18,14 @@ export function SequenceSurface({
   onSubmitReadyChange,
   disabled,
   onSubmit,
+  worldId,
 }: Props) {
+  // The public half of the world: scene, vocabulary and labels. The requirements live on
+  // the server — they are the answer key, and this file used to import them, which shipped
+  // the whole state machine to the browser.
+  const world = publicSequenceWorld(worldId);
+  const labels = world.labelsRu;
+  const buttons = displayOrder(world);
   const [steps, setSteps] = useState<string[]>([]);
   const ready = steps.length > 0;
 
@@ -45,16 +45,18 @@ export function SequenceSurface({
     >
       <fieldset disabled={disabled}>
         <legend className="mb-3 font-medium text-[var(--ink)]">Добавь действия в нужном порядке</legend>
+        {/* The scene, or a child meeting a new world has to guess what is on the table. */}
+        <p className="mb-3 text-sm text-[var(--text-secondary)]">{world.sceneRu}</p>
         <div className="flex flex-wrap gap-2">
-          {SEQUENCE_ACTIONS.map((action) => (
+          {buttons.map((action) => (
             <button
               key={action}
               type="button"
-              aria-label={`Добавить действие: ${ACTION_LABELS[action]}`}
+              aria-label={`Добавить действие: ${labels[action]}`}
               onClick={() => setSteps((current) => [...current, action])}
               className="min-h-11 rounded-xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-2 text-sm font-semibold text-[var(--ink)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
             >
-              + {ACTION_LABELS[action]}
+              + {labels[action]}
             </button>
           ))}
         </div>
@@ -66,7 +68,7 @@ export function SequenceSurface({
           <ol className="space-y-2">
             {steps.map((step, index) => (
               <li key={`${step}-${index}`} className="flex min-h-11 items-center justify-between gap-3 rounded-lg bg-[var(--surface-strong)] px-3">
-                <span>{index + 1}. {ACTION_LABELS[step as keyof typeof ACTION_LABELS]}</span>
+                <span>{index + 1}. {labels[step] ?? step}</span>
                 <button
                   type="button"
                   aria-label={`Убрать шаг ${index + 1}`}
