@@ -50,11 +50,29 @@
   animation: pop-from-corner 160ms var(--ease-out) both;
 }
 
+/* A part the monster has just grown. It scales from its own attachment point — every
+   part in MonsterSVG sets its transform-origin to the anchor it hangs off, so ears push
+   out of the head and wings out of the back rather than all inflating from the centre.
+   It overshoots once and settles: a thing that lands has weight. It never starts at 0 —
+   0.35 is small, but it is something arriving, not something conjured.
+   Slower than the UI curves on purpose. This is the only moment in five weeks that says
+   "you changed something", so it is allowed to take longer than a button. */
+@keyframes part-grow {
+  0% { opacity: 0; transform: scale(0.35); }
+  55% { opacity: 1; transform: scale(1.14); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.part.growing {
+  animation: part-grow 620ms var(--ease-out) both;
+}
+
 /* Reduced motion means gentler, not nothing: the message still needs to announce itself,
-   it just stops travelling. */
+   it just stops travelling. The new part still has to be legible as new, so it fades in
+   on its own instead of scaling. */
 @media (prefers-reduced-motion: reduce) {
   .rise-in,
-  .pop-from-corner {
+  .pop-from-corner,
+  .part.growing {
     animation: fade-in 200ms var(--ease-out) both;
   }
 }

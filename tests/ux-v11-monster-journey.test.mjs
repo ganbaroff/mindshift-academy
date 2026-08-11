@@ -20,6 +20,8 @@ import {
   weekOfSession,
   sessionNumberOf,
   sessionsOfWeek,
+  weekClosedBy,
+  monsterPartsThroughWeek,
 } from "../src/lib/tasks/course-map.ts";
 import {
   clarify,
@@ -322,6 +324,105 @@ console.log("\n=== the session screen wires it as specified ===");
   check("«готово, когда» is visible before the first attempt", page.includes('data-testid="task-done-when"'));
   check("the full condition only expands after a miss", /failStreak > 0 && currentTask\?\.doneWhenFullRu/.test(page));
   check("the stuck child gets no modal", !/Modal|Dialog/.test(page.slice(page.indexOf("stuck-notice") - 400, page.indexOf("stuck-notice") + 400)));
+}
+
+// ---------------------------------------------------------------------------
+// step 4 — the growth moment: the week's part arrives where the child can see it
+// ---------------------------------------------------------------------------
+{
+  // Only the last session of a week closes one. Two sessions in three must announce
+  // nothing, or a child is congratulated for a part they have not earned.
+  const closers = SESSION_ORDER.filter((id) => weekClosedBy(id) !== null);
+  check("exactly five sessions close a week", closers.length === 5);
+  check(
+    "only the third session of a week closes it",
+    closers.every((id) => sessionNumberOf(id) === 3)
+  );
+  check("session 1 of a week closes nothing", weekClosedBy("w1-s1") === null);
+  check("session 2 of a week closes nothing", weekClosedBy("w1-s2") === null);
+  check("an id outside the catalog closes nothing", weekClosedBy("w9-s3") === null);
+  check("a week closes with its own part", weekClosedBy("w3-s3")?.part === "horn");
+  check(
+    "the closing week is the session's own week",
+    COURSE_WEEKS.every((w) => weekClosedBy(sessionsOfWeek(w.week).at(-1))?.week === w.week)
+  );
+
+  // The celebration draws the monster from `monsterPartsThroughWeek`; the map draws it
+  // from `earnedMonsterParts`. If those two ever disagree, a child sees one silhouette
+  // on the completion screen and a different one on the map.
+  for (const w of COURSE_WEEKS) {
+    const through = SESSION_ORDER.filter((id) => weekOfSession(id) <= w.week);
+    check(
+      `week ${w.week}: celebration and map agree on the silhouette`,
+      JSON.stringify(monsterPartsThroughWeek(w.week)) ===
+        JSON.stringify(earnedMonsterParts(through))
+    );
+  }
+  check(
+    "parts arrive in the fixed growth order",
+    JSON.stringify(monsterPartsThroughWeek(5)) === JSON.stringify(MONSTER_PART_ORDER)
+  );
+
+  // Russian disagrees across the five parts. A single «выросли {part}» template prints
+  // «выросли рог» and «выросли узор на спине» — broken Russian, to a child, three weeks
+  // out of five. The phrase has to be authored per part.
+  check(
+    "every week authors a whole arrival phrase",
+    COURSE_WEEKS.every((w) => typeof w.partGrownRu === "string" && w.partGrownRu.includes(w.partRu))
+  );
+  check(
+    "the phrase is a sentence, not the noun repeated",
+    COURSE_WEEKS.every((w) => w.partGrownRu.trim() !== w.partRu.trim())
+  );
+  check("a singular part gets a singular verb", weekMetaPhrase(3) === "вырос рог");
+  check("the back pattern appears rather than grows", weekMetaPhrase(4) === "появился узор на спине");
+
+  const growth = readFileSync(join(root, "src/components/companion/MonsterGrowth.tsx"), "utf8");
+  check("the growth card renders nothing when no week closed", /if \(!meta\) return null;/.test(growth));
+  check("the growth card names the capability, not a score", growth.includes("partMeaningRu"));
+  check("the growth card uses the authored phrase", growth.includes("partGrownRu"));
+  check("the growth card animates the part that just arrived", /growing=\{meta\.part\}/.test(growth));
+  check("the growth card stores nothing about the child", !/localStorage|sessionStorage|document\.cookie/.test(codeOnly(growth)));
+  check("the growth card adds no second confetti", !/confetti/.test(codeOnly(growth)));
+  check("the growth card announces itself to a screen reader", /role="status"/.test(growth));
+
+  const css = readFileSync(join(root, "src/app/globals.css"), "utf8");
+  check("a growing part has an animation", /\.part\.growing\s*\{[^}]*animation:\s*part-grow/.test(css));
+  check("the part scales from something, never from zero", /0%\s*\{[^}]*scale\(0\.35\)/.test(css));
+  check("the part overshoots once and settles", /55%\s*\{[^}]*scale\(1\.14\)/.test(css));
+  const reduced = css.slice(css.indexOf("@media (prefers-reduced-motion: reduce)"));
+  check("reduced motion drops the scale but keeps the arrival", /\.part\.growing/.test(reduced.slice(0, 400)));
+
+  const page = readFileSync(join(root, "src/app/session/[id]/page.tsx"), "utf8");
+  check("the completion screen asks whether a week closed", page.includes("weekClosedBy(sessionId)"));
+  check("the growth card replaces the generic avatar", /weekClosedBy\(sessionId\) \? \(\s*<MonsterGrowth/.test(page));
+  check("the growth card gets the child's own colour", /color=\{monsterColor\}/.test(page));
+  // The store's default violet is not a child's monster. Only the flag-disabled legacy
+  // /lesson route used to hydrate this, so without it the celebration draws a stranger.
+  check(
+    "the session screen hydrates the monster from server truth",
+    /setActiveSkin\(m\.emoji, m\.name, m\.color\)/.test(page)
+  );
+  check("the capstone shows the wings it just earned", /<MonsterGrowth[\s\S]{0,80}\/>\s*<\/div>\s*<CalmClosure/.test(page));
+  const pageCode = codeOnly(page);
+  check("the confetti dropped the pre-redesign neon", !pageCode.includes("#a78bfa") && !pageCode.includes("#22d3ee"));
+
+  const map = readFileSync(join(root, "src/app/map/page.tsx"), "utf8");
+  check("the trail prints the authored phrase", map.includes("{w.partGrownRu}"));
+  check("the trail no longer glues a verb to a noun", !map.includes("выросли {w.partRu}"));
+}
+
+function weekMetaPhrase(week) {
+  return COURSE_WEEKS.find((w) => w.week === week)?.partGrownRu;
+}
+
+/**
+ * An assertion about behaviour must read the code, not the prose around it. The growth
+ * card's own doc comment explains why it stores nothing and throws no confetti — naive
+ * `includes("localStorage")` would fail on the sentence that promises it doesn't.
+ */
+function codeOnly(src) {
+  return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
 }
 
 console.log(
