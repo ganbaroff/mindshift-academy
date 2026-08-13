@@ -66,7 +66,8 @@
     "test:map": "npx tsx scripts/e2e/map-check.mjs",
     "vault": "npx tsx scripts/curriculum/export-vault.mjs",
     "vault:check": "npx tsx scripts/curriculum/export-vault.mjs --out .vault-check && diff -r .vault-check curriculum-vault && rm -rf .vault-check",
-    "test:tier": "npx tsx tests/tier-demand.test.mjs"
+    "test:tier": "npx tsx tests/tier-demand.test.mjs",
+    "tier:live": "npx tsx scripts/e2e/tier-live.mjs"
   },
   "dependencies": {
     "@clerk/backend": "3.8.2",
