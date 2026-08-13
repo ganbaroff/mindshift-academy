@@ -65,7 +65,14 @@ async function prepareDatabase(databaseUrl, env) {
   if (result.code !== 0) throw new Error(`Prisma test database failed (${result.code}): ${result.output}`);
 }
 
-function seedUnlockedCapstone(databaseUrl) {
+/**
+ * Mark every task passed for the sessions BEFORE `stopAt`, so the fixture child arrives at
+ * that session with the weeks in front of it unlocked and that session itself untouched.
+ * The default keeps the capstone behaviour this was written for; the tier ladder passes
+ * `w2-s1`, because seeding w2-s1's own tasks renders «Сессия пройдена!» instead of a
+ * workspace — which is precisely how that gate failed on its second run.
+ */
+function seedUnlockedCapstone(databaseUrl, stopAt = "w5-s3") {
   const databasePath = databaseUrl.replace(/^file:/, "");
   const db = new SQLiteDatabase(databasePath);
   try {
@@ -77,7 +84,7 @@ function seedUnlockedCapstone(databaseUrl) {
     );
     const curriculum = loadCurriculum();
     for (const session of curriculum) {
-      if (session.id === "w5-s3") break;
+      if (session.id === stopAt) break;
       for (const task of session.tasks) {
         insert.run(
           `cross-browser:${session.id}:${task.id}`,
@@ -132,6 +139,132 @@ function seedChildFixture(databaseUrl) {
   } finally {
     db.close();
   }
+}
+
+/**
+ * Put the fixture learner at a chosen mastery so the session route offers a chosen tier.
+ * `tierForMastery` maps <0.35 → 1, <0.7 → 2, else 3 (src/lib/tasks/mastery.ts), and the
+ * boundaries are read from there rather than retyped so a recalibration cannot leave this
+ * gate quietly asserting the old ladder.
+ */
+function seedMastery(databaseUrl, concept, mastery) {
+  const db = new SQLiteDatabase(databaseUrl.replace(/^file:/, ""));
+  try {
+    const user = db.prepare("SELECT id FROM User WHERE clerkId = ?").get("test_user_id");
+    assert.ok(user, "the fixture child must exist before mastery is seeded");
+    db.prepare("DELETE FROM ConceptMastery WHERE userId = ? AND concept = ?").run(user.id, concept);
+    db.prepare(
+      `INSERT INTO ConceptMastery (id, userId, concept, mastery, intervalStep, updatedAt)
+       VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`
+    ).run(`mastery-${concept}`, user.id, concept, mastery);
+  } finally {
+    db.close();
+  }
+}
+
+/**
+ * The tier must change the TASK, not the hint.
+ *
+ * Before 2026-08-13 `offeredTier` moved exactly one line of copy, so this assertion could
+ * not have been written: tier 1 and tier 3 rendered the same screen. What is certified here
+ * is the withdrawal of the worked example — the model a child reasons from — plus the
+ * tier-3 demand line whose server half lives in src/lib/tasks/tier-demand.ts and is gated
+ * by tests/tier-demand.test.mjs.
+ *
+ * w2-s1 is the session under test because its family (`sequence-world`) is the one carrying
+ * a tier-3 demand, and because week 2 is fully briefed, so nothing here depends on the
+ * un-backfilled weeks.
+ */
+async function verifyTierLadder(browser, baseUrl, databaseUrl, outDir) {
+  const session = loadCurriculum().find((item) => item.id === "w2-s1");
+  assert.ok(session, "w2-s1 must exist for the tier ladder gate");
+  const family = session.tasks[0].family;
+  assert.equal(family, "sequence-world", "w2-s1 must still open on the family carrying the demand");
+
+  const seen = [];
+  const reloadsInLadder = [];
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  try {
+    await installAcademyBrowserRoutes(context);
+    const page = await context.newPage();
+
+    for (const { tier, mastery } of [
+      { tier: 1, mastery: 0 },
+      { tier: 2, mastery: 0.5 },
+      { tier: 3, mastery: 0.9 },
+    ]) {
+      seedMastery(databaseUrl, session.concept, mastery);
+      await page.goto(`${baseUrl}/session/w2-s1?demo=1`, { waitUntil: "domcontentloaded" });
+      const workspace = page.getByTestId(`task-workspace-${family}`);
+      try {
+        await workspace.waitFor({ timeout: 45000 });
+      } catch {
+        // Same webpack dev-server compile race the session sweep above documents and
+        // survives with exactly one counted reload — this gate hit it on w2-s1 on its
+        // first run. Retry once; a second failure is fatal and means something real.
+        reloadsInLadder.push(tier);
+        await page.reload({ waitUntil: "domcontentloaded" });
+        try {
+          await workspace.waitFor({ timeout: 45000 });
+        } catch (error) {
+          // A bare timeout here cannot tell a locked week from a broken bundle, and the
+          // first version of this gate spent two full runs proving that. Carry the page.
+          throw new Error(
+            `tier ladder: workspace never rendered at tier ${tier}.\n` +
+              `url=${page.url()}\n` +
+              `body=${(await page.locator("body").innerText()).slice(0, 300)}\n` +
+              `cause=${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+
+      const shown = await workspace.getAttribute("data-tier");
+      assert.equal(shown, String(tier), `mastery ${mastery} must offer tier ${tier}`);
+
+      const workedExample = await workspace.getAttribute("data-worked-example");
+      const exampleVisible = await page.getByTestId("worked-example").count();
+      const exampleOpen = exampleVisible
+        ? await page.getByTestId("worked-example").evaluate((node) => node.open)
+        : false;
+      const reminders = await page.getByTestId("task-tier-reminder").count();
+      const demands = await page.getByTestId("task-tier-demand").count();
+
+      if (tier === 1) {
+        assert.equal(workedExample, "open", "tier 1 shows the worked example open");
+        assert.equal(exampleVisible, 1, "tier 1 renders the worked example");
+        assert.equal(exampleOpen, true, "tier 1 has it already open, not merely available");
+        assert.equal(reminders, 1, "tier 1 carries the one-line reminder");
+        assert.equal(demands, 0, "tier 1 states no extra demand");
+      }
+      if (tier === 2) {
+        assert.equal(workedExample, "folded", "tier 2 folds the worked example away");
+        assert.equal(exampleVisible, 1, "tier 2 still offers the example if asked for");
+        assert.equal(exampleOpen, false, "tier 2 keeps it folded until the child asks");
+        assert.equal(reminders, 0, "tier 2 withdraws the reminder");
+        assert.equal(demands, 0, "tier 2 states no extra demand");
+      }
+      if (tier === 3) {
+        assert.equal(workedExample, "none", "tier 3 removes the worked example entirely");
+        assert.equal(exampleVisible, 0, "tier 3 renders no worked example at all");
+        assert.equal(reminders, 0, "tier 3 withdraws the reminder");
+        assert.equal(demands, 1, "tier 3 states the economy demand on screen");
+      }
+
+      await page.screenshot({ path: join(outDir, `tier-${tier}-w2-s1.png`), fullPage: true });
+      seen.push({ tier, mastery, workedExample, reminders, demands });
+    }
+
+    // The point of the whole change, asserted as a difference rather than as three
+    // independent snapshots: the screens must not be interchangeable.
+    const shapes = new Set(seen.map((item) => `${item.workedExample}/${item.reminders}/${item.demands}`));
+    assert.equal(shapes.size, 3, "each tier must render a distinguishable task");
+    if (reloadsInLadder.length) {
+      console.log(`  NOTE  tier ladder needed a reload on tier: ${reloadsInLadder.join(", ")}`);
+    }
+  } finally {
+    await context.close();
+  }
+  return { tiers: seen, reloads: reloadsInLadder };
 }
 
 function resetCrossBrowserFixture(databaseUrl) {
@@ -990,6 +1123,19 @@ export async function runCurrentSessionUiSuite(options = {}) {
     await browser.close();
     browser = null;
 
+    // The tier ladder wants a learner whose mastery this gate controls, so it starts from
+    // a clean fixture rather than inheriting whatever the sessions above left behind.
+    // `seedUnlockedCapstone` comes first and is not optional: week 2 is locked until week 1
+    // is finished, so a freshly-reset child sent to /session/w2-s1 is redirected and the
+    // workspace never renders — which is exactly how this gate failed on its first run.
+    resetCrossBrowserFixture(databaseUrl);
+    seedUnlockedCapstone(databaseUrl, "w2-s1");
+    seedChildFixture(databaseUrl);
+    browser = await chromium.launch({ headless: true });
+    const tierLadder = await verifyTierLadder(browser, baseUrl, databaseUrl, outDir);
+    await browser.close();
+    browser = null;
+
     let crossBrowserEvidence = null;
     if (crossBrowser) {
       crossBrowserEvidence = await verifyCrossBrowserSmokes(baseUrl, databaseUrl, outDir);
@@ -1006,7 +1152,15 @@ export async function runCurrentSessionUiSuite(options = {}) {
       keyboard: true,
       directAttemptCallsFromTest: false,
       productionBypassAccepted: false,
-      artifacts: ["mobile-320-w1-s1.png", "desktop-w1-s1.png", "current-session-chromium-trace.zip"],
+      tierLadder,
+      artifacts: [
+        "mobile-320-w1-s1.png",
+        "desktop-w1-s1.png",
+        "tier-1-w2-s1.png",
+        "tier-2-w2-s1.png",
+        "tier-3-w2-s1.png",
+        "current-session-chromium-trace.zip",
+      ],
       ...(crossBrowserEvidence ? { crossBrowser: crossBrowserEvidence } : {}),
     };
     persistReceipt(outDir, receipt);
