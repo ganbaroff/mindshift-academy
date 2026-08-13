@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     default: "MindShift Academy — Обучение ИИ через игру",
     template: "%s | MindShift",
   },
-  description: 'Научись управлять искусственным интеллектом через промпт-инженерию. Образовательная платформа для детей 8-14 лет.',
+  description: 'Научись управлять искусственным интеллектом через промпт-инженерию. Образовательная платформа для детей 8–11 лет.',
 };
 
 export const viewport: Viewport = {
