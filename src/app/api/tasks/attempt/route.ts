@@ -27,6 +27,8 @@ import { persistTaskAttempt } from "@/lib/tasks/persist";
 import { awardTaskPassCrystals, ensureStarterCrystals, isCurriculumSessionComplete } from "@/lib/tasks/crystals";
 import { resolveCurriculumTask } from "@/lib/tasks/resolve-task";
 import { selectOfferedTier, effectiveTaskTier } from "@/lib/tasks/tier-select";
+import { applyTierThreeDemand } from "@/lib/tasks/tier-demand";
+import type { AttemptOutcome } from "@/lib/tasks/attempt";
 import {
   awardSessionMilestoneCrystals,
   awardWeeklyCosmeticIfReady,
@@ -167,6 +169,8 @@ export async function POST(req: Request) {
         promptTokens: 0,
         completionTokens: 0,
         choiceModeUsed: false,
+        program: structured,
+        worldId: task.worldId,
       });
     }
 
@@ -193,6 +197,8 @@ export async function POST(req: Request) {
         promptTokens: 0,
         completionTokens: 0,
         choiceModeUsed: true,
+        program,
+        worldId: task.worldId,
       });
     }
 
@@ -327,6 +333,8 @@ export async function POST(req: Request) {
       promptTokens,
       completionTokens,
       choiceModeUsed: false,
+      program: interpreted.program,
+      worldId: task.worldId,
     });
   } catch (err) {
     console.error("tasks/attempt error:", err);
@@ -381,6 +389,14 @@ async function finalizeAttempt(params: {
   promptTokens: number;
   completionTokens: number;
   choiceModeUsed: boolean;
+  /**
+   * The parsed program, carried through only so the tier-3 demand can inspect it.
+   * The family checker has already run; `applyTierThreeDemand` may refuse a pass at
+   * tier 3, never grant one. Tier is not known before this point — mastery is read
+   * here, after consent/rate-limit/moderation, and that order is not worth rearranging.
+   */
+  program?: { status: string; steps?: unknown } | null;
+  worldId?: string | null;
 }) {
   const dbUser = await prisma.user.upsert({
     where: { clerkId: params.clerkId },
@@ -448,12 +464,23 @@ async function finalizeAttempt(params: {
       : "practice";
   const tier = effectiveTaskTier(params.tierAuthored, offeredTier, role);
 
+  // Tier 3 asks for more than a correct answer — see src/lib/tasks/tier-demand.ts.
+  // This can only turn a pass into a fail, so nothing downstream (crystals, mastery,
+  // session completion) can be reached by a program that did not earn it.
+  const outcome = applyTierThreeDemand({
+    tier,
+    family: params.family,
+    outcome: params.outcome as AttemptOutcome,
+    program: params.program,
+    worldId: params.worldId,
+  });
+
   const persisted = await persistTaskAttempt({
     userId: dbUser.id,
     concept: params.concept,
     family: params.family,
     tier,
-    pass: params.outcome.pass,
+    pass: outcome.pass,
     eventId: params.eventId,
     sessionId: params.sessionId,
     taskId: params.taskId,
@@ -463,7 +490,7 @@ async function finalizeAttempt(params: {
 
   let crystals: number;
   let crystalsAwarded = false;
-  if (params.outcome.pass) {
+  if (outcome.pass) {
     const award = await awardTaskPassCrystals({
       userId: dbUser.id,
       sessionId: params.sessionId,
@@ -503,13 +530,13 @@ async function finalizeAttempt(params: {
   }
 
   return NextResponse.json({
-    pass: params.outcome.pass,
-    feedback: params.outcome.feedback,
-    programStatus: params.outcome.programStatus,
-    reasonCode: params.outcome.reasonCode ?? null,
-    filledCells: params.outcome.filledCells ?? null,
-    missingCells: params.outcome.missingCells ?? null,
-    extraCells: params.outcome.extraCells ?? null,
+    pass: outcome.pass,
+    feedback: outcome.feedback,
+    programStatus: outcome.programStatus,
+    reasonCode: outcome.reasonCode ?? null,
+    filledCells: outcome.filledCells ?? null,
+    missingCells: outcome.missingCells ?? null,
+    extraCells: outcome.extraCells ?? null,
     safetyPassed: true,
     model: params.model,
     interpretLatencyMs: params.interpretLatencyMs,

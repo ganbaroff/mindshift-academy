@@ -11,6 +11,7 @@ export function WorkedExample({ family, initiallyOpen = false }: Props) {
 
   return (
     <details
+      data-testid="worked-example"
       open={initiallyOpen}
       className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-4"
     >
