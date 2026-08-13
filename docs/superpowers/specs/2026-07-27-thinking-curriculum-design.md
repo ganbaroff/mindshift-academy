@@ -36,7 +36,7 @@ Settled with the owner before design; not open for reinterpretation during imple
 
 | Question | Decision |
 |---|---|
-| Audience | Children 8–14, reached through a consenting parent. Unchanged. |
+| Audience | Children 8–11, reached through a consenting parent. Narrowed from 8–14 on 2026-08-13 to match `docs/canon/MINDSHIFT-PRODUCT-CANON-V1.md` §1. |
 | Subject | Thinking and logic, with AI as the instrument. Broader than prompt engineering. |
 | Length | Five weeks, three sessions per week, 15–20 minutes per session. |
 | Payment | Deferred. Content first. No checkout work in this scope. |

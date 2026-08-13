@@ -2,7 +2,7 @@
 
 ## 1. The product in one paragraph
 
-MindShift Academy teaches children 8-14 to phrase instructions precisely. The child hatches a
+MindShift Academy teaches children 8–11 to phrase instructions precisely. The child hatches a
 digital monster and teaches it by writing instructions: to draw a shape, to build a plan in the
 right order, to follow a rule, to copy a pattern, to prove it understood. The monster obeys
 **literally**, so vague phrasing produces a visibly wrong result — that is the whole pedagogy.

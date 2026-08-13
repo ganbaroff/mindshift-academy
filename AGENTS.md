@@ -2,7 +2,8 @@
 
 ## 1. What this is
 
-MindShift Academy is a Next.js EdTech app for children (~8-14) that teaches prompt engineering through
+MindShift Academy is a Next.js EdTech app for children (8–11 — the V1 cohort per `docs/canon/MINDSHIFT-PRODUCT-CANON-V1.md` §1;
+12–14 is explicitly out of V1 UX) that teaches prompt engineering through
 an AI-companion-monster mechanic (Clerk auth, per-child progression, Azure/NVIDIA-backed tutor+judge,
 fail-closed safety moderation). It is in **closed-pilot hardening**, not public launch: a wave-based
 security/a11y/consent audit (`docs/release/W0..W5-RECEIPT-2026-07-31.md`) has been landing since late

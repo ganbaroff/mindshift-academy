@@ -1,6 +1,6 @@
 # MindShift Academy
 
-A COPPA-gated, invite-only web app that teaches children (8–14) the basics of prompt
+A COPPA-gated, invite-only web app that teaches children (8–11) the basics of prompt
 engineering through a 5-lesson story: they hatch a digital monster, teach it to speak, invent a
 secret cipher, fix its "vision", and solve a maze with IF/THEN logic — all by writing prompts to
 a safe, moderated AI companion. Parents get a weekly progress report.

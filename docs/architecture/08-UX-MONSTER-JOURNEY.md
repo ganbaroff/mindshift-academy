@@ -164,7 +164,7 @@ Build a single static HTML file (inline CSS + vanilla JS, no frameworks, no buil
 no external requests) that mocks the learning screen of a children's educational web app.
 
 CONTEXT
-Children aged 8-14 learn to phrase instructions precisely. A child writes instructions to a
+Children aged 8–11 learn to phrase instructions precisely. A child writes instructions to a
 friendly monster-robot; the monster does exactly what it is told, so sloppy phrasing produces
 funny wrong results. Russian interface. Most users are on cheap Android phones.
 

@@ -1,7 +1,9 @@
 # MindShift: Business & Legal Architecture
 
 ## 1. Positioning & Market
-**Core Audience:** Children 8-14 in Azerbaijan and CIS.
+**Core Audience:** Children 8–11 in Azerbaijan and CIS. (Was 8-14 until 2026-08-13; the V1
+cohort is 8–11 and 12–14 is out of V1 UX per `docs/canon/MINDSHIFT-PRODUCT-CANON-V1.md` §1
+and §11.1, reopened only on pilot data.)
 **Buyer Persona:** Parents willing to pay for supplementary IT education.
 **Value Proposition:** "Teach your child how to command AI, not just consume it."
 **Cultural Framing:** Positioned as a "productivity and focus tool" (Respects Energy) rather than a clinical "ADHD accommodation".

@@ -19,7 +19,7 @@ first, then `02-CURRENT-STATE.md`, then look at the real content in `04-SAMPLE-T
 
 ## Ground rules
 
-- The real users are children 8-14 on cheap Android phones. 320px wide is a real device, not an
+- The real users are children 8–11 on cheap Android phones. 320px wide is a real device, not an
   edge case.
 - Russian interface. Some families are Azerbaijani-speaking at home.
 - No dark patterns, no streak guilt, no countdown timers, no loss framing. This product is used
