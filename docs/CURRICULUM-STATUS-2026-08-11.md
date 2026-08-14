@@ -115,10 +115,30 @@ pictures), which is what makes it a capstone rather than a sixth week.
 
 ## Order of work, and why this order
 
-1. **The invariant test first, red.** `tests/curriculum-variety.test.mjs` asserting: no week
-   uses one world for all three sessions; every transfer leaves its practised world; no prompt
-   sentence appears twice in a week; every session carries the brief. It fails on four weeks.
-   Then each week's PR turns part of it green. Curriculum by red-green, not by opinion.
+1. ~~**The invariant test first, red.**~~ **СДЕЛАНО 2026-08-14.** `tests/curriculum-variety.test.mjs`
+   существует и красный ровно там, где предсказано. Замер прогона (`npm run test:variety`, exit 1):
+   **14 нарушений в неделях 1, 3, 4, 5; неделя 2 зелёная.** Неделя 1 — 21 задача, 6 открываются
+   фразой «Сделай так, чтобы совпало с картинкой», ещё 9 — «Сделай так, чтобы совпало», две пары
+   задач совпадают дословно; без брифа 14 из 21. Недели 3, 4, 5 — по 15 задач, ни одна не объявляет
+   мир, ни одна не имеет брифа. Итого без брифа 59 из 81 — цифра из раздела «Возраст» подтверждена
+   независимым прогоном, а не переписана.
+
+   Проверки: (1) мир объявлен; (2) неделя не проходит целиком в одном мире; (3) перенос уходит из
+   мира, который сессия отрабатывала; (4) ни одна фраза не открывает две задачи внутри недели;
+   (5) у каждой задачи есть бриф. Проверки 2 и 3 не выполняются, пока мир не объявлен, и так и
+   пишутся в отчёте — «не измерено» вместо ложного PASS.
+
+   Мир стал объявляемым полем. `worldId` остался ключом sequence-движка; для остальных четырёх
+   семейств добавлено `world?: string` в `ContentTask` — чисто декларативная метка, её никто не
+   резолвит, поэтому она не может выбрать чужую машину состояний.
+
+   Два режима, чтобы красный тест не блокировал всю сборку: `npm run test:variety` — полный
+   инвентарь долга, exit 1; `--ratchet` (внутри `npm test`) — сторожит недели из `GREEN_WEEKS`
+   и падает, если неделя, числящаяся красной, уже стала чистой. Обе стороны храповика проверены
+   подделкой списка: `GREEN_WEEKS=[2,4]` → exit 1 (регресс), `GREEN_WEEKS=[]` → exit 1 (неделя 2
+   чистая, но не зарегистрирована).
+
+   Каждая следующая неделя добавляет свой номер в `GREEN_WEEKS` тем же PR, что её чинит.
 2. **Week 4** — pure authoring, no engine, no schema change. Proves the shape of the work.
 3. **Week 1** — the trim is the risky part (see below), so it goes second while attention is high.
 4. **Week 5** — depends on 1 and 4 existing, because its claims quote them.
