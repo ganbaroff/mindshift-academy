@@ -52,6 +52,15 @@ export type ContentTask = {
    * came to teach the same six steps three sessions running.
    */
   worldId?: string;
+  /**
+   * The situation this task happens in, for the four families where the world lives in the
+   * prose and no engine reads it (`grid-draw`, `rule-runner`, `pattern-expand`, `claim-check`).
+   * Purely declarative: nothing resolves it, so it can never select a state machine the way
+   * `worldId` does. It exists so «which world is this?» is a fact a test can check rather than
+   * a guess from Russian text — see `tests/curriculum-variety.test.mjs`, which demands that a
+   * week is not one world and that its transfer task leaves the world it practised.
+   */
+  world?: string;
   /** grid-draw: 0-based target cells. */
   target?: [number, number][];
   /** rule-runner: maps the child's rule must pass. */
