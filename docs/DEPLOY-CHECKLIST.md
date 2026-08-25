@@ -4,6 +4,33 @@
 > [RELEASE-STATUS-2026-07-24.md](RELEASE-STATUS-2026-07-24.md). The remaining sections below are
 > reusable runbook guidance and historical prerequisites, not a statement of the current live status.
 
+## Zeroth command: take a copy, and prove the live schema
+
+Two things happen before the preflight, because both answer questions a failed deploy can no
+longer answer.
+
+```bash
+npm run db:schema
+```
+
+Compares the live database against `prisma/schema.prisma` and exits 1 on drift. Migrations here
+are applied by hand and nothing in CI or in the Vercel build ever applies them, so this is the
+only moment anyone checks. A deploy that meets a missing column discovers it in front of a child.
+
+```bash
+npm run db:backup
+```
+
+Writes a dump to `backups/` and, in the same run, loads it into a fresh database and compares
+row counts. **Do this on every release, not on a schedule.** Turso's own point-in-time recovery
+covers 24 hours on the free plan — beyond that window this dump is the only copy, and a dump
+made a month ago protects nothing. Tying it to the release is what keeps it fresh without
+scattering copies of children's data across a machine on a timer.
+
+The file holds parental consent records and children's task history. It is git-ignored by
+construction — the script refuses to run otherwise — and it should be deleted once the release
+has settled.
+
 ## First command: secret/configuration preflight
 
 Run `npm run check:prod-env` in the exact deployment environment before releasing. It validates
