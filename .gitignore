@@ -68,6 +68,11 @@ scripts/e2e/*.png
 # Local CI crystal harness DB
 ci-crystals*.db
 
+# Operator-made database exports. These hold children's personal data and parental consent
+# records — never committed, and scripts/turso-export.mjs refuses to write here unless this
+# rule is present.
+/backups/
+
 # W0 drill ephemeral outputs
 docs/release/_w0_drill_workspace/*.out.txt
 # W2 drill ephemeral outputs
