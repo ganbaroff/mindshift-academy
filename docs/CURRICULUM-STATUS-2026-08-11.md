@@ -49,10 +49,10 @@ render sorted by label.
 
 ## Still wrong — not done
 
-1. **Weeks 1, 3, 4, 5 are still one world each.** Only week 2 has been reworked. Week 1's
+1. **Weeks 1, 3, 5 are still one world each.** Weeks 2 and 4 have been reworked. Week 1's
    21 grid tasks and their six repeated prompts are untouched.
-2. **Their transfer tasks still do not transfer.** Same defect as week 2 had, in four places.
-3. **12 sessions still have no brief.** w1-s2, w1-s3, and all of weeks 3–5. `validateSession`
+2. **Their transfer tasks still do not transfer.** Same defect as week 2 had, in three places.
+3. **9 sessions still have no brief.** w1-s2, w1-s3, and all of weeks 3 and 5. `validateSession`
    is all-or-nothing per session, so they can be migrated one session at a time safely.
 4. **No task references the monster's growth.** The week's idea and the part it earns are on
    the map and nowhere else.
@@ -139,7 +139,16 @@ pictures), which is what makes it a capstone rather than a sixth week.
    чистая, но не зарегистрирована).
 
    Каждая следующая неделя добавляет свой номер в `GREEN_WEEKS` тем же PR, что её чинит.
-2. **Week 4** — pure authoring, no engine, no schema change. Proves the shape of the work.
+2. ~~**Week 4**~~ **СДЕЛАНО 2026-08-14.** Три мира вместо абстрактных чисел: `drum` (барабан,
+   круг возвращается), `beads` (нитка бусин, старт и шаг), `week-days` (расписание монстра,
+   починка сбоя и далёкий член). Решение меняется вместе с миром, а не только декорация:
+   цикл → арифметика → починка и выход за десятый день. Переносы по кольцу, как в неделе 2:
+   s1 кончает в бусах, s2 в днях, s3 возвращается в барабан — но уже с задачей починки,
+   которой барабан не ставил. Все 15 задач получили бриф, id ни одной не тронут.
+
+   Долг по инварианту: **14 → 12 нарушений**, зелёных недель **1 → 2**. Храповик отработал
+   на первом же настоящем применении: неделя 4 стала чистой, и он потребовал внести её в
+   `GREEN_WEEKS` в этом же PR, иначе прогон падал.
 3. **Week 1** — the trim is the risky part (see below), so it goes second while attention is high.
 4. **Week 5** — depends on 1 and 4 existing, because its claims quote them.
 5. **Week 3** — last, because it is the one that may need an engineering decision.
