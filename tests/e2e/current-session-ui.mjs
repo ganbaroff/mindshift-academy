@@ -728,6 +728,8 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
   // Sessions whose first paint needed a reload. Reported, never swallowed: a number that
   // starts climbing is the signal that the dev-server race has become a real regression.
   const reloads = [];
+  // Browser-cancelled requests. Reported, never asserted — see the requestfailed handler.
+  const abortedRequests = [];
   await context.tracing.start({ screenshots: true, snapshots: true });
   try {
     await installAcademyBrowserRoutes(context);
@@ -735,11 +737,29 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
     page.on("pageerror", (error) => pageErrors.push(`pageerror: ${error.message}`));
     page.on("response", (response) => {
       if (response.status() >= 500) pageErrors.push(`HTTP ${response.status()} ${response.url()}`);
+      // A static asset the server does not have is a real broken build, and the old assert
+      // never saw it: it only watched for 5xx and for transport failures, and a missing chunk
+      // answers 404. Added in the same change that stopped counting aborts, so the gate did
+      // not get quieter — it got more specific.
+      if (response.status() >= 400 && response.status() < 500 && response.url().includes("/_next/static/")) {
+        pageErrors.push(`static ${response.status()} ${response.url()}`);
+      }
     });
     page.on("requestfailed", (request) => {
-      if (request.url().includes("/_next/") || request.url().includes("/api/")) {
-        pageErrors.push(`failed ${request.url()} ${request.failure()?.errorText ?? "unknown"}`);
+      if (!request.url().includes("/_next/") && !request.url().includes("/api/")) return;
+      const reason = request.failure()?.errorText ?? "unknown";
+      // net::ERR_ABORTED means the BROWSER cancelled the request — a navigation superseded a
+      // prefetch, or a font request outlived the page that asked for it. It is not the server
+      // failing to serve. This job went red on 4 of 5 pushes because a chunk and eight font
+      // requests were aborted mid-run on a cold runner, while the identical sha passed on the
+      // pull_request trigger — a check that red on chance is a check nobody reads. Aborts are
+      // now counted and printed, exactly like `reloads`: a number that starts climbing is the
+      // signal that the race became a regression.
+      if (reason.includes("ERR_ABORTED")) {
+        abortedRequests.push(`${request.url()} ${reason}`);
+        return;
       }
+      pageErrors.push(`failed ${request.url()} ${reason}`);
     });
 
     const curriculum = loadCurriculum();
@@ -902,7 +922,10 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
     assert.deepEqual([...families].sort(), ["claim-check", "grid-draw", "pattern-expand", "rule-runner", "sequence-world"]);
     assert.equal(pageErrors.length, 0, pageErrors.join("\n"));
     if (reloads.length) console.log(`  NOTE  first paint needed a reload on: ${reloads.join(", ")}`);
-    return { sessions: SESSION_IDS.length, tasks: taskCount, families: families.size, reloads };
+    if (abortedRequests.length) {
+      console.log(`  NOTE  ${abortedRequests.length} browser-cancelled request(s), not asserted: ${abortedRequests.slice(0, 5).join(" | ")}`);
+    }
+    return { sessions: SESSION_IDS.length, tasks: taskCount, families: families.size, reloads, aborted: abortedRequests.length };
   } finally {
     await context.tracing.stop({ path: join(outDir, "current-session-chromium-trace.zip") });
     await context.close();

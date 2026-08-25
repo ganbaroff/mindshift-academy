@@ -8,6 +8,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/access-code/redeem", // public child redemption; rate-limited, the code IS the credential
   "/api/access-request", // public parent request inbox; rate-limited, grants nothing by itself
   "/api/version", // build provenance: reads two env values, returns a short sha
+  "/api/health", // liveness probe: one memoised SELECT 1, reports no configuration
 ]);
 
 export function isPublicApiPath(pathname: string): boolean {

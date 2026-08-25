@@ -8,7 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node tests/academy-gates.test.mjs && node tests/deterministic.mjs && node tests/access-request.test.mjs && node tests/family-invite.test.mjs && npx tsx tests/tasks.test.mjs && npx tsx tests/interpreter-fixtures.test.mjs && npx tsx tests/session-mastery.test.mjs && npx tsx tests/w2-learner-state.test.mjs && npx tsx tests/w3-engagement.test.mjs && npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs && npx tsx tests/ux-v11-monster-journey.test.mjs && npx tsx tests/problem-report.test.mjs && npx tsx tests/tier-demand.test.mjs && npx tsx tests/curriculum-variety.test.mjs --ratchet",
+    "test": "node tests/academy-gates.test.mjs && node tests/deterministic.mjs && node tests/access-request.test.mjs && node tests/family-invite.test.mjs && npx tsx tests/tasks.test.mjs && npx tsx tests/interpreter-fixtures.test.mjs && npx tsx tests/session-mastery.test.mjs && npx tsx tests/w2-learner-state.test.mjs && npx tsx tests/w3-engagement.test.mjs && npx tsx tests/w4-ai-safety.test.mjs && node tests/w4-a11y-appendix.test.mjs && npx tsx tests/w4-session-matrix.test.mjs && npx tsx tests/ux-v11-monster-journey.test.mjs && npx tsx tests/problem-report.test.mjs && npx tsx tests/tier-demand.test.mjs && npx tsx tests/curriculum-variety.test.mjs --ratchet && npx tsx tests/release-identity.test.mjs",
     "test:gate-contract": "node tests/academy-gates.test.mjs",
     "test:variety": "npx tsx tests/curriculum-variety.test.mjs",
     "test:variety:ratchet": "npx tsx tests/curriculum-variety.test.mjs --ratchet",

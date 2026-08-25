@@ -1,0 +1,94 @@
+# Production watchdog — the thing that notices before a parent does.
+#
+# Until 2026-08-14 nothing outside the app ever checked whether it was serving: no uptime
+# probe, no error tracking, no log drain. An outage would have been reported by a family.
+#
+# This polls `/api/health` (PREMIERE-AUDIT P2-03) and the home page every 15 minutes. When it
+# fails, the job fails, and GitHub emails the repository owner — that is the alert channel,
+# and it needs no secret to work. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID as repository
+# secrets and the same failure also lands on the phone; without them that step is skipped and
+# the email path is unaffected.
+#
+# Two things a reader should know before trusting it:
+#   * GitHub disables scheduled workflows in a repository with no activity for 60 days. A
+#     silent watchdog and a healthy site look identical from the outside — check the Actions
+#     tab if this stops appearing.
+#   * Scheduled runs are best-effort and are regularly delayed under load, so treat 15 minutes
+#     as "roughly", never as a guarantee.
+#
+# The repository is public, so these runs cost no Actions minutes.
+
+name: Watchdog
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      # Overridable with a repository variable so a staging host can be watched the same way.
+      BASE_URL: ${{ vars.ACADEMY_PROD_URL || 'https://academy.volaura.app' }}
+      # Job scope, so the paging step's `if` can test for their presence. Absent secrets
+      # resolve to an empty string; GitHub masks the values in every log line.
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - name: Probe health and home page
+        id: probe
+        run: |
+          set -u
+          fail=""
+
+          # Three attempts before crying wolf. A watchdog that alerts on one dropped packet
+          # gets muted by its owner within a week, and a muted watchdog is worse than none —
+          # the same failure mode that made the current-session-ui check unreadable.
+          probe() {
+            local path="$1" expect="$2" attempt
+            for attempt in 1 2 3; do
+              body=$(curl -sS --max-time 15 -o /tmp/watchdog-body -w '%{http_code}' "${BASE_URL}${path}" || echo "000")
+              if [ "$body" = "$expect" ]; then
+                echo "PASS  ${path} ${body}"
+                return 0
+              fi
+              echo "retry ${attempt}/3  ${path} got ${body}"
+              sleep 20
+            done
+            echo "FAIL  ${path} expected ${expect}, got ${body}"
+            echo "      body: $(head -c 300 /tmp/watchdog-body 2>/dev/null || true)"
+            return 1
+          }
+
+          probe "/api/health" "200" || fail="${fail} /api/health"
+          probe "/" "200" || fail="${fail} /"
+
+          # Record which build answered, so a failing run says WHAT was live, not just that
+          # something was wrong. Never fatal on its own.
+          echo "live: $(curl -sS --max-time 10 "${BASE_URL}/api/version" || echo unavailable)"
+
+          if [ -n "$fail" ]; then
+            echo "::error::production watchdog failed:${fail}"
+            exit 1
+          fi
+          echo "watchdog: all probes green"
+
+      - name: Page the operator on Telegram
+        if: failure() && env.TELEGRAM_BOT_TOKEN != '' && env.TELEGRAM_CHAT_ID != ''
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          curl -sS --max-time 15 \
+            "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=MindShift Academy watchdog FAILED. ${RUN_URL}" \
+            -o /dev/null
