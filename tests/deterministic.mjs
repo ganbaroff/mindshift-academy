@@ -102,6 +102,7 @@ check(
     isPublicApiPath("/api/checkout") &&
     isPublicApiPath("/api/cron/mood-decay") &&
     isPublicApiPath("/api/cron/weekly-report") &&
+    isPublicApiPath("/api/health") &&
     !isPublicApiPath("/api/user") &&
     !isPublicApiPath("/api/chat") &&
     !isPublicApiPath("/api/cron"),
