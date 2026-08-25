@@ -54,9 +54,13 @@ jobs:
           # gets muted by its owner within a week, and a muted watchdog is worse than none —
           # the same failure mode that made the current-session-ui check unreadable.
           probe() {
-            local path="$1" expect="$2" attempt
+            local path="$1" expect="$2" attempt status body
             for attempt in 1 2 3; do
-              body=$(curl -sS --max-time 15 -o /tmp/watchdog-body -w '%{http_code}' "${BASE_URL}${path}" || echo "000")
+              # curl already writes 000 via -w when it never got a response, so an `|| echo 000`
+              # here appends a SECOND one and the alarm reads "got 000000" — which is the line
+              # a woken operator reads first. Normalise an empty capture instead.
+              status=$(curl -sS --max-time 15 -o /tmp/watchdog-body -w '%{http_code}' "${BASE_URL}${path}") || true
+              body=${status:-000}
               if [ "$body" = "$expect" ]; then
                 echo "PASS  ${path} ${body}"
                 return 0
