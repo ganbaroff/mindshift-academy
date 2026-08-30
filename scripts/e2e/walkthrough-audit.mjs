@@ -19,7 +19,7 @@ const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 
-const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1b");
+const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1c");
 mkdirSync(OUT_DIR, { recursive: true });
 
 const results = [];
