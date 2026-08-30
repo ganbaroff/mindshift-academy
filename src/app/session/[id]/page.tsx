@@ -80,7 +80,15 @@ export default function ThinkingSessionPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [filledCells, setFilledCells] = useState<Cell[]>([]);
   const [mismatchCells, setMismatchCells] = useState<Cell[]>([]);
-  const [showExplanation, setShowExplanation] = useState(false);
+  // Visible from mount (08-UX-MONSTER-JOURNEY): a child must be able to read the
+  // concept explanation BEFORE their first attempt, not only after a collision-task
+  // miss. Text-density audit (2026-08-29): 8 stacked blocks above the board once this
+  // rendered on every task, so it is now a per-task default, not a one-time default —
+  // expanded on task index 0, collapsed to a one-line disclosure on every task after
+  // that. The effect below re-derives it whenever the task index changes; the
+  // collision-task branch further down still force-expands it on a miss, and that stays
+  // compatible because it never touches the task index.
+  const [showExplanation, setShowExplanation] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
@@ -112,6 +120,15 @@ export default function ThinkingSessionPage() {
   const currentTask = session?.tasks[safeIndex] ?? null;
   const pastLastWithoutComplete =
     Boolean(session) && taskIndex >= (session?.tasks.length ?? 0);
+
+  // Re-derive the explanation's default every time the task index actually changes
+  // (initial load, resume-at-firstOpen, or advanceTask) — expanded only on task 1.
+  // A user's manual toggle stays in effect until the NEXT task-index change, which is
+  // what "toggle freely after" means: freely within the current task, reset on the next.
+  useEffect(() => {
+    if (!session) return;
+    setShowExplanation(safeIndex === 0);
+  }, [session, safeIndex]);
 
   const done = useMemo(() => {
     if (!session) return false;
@@ -486,7 +503,7 @@ export default function ThinkingSessionPage() {
           <div className="px-6 pt-8">
             <MonsterGrowth sessionId={sessionId} color={monsterColor} />
           </div>
-          <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
+          <CalmClosure certificateReady={certificateReady} monsterName="Монстр" />
         </div>
       );
     }
@@ -720,13 +737,34 @@ export default function ThinkingSessionPage() {
             </p>
           ) : null}
           {showExplanation ? (
-            // Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
-            // runs on the main thread and drops frames exactly when the page is busy
-            // fetching. Same motion, in CSS, off the main thread.
-            <p className="rise-in mt-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-              {session.explanationRu}
-            </p>
-          ) : null}
+            <div className="mt-2 space-y-1">
+              {/* Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
+                  runs on the main thread and drops frames exactly when the page is busy
+                  fetching. Same motion, in CSS, off the main thread. */}
+              <p className="rise-in rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+                {session.explanationRu}
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowExplanation(false)}
+                aria-expanded="true"
+                data-testid="explanation-toggle"
+                className="min-h-11 w-full rounded-xl px-2 text-left text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+              >
+                Свернуть объяснение
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowExplanation(true)}
+              aria-expanded="false"
+              data-testid="explanation-toggle"
+              className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-2 text-left text-sm font-medium text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+            >
+              💡 Объяснение — нажми, чтобы открыть
+            </button>
+          )}
         </header>
 
         <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">

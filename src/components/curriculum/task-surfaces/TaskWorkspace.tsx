@@ -116,27 +116,10 @@ export function TaskWorkspace({
     >
       {/* Task-first: goal + controls before long copy so phones see the board above the fold. */}
       {reference}
-      {/* «Что дано» is shown in the workspace, not stated in prose — the designer's
-          point in 08-UX-MONSTER-JOURNEY §10.2, which we accepted: a child reads the
-          materials where they use them, not in a labelled row above the fun. */}
-      {task.givenRu?.length ? (
-        <ul
-          data-testid="task-given"
-          aria-label="Что у тебя есть"
-          className="flex flex-wrap gap-2"
-        >
-          {task.givenRu.map((item) => (
-            <li
-              key={item}
-              className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]"
-            >
-              {item}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {surface}
 
+      {/* Goal-first (08-UX-MONSTER-JOURNEY §10.2): «готово, когда» must be visible before the
+          first attempt, so the child reads the success condition before the interactive board,
+          not after. Moved above givenRu/{"{surface}"} — was previously rendered below both. */}
       <header className="space-y-1.5 border-t border-[var(--border-color)] pt-3">
         <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-primary-dark)]">
           Уровень {offeredTier}
@@ -167,6 +150,27 @@ export function TaskWorkspace({
           </p>
         ) : null}
       </header>
+
+      {/* «Что дано» is shown in the workspace, not stated in prose — the designer's
+          point in 08-UX-MONSTER-JOURNEY §10.2, which we accepted: a child reads the
+          materials where they use them, not in a labelled row above the fun. */}
+      {task.givenRu?.length ? (
+        <ul
+          data-testid="task-given"
+          aria-label="Что у тебя есть"
+          className="flex flex-wrap gap-2"
+        >
+          {task.givenRu.map((item) => (
+            <li
+              key={item}
+              className="rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-1.5 text-sm font-medium text-[var(--text-primary)]"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {surface}
 
       {workedExample === "none" ? null : (
         <WorkedExample

@@ -61,7 +61,10 @@ export function GridDrawSurface({
               <button
                 key={index}
                 type="button"
-                aria-label={`Выбрать клетку ${row + 1}, ${column + 1}`}
+                // Coordinates live only in the accessible name now — the visible cell
+                // face carries no text, so it reads as the same picture-language as
+                // the target grid above it (DisplayGrid), not a coordinate to translate.
+                aria-label={`Ряд ${row + 1}, колонка ${column + 1}`}
                 aria-pressed={active}
                 onClick={() => toggle(row, column)}
                 // The cell a child actually taps, several times per attempt: it had no
@@ -71,10 +74,11 @@ export function GridDrawSurface({
                 // most-tapped controls in the product and every one of them was under the
                 // touch minimum. The room was always there: 320px leaves 264px inside the
                 // page and workspace padding, and four 44px cells with 6px gaps need 194px.
-                className={`h-11 w-11 rounded-xl border text-xs font-bold transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:h-12 sm:w-12 sm:text-sm ${active ? "border-[var(--color-primary-dark)] bg-[var(--color-primary)] text-white" : "border-[var(--border-color)] bg-[var(--surface-strong)] text-[var(--text-secondary)]"}`}
-              >
-                {row + 1},{column + 1}
-              </button>
+                // Size/shape/rounding and the active fill colour match DisplayGrid's target
+                // cells exactly (same cyan) so a filled input cell looks like the target
+                // picture it is meant to reproduce, instead of a differently-styled control.
+                className={`h-11 w-11 rounded-lg border transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:h-12 sm:w-12 ${active ? "border-cyan-400/40 bg-cyan-500/10" : "border-[var(--border-color)] bg-[var(--surface-strong)]"}`}
+              />
             );
           })}
         </div>
