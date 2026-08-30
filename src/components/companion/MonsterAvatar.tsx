@@ -25,6 +25,15 @@ const DynamicMonsterAvatarInner = dynamic(
   }
 );
 
-export function MonsterAvatar(props: MonsterAvatarProps) {
-  return <DynamicMonsterAvatarInner {...props} />;
+export function MonsterAvatar({ size = 120, ...props }: MonsterAvatarProps) {
+  // Fixed-size wrapper so the dynamic-import `loading` fallback (which next/dynamic
+  // never passes component props to, so it can't see `size`) is still constrained to
+  // the right box instead of collapsing to a full-width, near-zero-height bar on a
+  // cold chunk load (docs/audit/WALKTHROUGH-UX-2026-08-29.md — w1-s1 intro showed an
+  // empty beige bar where w2-s3, with the chunk already cached, showed the circle).
+  return (
+    <div style={{ width: size, height: size, minWidth: size, minHeight: size }}>
+      <DynamicMonsterAvatarInner size={size} {...props} />
+    </div>
+  );
 }

@@ -767,35 +767,12 @@ export default function ThinkingSessionPage() {
               Это задание уже пройдено ✓. Можно потренироваться или нажать «Дальше».
             </p>
           ) : null}
-          {showExplanation ? (
-            <div className="mt-2 space-y-1">
-              {/* Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
-                  runs on the main thread and drops frames exactly when the page is busy
-                  fetching. Same motion, in CSS, off the main thread. */}
-              <p className="rise-in rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-                {session.explanationRu}
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowExplanation(false)}
-                aria-expanded="true"
-                data-testid="explanation-toggle"
-                className="min-h-11 w-full rounded-xl px-2 text-left text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
-              >
-                Свернуть объяснение
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowExplanation(true)}
-              aria-expanded="false"
-              data-testid="explanation-toggle"
-              className="mt-2 flex min-h-11 w-full items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-2 text-left text-sm font-medium text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
-            >
-              💡 Объяснение — нажми, чтобы открыть
-            </button>
-          )}
+          {/* The «Объяснение» disclosure used to live here as its own always-rendered
+              toggle. It is now merged into TaskWorkspace's single disclosure button
+              (Sprint-1 text consolidation) — state (showExplanation) stays here
+              because the collision-miss auto-expand and per-task-index reset below
+              both need to reach it, but the button + panel render inside
+              TaskWorkspace now. */}
         </header>
 
         <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">
@@ -803,22 +780,13 @@ export default function ThinkingSessionPage() {
             <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
           </div>
           <div className="min-w-0 space-y-3 sm:space-y-4">
-            {/* «Готово, когда» — one short line in the monster's voice, always visible
-                before the first attempt. We refused to hide it until after a miss
-                (§10.2): the defect that started this work was a child who could not
-                tell what a finished answer looked like, and hiding the condition makes
-                the first attempt a guess by design. No label, no third row to read. */}
-            <div className="flex items-start gap-3">
-              {/* The avatar is phone-only — a second monster already sits in the desktop
-                  column. The line itself is visible at every width: it is the success
-                  condition, and hiding it on a viewport is the same defect as hiding it
-                  until after a miss. */}
-              <div className="sm:hidden">
-                <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
-              </div>
-              <p className="pt-1 text-sm leading-5 text-[var(--text-secondary)]" data-testid="task-done-when">
-                {currentTask?.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
-              </p>
+            {/* The goal line + «готово, когда» line now render once, inside
+                TaskWorkspace's own header (Sprint-1 consolidation) — this used to be
+                a second, separate copy of the same condition. The avatar stays here:
+                it is phone-only (a second monster already sits in the desktop
+                column) and it is a visual, not a text block. */}
+            <div className="sm:hidden">
+              <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
             </div>
             {idleNudge >= 2 && showStructuredCheck ? (
               <MascotCue beat="sessionIdle" className="justify-start" />
@@ -839,6 +807,9 @@ export default function ThinkingSessionPage() {
                 disabled={isSending}
                 externalPrimaryAction
                 onPrimaryActionChange={setPrimaryAction}
+                explanationRu={session.explanationRu}
+                showDisclosure={showExplanation}
+                onToggleDisclosure={setShowExplanation}
                 onSubmit={(program) => {
                   setCoachDismissed(true);
                   void runAttempt({ program });

@@ -19,7 +19,7 @@ const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 
-const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1");
+const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1b");
 mkdirSync(OUT_DIR, { recursive: true });
 
 const results = [];
@@ -356,8 +356,11 @@ async function main() {
         // it under its own name before dismissing it, so it reads as a distinct screen
         // rather than folding into "-initial" or the generic fallback-click capture.
         try {
+          // 15s not 5s: w1-s1 is the first /session/[id] hit of the whole run, so this
+          // wait races Next dev's cold on-demand compile (same cold-vs-warm chunk gap
+          // MonsterAvatar.tsx's fixed-size wrapper comment documents for w1-s1 vs w2-s3).
           const introCta = page.getByTestId("session-intro-start");
-          await introCta.waitFor({ timeout: 5000 });
+          await introCta.waitFor({ timeout: 15000 });
           await shot(page, `${prefix}-${target.id}-intro.png`, `${target.label}: session intro (story + goal) before the board`);
           await introCta.click({ timeout: 3000 });
         } catch {
@@ -431,7 +434,7 @@ async function main() {
         // Same intro-screen handling as the desktop pass above, mobile viewport.
         try {
           const introCtaMobile = mp.getByTestId("session-intro-start");
-          await introCtaMobile.waitFor({ timeout: 5000 });
+          await introCtaMobile.waitFor({ timeout: 15000 });
           await shot(mp, `${prefix}-${target.id}-mobile-intro.png`, `${target.label}: session intro (story + goal), mobile 375px`);
           await introCtaMobile.click({ timeout: 3000 });
         } catch {

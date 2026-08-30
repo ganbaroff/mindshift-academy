@@ -24,6 +24,13 @@ type Props = {
   externalPrimaryAction?: boolean;
   onPrimaryActionChange?: (state: TaskPrimaryActionState | null) => void;
   onSubmit: (program: StructuredProgram) => void | Promise<void>;
+  /** Session's «Объяснение» — now folded into the single merged disclosure below,
+   * instead of a separate always-rendered toggle in the session page header. */
+  explanationRu?: string;
+  /** Controlled from the session page (not local state) because a collision-task
+   * miss force-expands it there, and the per-task-index reset lives there too. */
+  showDisclosure: boolean;
+  onToggleDisclosure: (next: boolean) => void;
 };
 
 const FAMILY_TITLES = {
@@ -75,11 +82,20 @@ export function TaskWorkspace({
   externalPrimaryAction = false,
   onPrimaryActionChange,
   onSubmit,
+  explanationRu,
+  showDisclosure,
+  onToggleDisclosure,
 }: Props) {
   const formId = useId();
   const workedExample = WORKED_EXAMPLE_BY_TIER[offeredTier];
   const tierThreeDemand =
     offeredTier === 3 ? TIER_THREE_DEMANDS[task.family] : undefined;
+  // §10.2's success condition, consolidated into ONE header line instead of two
+  // separate blocks (page-level doneWhenRu paragraph + this component's own
+  // level-heading/prompt caption). goalRu is the single prominent sentence; doneWhenRu
+  // only earns its own line when it says something goalRu did not already say.
+  const goalText = task.goalRu ?? task.promptRu;
+  const showDoneWhenLine = Boolean(task.doneWhenRu) && task.doneWhenRu !== goalText;
 
   const handleSubmitReadyChange = useCallback(
     (ready: boolean) => {
@@ -114,46 +130,47 @@ export function TaskWorkspace({
       aria-labelledby="task-workspace-title"
       className="space-y-3 rounded-3xl border border-[var(--border-color)] bg-[var(--surface)] p-3 sm:space-y-4 sm:p-6"
     >
-      {/* Task-first: goal + controls before long copy so phones see the board above the fold. */}
-      {reference}
-
-      {/* Goal-first (08-UX-MONSTER-JOURNEY §10.2): «готово, когда» must be visible before the
-          first attempt, so the child reads the success condition before the interactive board,
-          not after. Moved above givenRu/{"{surface}"} — was previously rendered below both. */}
-      <header className="space-y-1.5 border-t border-[var(--border-color)] pt-3">
-        <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-primary-dark)]">
-          Уровень {offeredTier}
-          <span className="text-[var(--text-muted)]"> · </span>
-          <span id="task-workspace-title" className="text-[var(--color-primary-dark)]">
-            {FAMILY_TITLES[task.family]}
-          </span>
+      {/* ONE task header (Sprint-1 text-density consolidation, plan §"one goal line +
+          one disclosure"): goalRu is the single prominent sentence a child reads
+          before anything else. This replaces two formerly-separate blocks — the
+          session page's own doneWhenRu paragraph and this header's level-heading +
+          prompt caption — with one. id moved here (from the old FAMILY_TITLES span)
+          so aria-labelledby keeps resolving to an element that is always rendered. */}
+      <header className="space-y-1 border-t border-[var(--border-color)] pt-3">
+        <p
+          id="task-workspace-title"
+          data-testid="task-prompt-caption"
+          className="text-sm font-semibold leading-6 text-[var(--text-primary)]"
+        >
+          {goalText}
         </p>
-        {/* The goal lives inside the prompt line (§10.2) — one sentence naming the
-            finished thing. promptRu remains the fallback until a session is backfilled. */}
-        <p className="text-sm leading-6 text-[var(--text-primary)]" data-testid="task-prompt-caption">
-          {task.goalRu ?? task.promptRu}
+        {/* §10.2: the success condition must stay visible before the first attempt.
+            When it says nothing goalRu didn't already say, it stays in the DOM
+            (same testid, same text, e2e still finds it) but visually collapses to
+            sr-only instead of printing a near-duplicate second sentence. */}
+        <p
+          data-testid="task-done-when"
+          className={
+            showDoneWhenLine
+              ? "text-sm leading-5 text-[var(--text-secondary)]"
+              : "sr-only"
+          }
+        >
+          {task.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
         </p>
-        {offeredTier === 1 ? (
-          <p
-            data-testid="task-tier-reminder"
-            className="rounded-xl bg-[var(--color-secondary-soft)] p-2.5 text-xs leading-5 text-[var(--color-secondary-dark)] sm:text-sm"
-          >
-            <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
-          </p>
-        ) : null}
-        {tierThreeDemand ? (
-          <p
-            data-testid="task-tier-demand"
-            className="rounded-xl border border-[var(--color-primary-dark)]/30 p-2.5 text-xs leading-5 text-[var(--color-primary-dark)] sm:text-sm"
-          >
-            <strong>Условие уровня 3:</strong> {tierThreeDemand}
-          </p>
-        ) : null}
       </header>
 
-      {/* «Что дано» is shown in the workspace, not stated in prose — the designer's
-          point in 08-UX-MONSTER-JOURNEY §10.2, which we accepted: a child reads the
-          materials where they use them, not in a labelled row above the fun. */}
+      {/* Task-first: target/reference visual right after the header, before any copy
+          or the board, so phones see it above the fold. */}
+      {reference}
+
+      {/* «Что дано» stays visible for every family (not folded behind the disclosure
+          below): tests/e2e/current-session-ui.mjs's assertReaskFlow waits on
+          `task-given` being visible on a grid-draw task (w1-s1) before the child
+          touches anything — "the brief must be readable before the child touches
+          anything" — and pattern-expand/sequence-world read these chips as the
+          material they act on. Deviating here from the sprint brief's "grid tasks
+          only fold into disclosure" suggestion; called out in the sprint receipt. */}
       {task.givenRu?.length ? (
         <ul
           data-testid="task-given"
@@ -170,6 +187,66 @@ export function TaskWorkspace({
           ))}
         </ul>
       ) : null}
+
+      {/* ONE merged disclosure (Sprint-1): the session's «Объяснение», the level
+          heading, promptRu (only when it says something goalRu above did not), the
+          tier-1 «Коротко» reminder and the tier-3 demand — four to five previously
+          separate always-rendered blocks — now live behind a single collapsed
+          button. Post-collision auto-expand is unchanged: the session page still
+          flips `showDisclosure` to true on a collision miss (state lives there). */}
+      {showDisclosure ? (
+        <div className="space-y-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3">
+          {explanationRu ? (
+            <p className="rise-in text-sm leading-relaxed text-[var(--text-secondary)]">
+              {explanationRu}
+            </p>
+          ) : null}
+          <p className="text-xs font-bold uppercase tracking-wide text-[var(--color-primary-dark)]">
+            Уровень {offeredTier}
+            <span className="text-[var(--text-muted)]"> · </span>
+            {FAMILY_TITLES[task.family]}
+          </p>
+          {task.promptRu && task.promptRu !== goalText ? (
+            <p className="text-sm leading-6 text-[var(--text-secondary)]">{task.promptRu}</p>
+          ) : null}
+          {offeredTier === 1 ? (
+            <p
+              data-testid="task-tier-reminder"
+              className="rounded-xl bg-[var(--color-secondary-soft)] p-2.5 text-xs leading-5 text-[var(--color-secondary-dark)] sm:text-sm"
+            >
+              <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
+            </p>
+          ) : null}
+          {tierThreeDemand ? (
+            <p
+              data-testid="task-tier-demand"
+              className="rounded-xl border border-[var(--color-primary-dark)]/30 p-2.5 text-xs leading-5 text-[var(--color-primary-dark)] sm:text-sm"
+            >
+              <strong>Условие уровня 3:</strong> {tierThreeDemand}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => onToggleDisclosure(false)}
+            aria-expanded="true"
+            data-testid="explanation-toggle"
+            className="min-h-11 w-full rounded-xl px-2 text-left text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+          >
+            Свернуть
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => onToggleDisclosure(true)}
+          aria-expanded="false"
+          data-testid="explanation-toggle"
+          className="flex min-h-11 w-full items-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-3 py-2 text-left text-sm font-medium text-[var(--text-secondary)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)]"
+        >
+          💡 Подсказки и объяснение
+        </button>
+      )}
+
       {surface}
 
       {workedExample === "none" ? null : (
