@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
+import { SessionIntro } from "@/components/curriculum/SessionIntro";
 import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { MonsterGrowth } from "@/components/companion/MonsterGrowth";
@@ -83,12 +84,14 @@ export default function ThinkingSessionPage() {
   // Visible from mount (08-UX-MONSTER-JOURNEY): a child must be able to read the
   // concept explanation BEFORE their first attempt, not only after a collision-task
   // miss. Text-density audit (2026-08-29): 8 stacked blocks above the board once this
-  // rendered on every task, so it is now a per-task default, not a one-time default —
-  // expanded on task index 0, collapsed to a one-line disclosure on every task after
-  // that. The effect below re-derives it whenever the task index changes; the
-  // collision-task branch further down still force-expands it on a miss, and that stays
-  // compatible because it never touches the task index.
-  const [showExplanation, setShowExplanation] = useState(true);
+  // rendered on every task. Walkthrough-UX audit (2026-08-29, top fix #1) moved that
+  // explanation earlier still, into SessionIntro, shown before the board at all — so
+  // the in-task callout now defaults to collapsed on EVERY task, including task 1, to
+  // avoid saying the same sentence twice in a row. The effect below re-derives it
+  // whenever the task index changes; the collision-task branch further down still
+  // force-expands it on a miss, and that stays compatible because it never touches the
+  // task index.
+  const [showExplanation, setShowExplanation] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
@@ -122,13 +125,20 @@ export default function ThinkingSessionPage() {
     Boolean(session) && taskIndex >= (session?.tasks.length ?? 0);
 
   // Re-derive the explanation's default every time the task index actually changes
-  // (initial load, resume-at-firstOpen, or advanceTask) — expanded only on task 1.
+  // (initial load, resume-at-firstOpen, or advanceTask) — always collapsed, since
+  // SessionIntro already delivered session.explanationRu before the board appeared.
   // A user's manual toggle stays in effect until the NEXT task-index change, which is
   // what "toggle freely after" means: freely within the current task, reset on the next.
   useEffect(() => {
     if (!session) return;
-    setShowExplanation(safeIndex === 0);
+    setShowExplanation(false);
   }, [session, safeIndex]);
+
+  // The story-and-goal screen (docs/audit/WALKTHROUGH-UX-2026-08-29.md top fix #1):
+  // shown once, before the board, only when the child is starting the session fresh
+  // at task index 0. A child resuming mid-session (firstOpen > 0, computed in the
+  // session-load effect below) has already seen it and skips straight to the board.
+  const [showIntro, setShowIntro] = useState(true);
 
   const done = useMemo(() => {
     if (!session) return false;
@@ -200,6 +210,11 @@ export default function ThinkingSessionPage() {
             const firstOpen = body.session.tasks.findIndex((t) => !body.passedTaskIds!.includes(t.id));
             if (firstOpen >= 0) setTaskIndex(firstOpen);
             else setTaskIndex(Math.max(0, body.session.tasks.length - 1));
+            // Prior attempts this visit (from an earlier one, per persisted
+            // passedTaskIds) mean this is a resume, not a fresh start — skip the
+            // intro. firstOpen === 0 still means nothing has been passed yet, so a
+            // session with zero prior passes still gets the intro.
+            setShowIntro(firstOpen === 0);
           }
           if (typeof body.crystals === "number") setCrystals(body.crystals);
         }
@@ -485,6 +500,22 @@ export default function ThinkingSessionPage() {
         <Header />
         <main className="flex-1 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
+        </main>
+      </div>
+    );
+  }
+
+  if (showIntro && safeIndex === 0 && !done && !pastLastWithoutComplete) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
+        <Header />
+        <main className="flex flex-1 flex-col">
+          <SessionIntro
+            session={session}
+            firstTask={session.tasks[0] ?? null}
+            monsterColor={monsterColor}
+            onStart={() => setShowIntro(false)}
+          />
         </main>
       </div>
     );

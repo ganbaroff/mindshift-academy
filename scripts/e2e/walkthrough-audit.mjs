@@ -19,7 +19,7 @@ const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 
-const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-29-after");
+const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1");
 mkdirSync(OUT_DIR, { recursive: true });
 
 const results = [];
@@ -351,6 +351,20 @@ async function main() {
         await page.goto(url, { waitUntil: "domcontentloaded" }).catch((e) => failures.push({ name: `${target.id}-goto`, error: String(e) }));
         await shot(page, `${prefix}-${target.id}-initial.png`, `${target.label}: initial view of /session/${target.id}`);
 
+        // Story-and-goal intro screen (top fix #1, WALKTHROUGH-UX-2026-08-29): shown
+        // once, before the board, when a session starts fresh at task index 0. Capture
+        // it under its own name before dismissing it, so it reads as a distinct screen
+        // rather than folding into "-initial" or the generic fallback-click capture.
+        try {
+          const introCta = page.getByTestId("session-intro-start");
+          await introCta.waitFor({ timeout: 5000 });
+          await shot(page, `${prefix}-${target.id}-intro.png`, `${target.label}: session intro (story + goal) before the board`);
+          await introCta.click({ timeout: 3000 });
+        } catch {
+          // No intro this run (already resumed past it, or not present) — the
+          // workspace-wait/fallback-click logic below still handles that case.
+        }
+
         const workspace = page.getByTestId(`task-workspace-${target.family}`);
         let workspaceReady = false;
         try {
@@ -413,6 +427,17 @@ async function main() {
         await installAcademyBrowserRoutes(mobileContext);
         const mp = await mobileContext.newPage();
         await mp.goto(`${baseUrl}/session/${target.id}?demo=1`, { waitUntil: "domcontentloaded" }).catch((e) => failures.push({ name: `${target.id}-mobile-goto`, error: String(e) }));
+
+        // Same intro-screen handling as the desktop pass above, mobile viewport.
+        try {
+          const introCtaMobile = mp.getByTestId("session-intro-start");
+          await introCtaMobile.waitFor({ timeout: 5000 });
+          await shot(mp, `${prefix}-${target.id}-mobile-intro.png`, `${target.label}: session intro (story + goal), mobile 375px`);
+          await introCtaMobile.click({ timeout: 3000 });
+        } catch {
+          // No intro this run — fall through to the workspace wait below.
+        }
+
         let mobileWorkspaceReady = false;
         try {
           await mp.getByTestId(`task-workspace-${target.family}`).waitFor({ timeout: 45000 });
