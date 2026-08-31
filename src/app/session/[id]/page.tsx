@@ -36,6 +36,7 @@ import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 import { DEFAULT_NUDGE } from "@/lib/guide";
+import { themeForWeek } from "@/lib/week-theme";
 
 type TaskResult = {
   id: string;
@@ -123,6 +124,24 @@ export default function ThinkingSessionPage() {
   const currentTask = session?.tasks[safeIndex] ?? null;
   const pastLastWithoutComplete =
     Boolean(session) && taskIndex >= (session?.tasks.length ?? 0);
+
+  // Five light world themes, one per curriculum week (Sprint-2 theme task,
+  // docs/owner plan of record) — see src/lib/week-theme.ts for the palette
+  // rationale. `worldStyle` carries the three CSS custom properties the
+  // background gradient and accent chrome below read from; it stays
+  // undefined until `session` (and therefore `session.week`) has loaded.
+  const worldTheme = useMemo(() => (session ? themeForWeek(session.week) : null), [session]);
+  const worldStyle = useMemo(
+    () =>
+      worldTheme
+        ? ({
+            "--world-bg-from": worldTheme.bgFrom,
+            "--world-bg-to": worldTheme.bgTo,
+            "--world-accent": worldTheme.accent,
+          } as React.CSSProperties)
+        : undefined,
+    [worldTheme],
+  );
 
   // Re-derive the explanation's default every time the task index actually changes
   // (initial load, resume-at-firstOpen, or advanceTask) — always collapsed, since
@@ -507,7 +526,13 @@ export default function ThinkingSessionPage() {
 
   if (showIntro && safeIndex === 0 && !done && !pastLastWithoutComplete) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
+      <div
+        className="min-h-screen text-[var(--ink)] flex flex-col"
+        style={{
+          ...worldStyle,
+          background: "linear-gradient(180deg, var(--world-bg-from), var(--world-bg-to))",
+        }}
+      >
         <Header />
         <main className="flex flex-1 flex-col">
           <SessionIntro
@@ -515,6 +540,17 @@ export default function ThinkingSessionPage() {
             firstTask={session.tasks[0] ?? null}
             monsterColor={monsterColor}
             onStart={() => setShowIntro(false)}
+            theme={
+              worldTheme
+                ? {
+                    nameRu: worldTheme.nameRu,
+                    accent: worldTheme.accent,
+                    motif: worldTheme.motif,
+                    bgFrom: worldTheme.bgFrom,
+                    bgTo: worldTheme.bgTo,
+                  }
+                : undefined
+            }
           />
         </main>
       </div>
@@ -696,7 +732,13 @@ export default function ThinkingSessionPage() {
   const advanceLabel = passedCurrent ? "Дальше" : "Пропустить";
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
+    <div
+      className="min-h-screen text-[var(--text-primary)] flex flex-col"
+      style={{
+        ...worldStyle,
+        background: "linear-gradient(180deg, var(--world-bg-from), var(--world-bg-to))",
+      }}
+    >
       <Header />
 
       <div
@@ -757,6 +799,11 @@ export default function ThinkingSessionPage() {
               its parent's width instead, so nothing sticks out of a real phone. */}
           <p className="text-xs text-[var(--text-muted)]">
             Неделя {session.week}, сессия {session.session}
+            {worldTheme ? (
+              <span className="ml-1 text-[var(--world-accent)]">
+                · {worldTheme.motif} {worldTheme.nameRu}
+              </span>
+            ) : null}
           </p>
           <p className="block truncate text-xs text-[var(--text-secondary)]">{session.titleRu}</p>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
@@ -1025,7 +1072,8 @@ export default function ThinkingSessionPage() {
                 form={primaryAction?.formId}
                 disabled={checkDisabled}
                 data-testid="session-primary-check"
-                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                style={worldTheme ? { background: "var(--world-accent, var(--color-primary))" } : undefined}
               >
                 {isSending ? (
                   <span className="inline-flex items-center justify-center gap-2">
