@@ -116,7 +116,25 @@ export default function ThinkingSessionPage() {
   const [reasksUsed, setReasksUsed] = useState(0);
   /** Consecutive misses on the current task — drives the unprompted, free help. */
   const [failStreak, setFailStreak] = useState(0);
+  /**
+   * Companion reactivity (Sprint-2 task B): the monster's mood follows the last
+   * graded attempt — never "sad" on a miss (no guilt-face for an 8yo; the monster
+   * puzzles WITH the child, so a fail reads as "thinking" like the child is).
+   * A pass triggers a ~2.5s "celebrating" beat before settling to "happy".
+   */
+  const [lastAttemptOutcome, setLastAttemptOutcome] = useState<"pass" | "fail" | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+  const celebrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendingRef = useRef(false);
+
+  const clearCelebrateTimer = useCallback(() => {
+    if (celebrateTimerRef.current) {
+      clearTimeout(celebrateTimerRef.current);
+      celebrateTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearCelebrateTimer(), [clearCelebrateTimer]);
 
   const safeIndex = session
     ? Math.min(Math.max(0, taskIndex), Math.max(0, session.tasks.length - 1))
@@ -272,7 +290,10 @@ export default function ThinkingSessionPage() {
     setMismatchCells([]);
     setRevealedHint(null);
     setHintError(null);
-  }, []);
+    clearCelebrateTimer();
+    setCelebrating(false);
+    setLastAttemptOutcome(null);
+  }, [clearCelebrateTimer]);
 
   const advanceTask = useCallback(() => {
     if (!session) return;
@@ -369,6 +390,8 @@ export default function ThinkingSessionPage() {
     setFilledCells([]);
     setMismatchCells([]);
     setChoices(null);
+    clearCelebrateTimer();
+    setCelebrating(false);
 
     try {
       const payload = {
@@ -423,6 +446,13 @@ export default function ThinkingSessionPage() {
 
       if (data.pass) {
         setFailStreak(0);
+        setLastAttemptOutcome("pass");
+        setCelebrating(true);
+        clearCelebrateTimer();
+        celebrateTimerRef.current = setTimeout(() => {
+          setCelebrating(false);
+          celebrateTimerRef.current = null;
+        }, 2500);
         soundEngine.play("success");
         if (!prefersReducedMotion) {
           // Warm-paper palette, not the neon the app wore before the redesign — this
@@ -431,6 +461,7 @@ export default function ThinkingSessionPage() {
         }
       } else {
         setFailStreak((n) => n + 1);
+        setLastAttemptOutcome("fail");
         soundEngine.play("fail");
       }
     } catch {
@@ -440,6 +471,20 @@ export default function ThinkingSessionPage() {
       setIsSending(false);
     }
   };
+
+  // Companion reactivity (Sprint-2 task B). Order matters: an in-flight attempt or
+  // hint fetch always wins (the monster is visibly busy right now); a fresh pass
+  // wins over a stale fail from an earlier task-attempt cycle; a miss reads as
+  // "thinking" rather than "sad" — the monster puzzles alongside the child, it
+  // never looks disappointed in them.
+  const avatarMood: "happy" | "thinking" | "celebrating" =
+    isSending || hintBusy
+      ? "thinking"
+      : celebrating
+        ? "celebrating"
+        : lastAttemptOutcome === "fail"
+          ? "thinking"
+          : "happy";
 
   const showAdvancePreview =
     Boolean(feedback) &&
@@ -824,7 +869,7 @@ export default function ThinkingSessionPage() {
 
         <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">
           <div className="hidden sm:block">
-            <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
+            <MonsterAvatar mood={avatarMood} size={80} />
           </div>
           <div className="min-w-0 space-y-3 sm:space-y-4">
             {/* The goal line + «готово, когда» line now render once, inside
@@ -833,7 +878,7 @@ export default function ThinkingSessionPage() {
                 it is phone-only (a second monster already sits in the desktop
                 column) and it is a visual, not a text block. */}
             <div className="sm:hidden">
-              <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
+              <MonsterAvatar mood={avatarMood} size={48} />
             </div>
             {idleNudge >= 2 && showStructuredCheck ? (
               <MascotCue beat="sessionIdle" className="justify-start" />
