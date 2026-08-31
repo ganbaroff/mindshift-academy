@@ -19,7 +19,7 @@ const SQLiteDatabase = require("better-sqlite3");
 const { loadCurriculum } = require(join(root, "src/content/curriculum/index.ts"));
 const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 
-const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-30-s1c");
+const OUT_DIR = join(root, "evidence", "walkthrough-2026-08-31-s2");
 mkdirSync(OUT_DIR, { recursive: true });
 
 const results = [];
@@ -413,6 +413,72 @@ async function main() {
             await page.getByRole("button", { name: "Убрать", exact: false }).first().click({ timeout: 3000 }).catch(() => {});
           }
           await shot(page, `${prefix}-${target.id}-interacted.png`, `${target.label}: after local interaction (no submit)`);
+
+          if (target.id === "w1-s1") {
+            // Attempt-capture (Sprint-2 CHECK): grid-draw is resolved deterministically
+            // server-side and this harness runs FAKE_AI=1, so a real attempt costs
+            // nothing. The 3 cells tapped above (indices 0,1,2) essentially never equal
+            // the session's target, so this is expected to render a fail verdict.
+            const checkButton = page.getByTestId("session-primary-check");
+            const feedbackLocator = page.locator('pre[role="status"]');
+            try {
+              await checkButton.click({ timeout: 8000 });
+              await feedbackLocator.waitFor({ timeout: 8000 }).catch(() => {});
+              await page.waitForTimeout(2000);
+              await shot(
+                page,
+                "13-w1-s1-attempt-fail.png",
+                "w1-s1 grid-draw: after «Проверить» on the mismatched taps — expect fail feedback + thinking monster"
+              );
+            } catch (error) {
+              failures.push({ name: "w1-s1-attempt-fail", error: String(error) });
+            }
+
+            // BONUS pass-capture: DisplayGrid always renders the goal picture
+            // (session/[id]/page.tsx `gridTarget`), and its accessible name spells the
+            // target out in plain text: "...Целевые клетки: строка N, столбец M; ...".
+            // Both that summary and the input cells' own aria-label ("Ряд N, колонка M")
+            // use the same 1-based numbering, so no coordinate translation is needed —
+            // read one, click the matching buttons of the other.
+            try {
+              const referenceGrid = page.getByRole("img", { name: /Целевые клетки/ });
+              const accessibleName = (await referenceGrid.getAttribute("aria-label")) ?? "";
+              const match = accessibleName.match(/Целевые клетки: ([^.]*)\./);
+              const targetSegment = match ? match[1].trim() : "";
+              const targetCells = targetSegment && targetSegment !== "нет"
+                ? targetSegment
+                    .split(";")
+                    .map((part) => part.trim().match(/строка (\d+), столбец (\d+)/))
+                    .filter(Boolean)
+                    .map((m) => ({ row: m[1], column: m[2] }))
+                : [];
+
+              if (targetCells.length === 0) {
+                console.log("SKIP w1-s1 pass-capture: DisplayGrid target accessible name unreadable/empty");
+              } else {
+                const clearButton = page.getByRole("button", { name: "Очистить поле" });
+                if (await clearButton.isEnabled().catch(() => false)) {
+                  await clearButton.click({ timeout: 3000 }).catch(() => {});
+                }
+                for (const cell of targetCells) {
+                  await page
+                    .getByRole("button", { name: `Ряд ${cell.row}, колонка ${cell.column}` })
+                    .click({ timeout: 3000 })
+                    .catch(() => {});
+                }
+                await checkButton.click({ timeout: 8000 });
+                await feedbackLocator.waitFor({ timeout: 8000 }).catch(() => {});
+                await page.waitForTimeout(2000);
+                await shot(
+                  page,
+                  "14-w1-s1-attempt-pass.png",
+                  "w1-s1 grid-draw: after «Проверить» on the correct target cells — expect celebration"
+                );
+              }
+            } catch (error) {
+              console.log(`SKIP w1-s1 pass-capture: ${String(error)}`);
+            }
+          }
         } else if (workspaceReady) {
           await shot(page, `${prefix}-${target.id}-workspace.png`, `${target.label}: task workspace rendered`);
         }
