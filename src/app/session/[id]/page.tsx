@@ -874,9 +874,12 @@ export default function ThinkingSessionPage() {
             <MonsterAvatar mood={avatarMood} size={80} />
           </div>
           <div className="min-w-0 space-y-3 sm:space-y-4">
-            {/* The goal line + «готово, когда» line now render once, inside
-                TaskWorkspace's own header (Sprint-1 consolidation) — this used to be
-                a second, separate copy of the same condition. The avatar stays here:
+            {/* The goal line renders inside TaskWorkspace's own header (Sprint-1
+                consolidation). «Готово, когда» renders here instead, right under it,
+                as its own always-visible line (§10.2 rejects hiding or collapsing
+                the success condition, even when it echoes the goal) — kept at this
+                level, not inside TaskWorkspace, so it survives that component's
+                per-task `key` remount as one stable DOM node. The avatar stays here:
                 it is phone-only (a second monster already sits in the desktop
                 column) and it is a visual, not a text block. */}
             <div className="sm:hidden">
@@ -919,6 +922,15 @@ export default function ThinkingSessionPage() {
                   </div>
                 ) : undefined}
               />
+            ) : null}
+            {currentTask ? (
+              <p
+                data-testid="task-done-when"
+                className="text-sm leading-5 text-[var(--text-secondary)]"
+              >
+                <strong>Готово, когда:</strong>{" "}
+                {currentTask.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
+              </p>
             ) : null}
             {currentTask && !showAdvance ? (
               <SessionCoach

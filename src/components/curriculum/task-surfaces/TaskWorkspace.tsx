@@ -90,12 +90,12 @@ export function TaskWorkspace({
   const workedExample = WORKED_EXAMPLE_BY_TIER[offeredTier];
   const tierThreeDemand =
     offeredTier === 3 ? TIER_THREE_DEMANDS[task.family] : undefined;
-  // §10.2's success condition, consolidated into ONE header line instead of two
-  // separate blocks (page-level doneWhenRu paragraph + this component's own
-  // level-heading/prompt caption). goalRu is the single prominent sentence; doneWhenRu
-  // only earns its own line when it says something goalRu did not already say.
+  // goalRu is the single prominent sentence a child reads before anything else.
+  // «Готово, когда» (doneWhenRu) is a separate, always-visible line — §10.2 rejects
+  // hiding or collapsing it even when it echoes goalRu — and now renders in the
+  // session page, right under this header, so it survives this component's re-key
+  // on task change without a duplicate DOM node.
   const goalText = task.goalRu ?? task.promptRu;
-  const showDoneWhenLine = Boolean(task.doneWhenRu) && task.doneWhenRu !== goalText;
 
   const handleSubmitReadyChange = useCallback(
     (ready: boolean) => {
@@ -143,20 +143,6 @@ export function TaskWorkspace({
           className="text-sm font-semibold leading-6 text-[var(--text-primary)]"
         >
           {goalText}
-        </p>
-        {/* §10.2: the success condition must stay visible before the first attempt.
-            When it says nothing goalRu didn't already say, it stays in the DOM
-            (same testid, same text, e2e still finds it) but visually collapses to
-            sr-only instead of printing a near-duplicate second sentence. */}
-        <p
-          data-testid="task-done-when"
-          className={
-            showDoneWhenLine
-              ? "text-sm leading-5 text-[var(--text-secondary)]"
-              : "sr-only"
-          }
-        >
-          {task.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
         </p>
       </header>
 
