@@ -163,6 +163,26 @@ function seedMastery(databaseUrl, concept, mastery) {
 }
 
 /**
+ * The story-and-goal screen (SessionIntro, "Начать →") now renders before the task
+ * board on every fresh load at task index 0 (session page, docs/audit/
+ * WALKTHROUGH-UX-2026-08-29.md top fix #1) — this suite predates it and used to find
+ * the workspace directly on `page.goto`. A session *resumed* mid-way (task index > 0)
+ * skips the intro outright, so this waits for whichever of the two appears first
+ * rather than assuming either one, and only clicks through when the intro is what won.
+ */
+async function passIntro(page, timeout) {
+  const intro = page.getByTestId("session-intro-start");
+  const workspace = page.locator('[data-testid^="task-workspace-"]').first();
+  await Promise.race([
+    intro.waitFor({ state: "visible", timeout }).catch(() => {}),
+    workspace.waitFor({ state: "visible", timeout }).catch(() => {}),
+  ]);
+  if (await intro.isVisible().catch(() => false)) {
+    await intro.click();
+  }
+}
+
+/**
  * The tier must change the TASK, not the hint.
  *
  * Before 2026-08-13 `offeredTier` moved exactly one line of copy, so this assertion could
@@ -195,6 +215,7 @@ async function verifyTierLadder(browser, baseUrl, databaseUrl, outDir) {
     ]) {
       seedMastery(databaseUrl, session.concept, mastery);
       await page.goto(`${baseUrl}/session/w2-s1?demo=1`, { waitUntil: "domcontentloaded" });
+      await passIntro(page, 45000);
       const workspace = page.getByTestId(`task-workspace-${family}`);
       try {
         await workspace.waitFor({ timeout: 45000 });
@@ -204,6 +225,7 @@ async function verifyTierLadder(browser, baseUrl, databaseUrl, outDir) {
         // first run. Retry once; a second failure is fatal and means something real.
         reloadsInLadder.push(tier);
         await page.reload({ waitUntil: "domcontentloaded" });
+        await passIntro(page, 45000);
         try {
           await workspace.waitFor({ timeout: 45000 });
         } catch (error) {
@@ -565,6 +587,7 @@ async function assertReaskFlow(browser, baseUrl, outDir) {
   const page = await context.newPage();
   try {
   await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+  await passIntro(page, 30000);
   await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
 
   // The brief must be readable before the child touches anything.
@@ -661,6 +684,7 @@ async function verifyMobile(browser, baseUrl, outDir) {
       if (request.url().includes("/_next/") || request.url().includes("clerk.accounts")) browserDiagnostics.push(`failed ${request.url()} ${request.failure()?.errorText ?? "unknown"}`);
     });
     const navigation = await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+    await passIntro(page, 30000);
     try {
       await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
     } catch (error) {
@@ -773,6 +797,7 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
      * what it says.
      */
     await page.goto(`${baseUrl}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+    await passIntro(page, 180000);
     try {
       await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 180000 });
     } catch (error) {
@@ -810,6 +835,7 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
       const session = curriculum.find((candidate) => candidate.id === sessionId);
       assert.ok(session, `curriculum contains ${sessionId}`);
       const navigation = await page.goto(`${baseUrl}/session/${sessionId}?demo=1`, { waitUntil: "domcontentloaded" });
+      await passIntro(page, 45000);
       const workspace = page.getByTestId(`task-workspace-${session.tasks[0].family}`);
       try {
         // 45s, not 20s: this is the FIRST paint of a route the dev server has not
@@ -829,6 +855,7 @@ async function verifyAllSessions(browser, baseUrl, outDir) {
         // regression. So: retry once, record it, and let the second failure be fatal.
         reloads.push(sessionId);
         await page.reload({ waitUntil: "domcontentloaded" });
+        await passIntro(page, 45000);
         try {
           await workspace.waitFor({ timeout: 45000 });
         } catch (error) {
@@ -969,11 +996,13 @@ async function verifyCrossBrowserSmoke(browserType, browserName, baseUrl, outDir
     const page = await context.newPage();
 
     await page.goto(`${baseUrl}/session/w5-s3?demo=1`, { waitUntil: "domcontentloaded" });
+    await passIntro(page, 30000);
     const firstWorkspace = page.getByTestId("task-workspace-rule-runner");
     await firstWorkspace.waitFor({ timeout: 30000 });
     const initialPrompt = await page.getByTestId("task-prompt-caption").innerText();
     milestone = "reloadResume";
     await page.reload({ waitUntil: "commit" });
+    await passIntro(page, 30000);
     await page.getByTestId("task-workspace-rule-runner").waitFor({ timeout: 30000 });
     assert.equal(
       await page.getByTestId("task-prompt-caption").innerText(),

@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, Send, Lightbulb } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Header } from "@/components/layout/Header";
 import { DisplayGrid } from "@/components/curriculum/DisplayGrid";
+import { SessionIntro } from "@/components/curriculum/SessionIntro";
 import { TaskWorkspace, type TaskPrimaryActionState } from "@/components/curriculum/task-surfaces/TaskWorkspace";
 import { MonsterAvatar } from "@/components/companion/MonsterAvatar";
 import { MonsterGrowth } from "@/components/companion/MonsterGrowth";
@@ -35,6 +36,7 @@ import { soundEngine } from "@/lib/sound-engine";
 import { useGameStore } from "@/stores/game";
 import { CAPSTONE_SESSION_ID } from "@/lib/evolution";
 import { DEFAULT_NUDGE } from "@/lib/guide";
+import { themeForWeek } from "@/lib/week-theme";
 
 type TaskResult = {
   id: string;
@@ -80,7 +82,18 @@ export default function ThinkingSessionPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [filledCells, setFilledCells] = useState<Cell[]>([]);
   const [mismatchCells, setMismatchCells] = useState<Cell[]>([]);
-  const [showExplanation, setShowExplanation] = useState(false);
+  // Visible from mount (08-UX-MONSTER-JOURNEY): a child must be able to read the
+  // concept explanation BEFORE their first attempt, not only after a collision-task
+  // miss. Text-density audit (2026-08-29): 8 stacked blocks above the board once this
+  // rendered on every task. Walkthrough-UX audit (2026-08-29, top fix #1) moved that
+  // explanation earlier still, into SessionIntro, shown before the board at all — so
+  // the in-task callout now defaults to collapsed on EVERY task, including task 1, to
+  // avoid saying the same sentence twice in a row. Disclosure state is keyed by
+  // `${session.id}:${safeIndex}` instead of driven by a task-index effect (that effect
+  // tripped react-hooks/set-state-in-effect): a new task key means the disclosure is
+  // collapsed automatically, no effect required. The collision-task branch further
+  // down still force-expands it on a miss by setting the current task key.
+  const [explanationOpenFor, setExplanationOpenFor] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
@@ -104,7 +117,25 @@ export default function ThinkingSessionPage() {
   const [reasksUsed, setReasksUsed] = useState(0);
   /** Consecutive misses on the current task — drives the unprompted, free help. */
   const [failStreak, setFailStreak] = useState(0);
+  /**
+   * Companion reactivity (Sprint-2 task B): the monster's mood follows the last
+   * graded attempt — never "sad" on a miss (no guilt-face for an 8yo; the monster
+   * puzzles WITH the child, so a fail reads as "thinking" like the child is).
+   * A pass triggers a ~2.5s "celebrating" beat before settling to "happy".
+   */
+  const [lastAttemptOutcome, setLastAttemptOutcome] = useState<"pass" | "fail" | null>(null);
+  const [celebrating, setCelebrating] = useState(false);
+  const celebrateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sendingRef = useRef(false);
+
+  const clearCelebrateTimer = useCallback(() => {
+    if (celebrateTimerRef.current) {
+      clearTimeout(celebrateTimerRef.current);
+      celebrateTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => clearCelebrateTimer(), [clearCelebrateTimer]);
 
   const safeIndex = session
     ? Math.min(Math.max(0, taskIndex), Math.max(0, session.tasks.length - 1))
@@ -112,6 +143,41 @@ export default function ThinkingSessionPage() {
   const currentTask = session?.tasks[safeIndex] ?? null;
   const pastLastWithoutComplete =
     Boolean(session) && taskIndex >= (session?.tasks.length ?? 0);
+
+  // Five light world themes, one per curriculum week (Sprint-2 theme task,
+  // docs/owner plan of record) — see src/lib/week-theme.ts for the palette
+  // rationale. `worldStyle` carries the three CSS custom properties the
+  // background gradient and accent chrome below read from; it stays
+  // undefined until `session` (and therefore `session.week`) has loaded.
+  const worldTheme = useMemo(() => (session ? themeForWeek(session.week) : null), [session]);
+  const worldStyle = useMemo(
+    () =>
+      worldTheme
+        ? ({
+            "--world-bg-from": worldTheme.bgFrom,
+            "--world-bg-to": worldTheme.bgTo,
+            "--world-accent": worldTheme.accent,
+          } as React.CSSProperties)
+        : undefined,
+    [worldTheme],
+  );
+
+  // The explanation's default collapses every time the task index actually changes
+  // (initial load, resume-at-firstOpen, or advanceTask) — always collapsed, since
+  // SessionIntro already delivered session.explanationRu before the board appeared.
+  // Keying the open state by task instead of resetting it in an effect means a task
+  // change collapses the disclosure for free: the old key's state simply stops
+  // matching. A user's manual toggle stays in effect until the NEXT task-index
+  // change, which is what "toggle freely after" means: freely within the current
+  // task, reset on the next.
+  const taskKey = session ? `${session.id}:${safeIndex}` : "";
+  const showExplanation = explanationOpenFor === taskKey;
+
+  // The story-and-goal screen (docs/audit/WALKTHROUGH-UX-2026-08-29.md top fix #1):
+  // shown once, before the board, only when the child is starting the session fresh
+  // at task index 0. A child resuming mid-session (firstOpen > 0, computed in the
+  // session-load effect below) has already seen it and skips straight to the board.
+  const [showIntro, setShowIntro] = useState(true);
 
   const done = useMemo(() => {
     if (!session) return false;
@@ -183,6 +249,11 @@ export default function ThinkingSessionPage() {
             const firstOpen = body.session.tasks.findIndex((t) => !body.passedTaskIds!.includes(t.id));
             if (firstOpen >= 0) setTaskIndex(firstOpen);
             else setTaskIndex(Math.max(0, body.session.tasks.length - 1));
+            // Prior attempts this visit (from an earlier one, per persisted
+            // passedTaskIds) mean this is a resume, not a fresh start — skip the
+            // intro. firstOpen === 0 still means nothing has been passed yet, so a
+            // session with zero prior passes still gets the intro.
+            setShowIntro(firstOpen === 0);
           }
           if (typeof body.crystals === "number") setCrystals(body.crystals);
         }
@@ -221,7 +292,10 @@ export default function ThinkingSessionPage() {
     setMismatchCells([]);
     setRevealedHint(null);
     setHintError(null);
-  }, []);
+    clearCelebrateTimer();
+    setCelebrating(false);
+    setLastAttemptOutcome(null);
+  }, [clearCelebrateTimer]);
 
   const advanceTask = useCallback(() => {
     if (!session) return;
@@ -318,6 +392,8 @@ export default function ThinkingSessionPage() {
     setFilledCells([]);
     setMismatchCells([]);
     setChoices(null);
+    clearCelebrateTimer();
+    setCelebrating(false);
 
     try {
       const payload = {
@@ -367,11 +443,18 @@ export default function ThinkingSessionPage() {
       setResults((prev) => [...prev.filter((r) => r.id !== currentTask.id), result]);
 
       if (currentTask.role === "collision") {
-        setShowExplanation(true);
+        setExplanationOpenFor(taskKey);
       }
 
       if (data.pass) {
         setFailStreak(0);
+        setLastAttemptOutcome("pass");
+        setCelebrating(true);
+        clearCelebrateTimer();
+        celebrateTimerRef.current = setTimeout(() => {
+          setCelebrating(false);
+          celebrateTimerRef.current = null;
+        }, 2500);
         soundEngine.play("success");
         if (!prefersReducedMotion) {
           // Warm-paper palette, not the neon the app wore before the redesign — this
@@ -380,6 +463,7 @@ export default function ThinkingSessionPage() {
         }
       } else {
         setFailStreak((n) => n + 1);
+        setLastAttemptOutcome("fail");
         soundEngine.play("fail");
       }
     } catch {
@@ -389,6 +473,20 @@ export default function ThinkingSessionPage() {
       setIsSending(false);
     }
   };
+
+  // Companion reactivity (Sprint-2 task B). Order matters: an in-flight attempt or
+  // hint fetch always wins (the monster is visibly busy right now); a fresh pass
+  // wins over a stale fail from an earlier task-attempt cycle; a miss reads as
+  // "thinking" rather than "sad" — the monster puzzles alongside the child, it
+  // never looks disappointed in them.
+  const avatarMood: "happy" | "thinking" | "celebrating" =
+    isSending || hintBusy
+      ? "thinking"
+      : celebrating
+        ? "celebrating"
+        : lastAttemptOutcome === "fail"
+          ? "thinking"
+          : "happy";
 
   const showAdvancePreview =
     Boolean(feedback) &&
@@ -473,6 +571,39 @@ export default function ThinkingSessionPage() {
     );
   }
 
+  if (showIntro && safeIndex === 0 && !done && !pastLastWithoutComplete) {
+    return (
+      <div
+        className="min-h-screen text-[var(--ink)] flex flex-col"
+        style={{
+          ...worldStyle,
+          background: "linear-gradient(180deg, var(--world-bg-from), var(--world-bg-to))",
+        }}
+      >
+        <Header />
+        <main className="flex flex-1 flex-col">
+          <SessionIntro
+            session={session}
+            firstTask={session.tasks[0] ?? null}
+            monsterColor={monsterColor}
+            onStart={() => setShowIntro(false)}
+            theme={
+              worldTheme
+                ? {
+                    nameRu: worldTheme.nameRu,
+                    accent: worldTheme.accent,
+                    motif: worldTheme.motif,
+                    bgFrom: worldTheme.bgFrom,
+                    bgTo: worldTheme.bgTo,
+                  }
+                : undefined
+            }
+          />
+        </main>
+      </div>
+    );
+  }
+
   if (done) {
     const isCapstone = session.id === CAPSTONE_SESSION_ID;
 
@@ -486,7 +617,7 @@ export default function ThinkingSessionPage() {
           <div className="px-6 pt-8">
             <MonsterGrowth sessionId={sessionId} color={monsterColor} />
           </div>
-          <CalmClosure certificateReady={certificateReady || true} monsterName="Монстр" />
+          <CalmClosure certificateReady={certificateReady} monsterName="Монстр" />
         </div>
       );
     }
@@ -648,7 +779,13 @@ export default function ThinkingSessionPage() {
   const advanceLabel = passedCurrent ? "Дальше" : "Пропустить";
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--text-primary)] flex flex-col">
+    <div
+      className="min-h-screen text-[var(--text-primary)] flex flex-col"
+      style={{
+        ...worldStyle,
+        background: "linear-gradient(180deg, var(--world-bg-from), var(--world-bg-to))",
+      }}
+    >
       <Header />
 
       <div
@@ -709,6 +846,11 @@ export default function ThinkingSessionPage() {
               its parent's width instead, so nothing sticks out of a real phone. */}
           <p className="text-xs text-[var(--text-muted)]">
             Неделя {session.week}, сессия {session.session}
+            {worldTheme ? (
+              <span className="ml-1 text-[var(--world-accent)]">
+                · {worldTheme.motif} {worldTheme.nameRu}
+              </span>
+            ) : null}
           </p>
           <p className="block truncate text-xs text-[var(--text-secondary)]">{session.titleRu}</p>
           {currentTask && results.some((r) => r.id === currentTask.id && r.pass) ? (
@@ -719,37 +861,29 @@ export default function ThinkingSessionPage() {
               Это задание уже пройдено ✓. Можно потренироваться или нажать «Дальше».
             </p>
           ) : null}
-          {showExplanation ? (
-            // Was a framer-motion `y` shorthand, which is not hardware-accelerated: it
-            // runs on the main thread and drops frames exactly when the page is busy
-            // fetching. Same motion, in CSS, off the main thread.
-            <p className="rise-in mt-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3 text-sm leading-relaxed text-[var(--text-secondary)]">
-              {session.explanationRu}
-            </p>
-          ) : null}
+          {/* The «Объяснение» disclosure used to live here as its own always-rendered
+              toggle. It is now merged into TaskWorkspace's single disclosure button
+              (Sprint-1 text consolidation) — state (showExplanation) stays here
+              because the collision-miss auto-expand and per-task-index reset below
+              both need to reach it, but the button + panel render inside
+              TaskWorkspace now. */}
         </header>
 
         <section className="grid items-start gap-3 sm:grid-cols-[auto_1fr] sm:gap-5">
           <div className="hidden sm:block">
-            <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={80} />
+            <MonsterAvatar mood={avatarMood} size={80} />
           </div>
           <div className="min-w-0 space-y-3 sm:space-y-4">
-            {/* «Готово, когда» — one short line in the monster's voice, always visible
-                before the first attempt. We refused to hide it until after a miss
-                (§10.2): the defect that started this work was a child who could not
-                tell what a finished answer looked like, and hiding the condition makes
-                the first attempt a guess by design. No label, no third row to read. */}
-            <div className="flex items-start gap-3">
-              {/* The avatar is phone-only — a second monster already sits in the desktop
-                  column. The line itself is visible at every width: it is the success
-                  condition, and hiding it on a viewport is the same defect as hiding it
-                  until after a miss. */}
-              <div className="sm:hidden">
-                <MonsterAvatar mood={isSending ? "thinking" : "happy"} size={48} />
-              </div>
-              <p className="pt-1 text-sm leading-5 text-[var(--text-secondary)]" data-testid="task-done-when">
-                {currentTask?.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
-              </p>
+            {/* The goal line renders inside TaskWorkspace's own header (Sprint-1
+                consolidation). «Готово, когда» renders here instead, right under it,
+                as its own always-visible line (§10.2 rejects hiding or collapsing
+                the success condition, even when it echoes the goal) — kept at this
+                level, not inside TaskWorkspace, so it survives that component's
+                per-task `key` remount as one stable DOM node. The avatar stays here:
+                it is phone-only (a second monster already sits in the desktop
+                column) and it is a visual, not a text block. */}
+            <div className="sm:hidden">
+              <MonsterAvatar mood={avatarMood} size={48} />
             </div>
             {idleNudge >= 2 && showStructuredCheck ? (
               <MascotCue beat="sessionIdle" className="justify-start" />
@@ -770,6 +904,9 @@ export default function ThinkingSessionPage() {
                 disabled={isSending}
                 externalPrimaryAction
                 onPrimaryActionChange={setPrimaryAction}
+                explanationRu={session.explanationRu}
+                showDisclosure={showExplanation}
+                onToggleDisclosure={(next) => setExplanationOpenFor(next ? taskKey : null)}
                 onSubmit={(program) => {
                   setCoachDismissed(true);
                   void runAttempt({ program });
@@ -785,6 +922,15 @@ export default function ThinkingSessionPage() {
                   </div>
                 ) : undefined}
               />
+            ) : null}
+            {currentTask ? (
+              <p
+                data-testid="task-done-when"
+                className="text-sm leading-5 text-[var(--text-secondary)]"
+              >
+                <strong>Готово, когда:</strong>{" "}
+                {currentTask.doneWhenRu ?? "Смотри цель и собирай поле ниже — «Проверить» внизу."}
+              </p>
             ) : null}
             {currentTask && !showAdvance ? (
               <SessionCoach
@@ -985,7 +1131,8 @@ export default function ThinkingSessionPage() {
                 form={primaryAction?.formId}
                 disabled={checkDisabled}
                 data-testid="session-primary-check"
-                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl bg-[var(--color-primary)] px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="relative z-10 min-h-11 w-full flex-1 rounded-2xl px-6 py-3 font-bold text-white transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:cursor-not-allowed disabled:opacity-50"
+                style={worldTheme ? { background: "var(--world-accent, var(--color-primary))" } : undefined}
               >
                 {isSending ? (
                   <span className="inline-flex items-center justify-center gap-2">

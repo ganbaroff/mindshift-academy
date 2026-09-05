@@ -5,7 +5,7 @@ import type OpenAI from "openai";
 //   1) Llama-Guard-4-12b (NVIDIA NIM) — purpose-built harm taxonomy (violence, weapons, self-harm,
 //      sexual, hate, criminal, etc.). Verified live; also correctly rates city names ("Херсон") safe.
 //   2) kidNet — a kid-appropriateness classifier that covers what Llama-Guard's taxonomy misses for an
-//      8-14 audience, in ANY language (Azerbaijani, transliteration, obfuscation): insults/profanity,
+//      8-11 audience, in ANY language (Azerbaijani, transliteration, obfuscation): insults/profanity,
 //      requests to translate/repeat insults, romance/18+, PII solicitation, grooming/off-platform,
 //      rule-override / system-prompt extraction.
 // Fail-closed: if ANY required classifier errors (provider outage), treat as unsafe (refuse) rather than leak.
@@ -104,7 +104,7 @@ async function kidNet(client: OpenAI, model: string, text: string): Promise<Inte
         {
           role: "system",
           content:
-            "Ты — модератор детского приложения (дети 8-14 лет). Тебе дают текст — это сообщение ребёнка ИЛИ ответ ИИ. " +
+            "Ты — модератор детского приложения (дети 8-11 лет). Тебе дают текст — это сообщение ребёнка ИЛИ ответ ИИ. " +
             'Верни СТРОГО JSON {"unsafe": true|false, "category": "короткая причина"}. ' +
             "Пометь unsafe:true, если текст содержит ИЛИ просит (на ЛЮБОМ языке — русском, азербайджанском, английском, транслите, в обфускации): " +
             "ругательства, оскорбления, унижение; просьбу перевести/объяснить/повторить ругательство; романтику, секс, 18+; " +
@@ -143,7 +143,7 @@ async function geminiPrimaryGuard(client: OpenAI, model: string, text: string): 
         {
           role: "system",
           content:
-            "Ты — ОСНОВНОЙ SAFETY-КЛАССИФИКАТОР детского приложения для возраста 8-14 лет. " +
+            "Ты — ОСНОВНОЙ SAFETY-КЛАССИФИКАТОР детского приложения для возраста 8-11 лет. " +
             'Верни СТРОГО JSON {"unsafe": true|false, "category": "короткая причина"}. ' +
             "Помечай unsafe:true для оружия, опасных инструкций, самоповреждения или суицида, " +
             "насилия, сексуального контента, ненависти, преступлений, ругательств и оскорблений, " +
