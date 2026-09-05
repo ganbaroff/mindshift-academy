@@ -77,3 +77,6 @@ No secrets in chat or commits. No prod DB writes, no deploys, no push to `main`
 without explicit owner approval. `LEGACY_MODULE1_ENABLED` / `E2E_LEGACY_LESSONS`
 stay off. Age target is 8-11 per CEO decision 2026-08-29 (already reflected in
 `src/lib/moderation.ts` on this branch).
+
+## Status 2026-09-05
+S1 + S2 merged to production as e4fde8c (PR #33, squash, after db:schema parity + restore-verified backup). Sprint 3 plan of record: docs/audit/SPRINT-3-MASTER-PROMPT.md; research: docs/research/2026-09-05/. Branch: owner/sprint-3.
