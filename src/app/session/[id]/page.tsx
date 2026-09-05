@@ -88,11 +88,12 @@ export default function ThinkingSessionPage() {
   // rendered on every task. Walkthrough-UX audit (2026-08-29, top fix #1) moved that
   // explanation earlier still, into SessionIntro, shown before the board at all — so
   // the in-task callout now defaults to collapsed on EVERY task, including task 1, to
-  // avoid saying the same sentence twice in a row. The effect below re-derives it
-  // whenever the task index changes; the collision-task branch further down still
-  // force-expands it on a miss, and that stays compatible because it never touches the
-  // task index.
-  const [showExplanation, setShowExplanation] = useState(false);
+  // avoid saying the same sentence twice in a row. Disclosure state is keyed by
+  // `${session.id}:${safeIndex}` instead of driven by a task-index effect (that effect
+  // tripped react-hooks/set-state-in-effect): a new task key means the disclosure is
+  // collapsed automatically, no effect required. The collision-task branch further
+  // down still force-expands it on a miss by setting the current task key.
+  const [explanationOpenFor, setExplanationOpenFor] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [revealedHint, setRevealedHint] = useState<string | null>(null);
   const [hintBusy, setHintBusy] = useState(false);
@@ -161,15 +162,16 @@ export default function ThinkingSessionPage() {
     [worldTheme],
   );
 
-  // Re-derive the explanation's default every time the task index actually changes
+  // The explanation's default collapses every time the task index actually changes
   // (initial load, resume-at-firstOpen, or advanceTask) — always collapsed, since
   // SessionIntro already delivered session.explanationRu before the board appeared.
-  // A user's manual toggle stays in effect until the NEXT task-index change, which is
-  // what "toggle freely after" means: freely within the current task, reset on the next.
-  useEffect(() => {
-    if (!session) return;
-    setShowExplanation(false);
-  }, [session, safeIndex]);
+  // Keying the open state by task instead of resetting it in an effect means a task
+  // change collapses the disclosure for free: the old key's state simply stops
+  // matching. A user's manual toggle stays in effect until the NEXT task-index
+  // change, which is what "toggle freely after" means: freely within the current
+  // task, reset on the next.
+  const taskKey = session ? `${session.id}:${safeIndex}` : "";
+  const showExplanation = explanationOpenFor === taskKey;
 
   // The story-and-goal screen (docs/audit/WALKTHROUGH-UX-2026-08-29.md top fix #1):
   // shown once, before the board, only when the child is starting the session fresh
@@ -441,7 +443,7 @@ export default function ThinkingSessionPage() {
       setResults((prev) => [...prev.filter((r) => r.id !== currentTask.id), result]);
 
       if (currentTask.role === "collision") {
-        setShowExplanation(true);
+        setExplanationOpenFor(taskKey);
       }
 
       if (data.pass) {
@@ -901,7 +903,7 @@ export default function ThinkingSessionPage() {
                 onPrimaryActionChange={setPrimaryAction}
                 explanationRu={session.explanationRu}
                 showDisclosure={showExplanation}
-                onToggleDisclosure={setShowExplanation}
+                onToggleDisclosure={(next) => setExplanationOpenFor(next ? taskKey : null)}
                 onSubmit={(program) => {
                   setCoachDismissed(true);
                   void runAttempt({ program });
