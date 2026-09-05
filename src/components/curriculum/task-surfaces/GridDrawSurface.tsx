@@ -64,7 +64,7 @@ export function GridDrawSurface({
                 // Coordinates live only in the accessible name now — the visible cell
                 // face carries no text, so it reads as the same picture-language as
                 // the target grid above it (DisplayGrid), not a coordinate to translate.
-                aria-label={`Ряд ${row + 1}, колонка ${column + 1}`}
+                aria-label={`Выбрать клетку ${row + 1}, ${column + 1}`}
                 aria-pressed={active}
                 onClick={() => toggle(row, column)}
                 // The cell a child actually taps, several times per attempt: it had no

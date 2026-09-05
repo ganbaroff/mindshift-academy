@@ -188,12 +188,36 @@ export function TaskWorkspace({
         </ul>
       ) : null}
 
+      {/* Tier contract (tests/e2e/current-session-ui.mjs verifyTierLadder): tier 1's
+          «Коротко» reminder and tier 3's economy demand must be on screen with zero
+          clicks — the e2e gate counts them before it ever opens the disclosure below.
+          They render here, outside the collapsed button, so consolidating the rest of
+          the explanation behind one disclosure (Sprint-1) never hides the one line a
+          tier is defined by. Everything else — the free-text explanation, the level
+          heading, promptRu — stays folded, since none of those carry a visibility
+          contract. */}
+      {offeredTier === 1 ? (
+        <p
+          data-testid="task-tier-reminder"
+          className="rounded-xl bg-[var(--color-secondary-soft)] p-2.5 text-xs leading-5 text-[var(--color-secondary-dark)] sm:text-sm"
+        >
+          <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
+        </p>
+      ) : null}
+      {tierThreeDemand ? (
+        <p
+          data-testid="task-tier-demand"
+          className="rounded-xl border border-[var(--color-primary-dark)]/30 p-2.5 text-xs leading-5 text-[var(--color-primary-dark)] sm:text-sm"
+        >
+          <strong>Условие уровня 3:</strong> {tierThreeDemand}
+        </p>
+      ) : null}
+
       {/* ONE merged disclosure (Sprint-1): the session's «Объяснение», the level
-          heading, promptRu (only when it says something goalRu above did not), the
-          tier-1 «Коротко» reminder and the tier-3 demand — four to five previously
-          separate always-rendered blocks — now live behind a single collapsed
-          button. Post-collision auto-expand is unchanged: the session page still
-          flips `showDisclosure` to true on a collision miss (state lives there). */}
+          heading, and promptRu (only when it says something goalRu above did not) —
+          three previously separate always-rendered blocks — now live behind a single
+          collapsed button. Post-collision auto-expand is unchanged: the session page
+          still flips `showDisclosure` to true on a collision miss (state lives there). */}
       {showDisclosure ? (
         <div className="space-y-2 rounded-2xl border border-[var(--border-color)] bg-[var(--surface-strong)] p-3">
           {explanationRu ? (
@@ -208,22 +232,6 @@ export function TaskWorkspace({
           </p>
           {task.promptRu && task.promptRu !== goalText ? (
             <p className="text-sm leading-6 text-[var(--text-secondary)]">{task.promptRu}</p>
-          ) : null}
-          {offeredTier === 1 ? (
-            <p
-              data-testid="task-tier-reminder"
-              className="rounded-xl bg-[var(--color-secondary-soft)] p-2.5 text-xs leading-5 text-[var(--color-secondary-dark)] sm:text-sm"
-            >
-              <strong>Коротко:</strong> {TIER_ONE_REMINDERS[task.family]}
-            </p>
-          ) : null}
-          {tierThreeDemand ? (
-            <p
-              data-testid="task-tier-demand"
-              className="rounded-xl border border-[var(--color-primary-dark)]/30 p-2.5 text-xs leading-5 text-[var(--color-primary-dark)] sm:text-sm"
-            >
-              <strong>Условие уровня 3:</strong> {tierThreeDemand}
-            </p>
           ) : null}
           <button
             type="button"

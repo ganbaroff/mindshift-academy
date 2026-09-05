@@ -390,9 +390,9 @@ async function main() {
 
         if (workspaceReady && target.interact) {
           if (target.family === "grid-draw") {
-            // Cell aria-label changed from "Выбрать клетку N,M" to "Ряд N, колонка M"
-            // (coordinate text moved off the visible cell face into the accessible name only).
-            const cellButtons = page.getByRole("button", { name: /^Ряд \d+, колонка \d+/ });
+            // Cell aria-label stays "Выбрать клетку N, M" — the e2e contract this
+            // harness and current-session-ui.mjs both encode.
+            const cellButtons = page.getByRole("button", { name: /^Выбрать клетку \d+, \d+/ });
             const total = await cellButtons.count();
             for (let i = 0; i < Math.min(3, total); i += 1) {
               await cellButtons.nth(i).click().catch(() => {});
@@ -437,7 +437,7 @@ async function main() {
             // BONUS pass-capture: DisplayGrid always renders the goal picture
             // (session/[id]/page.tsx `gridTarget`), and its accessible name spells the
             // target out in plain text: "...Целевые клетки: строка N, столбец M; ...".
-            // Both that summary and the input cells' own aria-label ("Ряд N, колонка M")
+            // Both that summary and the input cells' own aria-label ("Выбрать клетку N, M")
             // use the same 1-based numbering, so no coordinate translation is needed —
             // read one, click the matching buttons of the other.
             try {
@@ -462,7 +462,7 @@ async function main() {
                 }
                 for (const cell of targetCells) {
                   await page
-                    .getByRole("button", { name: `Ряд ${cell.row}, колонка ${cell.column}` })
+                    .getByRole("button", { name: `Выбрать клетку ${cell.row}, ${cell.column}` })
                     .click({ timeout: 3000 })
                     .catch(() => {});
                 }
