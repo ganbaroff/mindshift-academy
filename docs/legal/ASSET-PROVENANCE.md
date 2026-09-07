@@ -19,13 +19,36 @@ repository.
 `celebrating.json`, `happy.json`, `sad.json`, `thinking.json` — the monster's states, loaded by
 `src/components/companion/MonsterAvatarInner.tsx`.
 
-**Origin: UNVERIFIED. Licence: UNRECORDED.** Same question as the audio and not yet answered.
-Lottie JSON is a vector export, so a file taken from a stock library carries that library's
-licence with it and looks identical to one drawn in-house.
+**Origin: Google, Noto Animated Emoji. Licence: CC BY 4.0 — attribution REQUIRED.**
 
-Note for design, not law: `sad.json` ships but is never selected. The session page moves the
-monster to `thinking` on a wrong answer, never to `sad` — a deliberate choice not to make a
-child read their mistake on the companion's face. The asset is dead weight unless that changes.
+Established 2026-09-06 by direct comparison, not by guessing. Each file is **byte-identical**
+to the emoji Google serves at
+`https://fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/lottie.json`:
+
+| Our file | Noto codepoint | Emoji | SHA-256 (first 16) | Bytes equal |
+|---|---|---|---|---|
+| `celebrating.json` | `1f973` | 🥳 party face | `6cc02b10d9471287` | yes |
+| `happy.json` | `1f60a` | 😊 smiling, smiling eyes | `81b63e6a41d25180` | yes |
+| `sad.json` | `1f622` | 😢 crying | `58c4605cb7cae240` | yes |
+| `thinking.json` | `1f914` | 🤔 thinking face | `46405d972ad78a2f` | yes |
+
+The internal composition names survived the copy and were the first clue: `emoji_party-face`,
+`emoji_Smiling face-smiling eyes`, `emoji_crying`, `emoji_thinking face`.
+
+**What this changed.** CC BY 4.0 permits commercial use and modification, so nothing has to be
+removed — but it requires credit, and we were shipping none. Attribution now renders on
+`/privacy` under «Сторонние материалы»: *Animated Noto Emoji, © Google LLC, CC BY 4.0*. That
+follows what the Noto downstream packages do; per-emoji credit is not workable on a child's
+screen.
+
+**Product note, not a legal one.** The companion monster is the core mechanic, and its animated
+face is a stock Google emoji. `MonsterSVG.tsx` draws a custom monster in code, but the avatar
+that reacts to a child's answer is 🤔 and 🥳. If the monster is meant to be *theirs*, these four
+files are the most conspicuous thing in the product that is not.
+
+Also: `sad.json` ships but is never selected. A wrong answer moves the monster to `thinking`,
+never `sad` — a deliberate choice not to make a child read their mistake on the companion's
+face. Dead weight unless that changes.
 
 ## What we do know
 
