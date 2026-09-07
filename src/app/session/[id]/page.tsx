@@ -565,7 +565,7 @@ export default function ThinkingSessionPage() {
       <div className="min-h-screen bg-[var(--color-bg-base)] text-[var(--ink)] flex flex-col">
         <Header />
         <main className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400" aria-label="Загрузка" />
+          <Loader2 className="w-8 h-8 animate-spin motion-reduce:animate-none text-violet-400" aria-label="Загрузка" />
         </main>
       </div>
     );
@@ -957,7 +957,14 @@ export default function ThinkingSessionPage() {
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                className="whitespace-pre-wrap text-sm text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-mono leading-relaxed"
+                // This is the monster talking to an eight-year-old, so it is set in the
+                // product's own reading face. It rendered in `font-mono` until 2026-09-06,
+                // which is the typography of a compiler error: the one moment a child is
+                // told they got it wrong looked like a terminal. The `pre` tag and
+                // `role="status"` stay — scripts/e2e/walkthrough-audit.mjs locates this
+                // element by `pre[role="status"]`, and pre-wrap keeps the authored line
+                // breaks that the feedback text relies on.
+                className="whitespace-pre-wrap text-base text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-sans leading-relaxed"
               >
                 {feedback}
               </pre>
@@ -1072,7 +1079,7 @@ export default function ThinkingSessionPage() {
                   disabled={isSending || !utterance.trim()}
                   className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-primary-soft)] px-5 py-3 font-semibold text-[var(--color-primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50"
                 >
-                  {isSending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
+                  {isSending ? <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" /> : <Send className="h-5 w-5" aria-hidden="true" />}
                   <span>Отправить текст</span>
                 </button>
               </form>
@@ -1094,7 +1101,7 @@ export default function ThinkingSessionPage() {
               className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl border border-[var(--color-accent-dark)] bg-[var(--color-accent)] px-3 text-sm font-semibold text-[#3A2600] transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] disabled:opacity-50 sm:px-4"
             >
               {hintBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               ) : (
                 <Lightbulb className="h-4 w-4" aria-hidden="true" />
               )}
@@ -1136,7 +1143,7 @@ export default function ThinkingSessionPage() {
               >
                 {isSending ? (
                   <span className="inline-flex items-center justify-center gap-2">
-                    <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-5 w-5 animate-spin motion-reduce:animate-none" aria-hidden="true" />
                     Проверяем…
                   </span>
                 ) : (
