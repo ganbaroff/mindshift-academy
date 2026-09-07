@@ -957,14 +957,20 @@ export default function ThinkingSessionPage() {
                 role="status"
                 aria-live="polite"
                 aria-atomic="true"
-                // This is the monster talking to an eight-year-old, so it is set in the
-                // product's own reading face. It rendered in `font-mono` until 2026-09-06,
-                // which is the typography of a compiler error: the one moment a child is
-                // told they got it wrong looked like a terminal. The `pre` tag and
-                // `role="status"` stay — scripts/e2e/walkthrough-audit.mjs locates this
-                // element by `pre[role="status"]`, and pre-wrap keeps the authored line
-                // breaks that the feedback text relies on.
-                className="whitespace-pre-wrap text-base text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-sans leading-relaxed"
+                // `font-mono` is LOAD-BEARING here, not decoration: src/lib/tasks/grid-draw.ts
+                // builds an ASCII diff of the two boards ("Я закрасил так:" / "А просили так:")
+                // whose columns only line up in a fixed-width face. A 2026-09-06 change to
+                // font-sans was reverted the same day after a browser screenshot of
+                // /session/w1-s1?demo=1 at 390px showed the grid going ragged.
+                // Size is raised to 16px because the same screenshot showed 14px monospace is
+                // small for an eight-year-old. The `pre` tag and `role="status"` stay:
+                // scripts/e2e/walkthrough-audit.mjs locates this element by `pre[role="status"]`.
+                //
+                // Known redundancy, deliberately NOT fixed here: DisplayGrid already renders
+                // the same diff in colour directly above, so the child is shown the board twice.
+                // Removing the ASCII copy means changing the feedback contract and
+                // tests/tasks.test.mjs:86 ("diff shows both grids"), which is its own change.
+                className="whitespace-pre-wrap text-base text-[var(--text-primary)] bg-[var(--surface-strong)] rounded-xl p-4 border border-[var(--border-color)] font-mono leading-relaxed"
               >
                 {feedback}
               </pre>
