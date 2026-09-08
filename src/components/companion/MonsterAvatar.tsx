@@ -36,7 +36,7 @@ const MOOD_GLYPH: Record<MonsterMood, string> = {
   celebrating: "🎉",
 };
 
-export function MonsterAvatar({ mood = "happy", color = "#FF6B4A", size = 120, ...props }: MonsterAvatarProps) {
+export function MonsterAvatar({ mood = "happy", color = "var(--color-primary)", size = 120, ...props }: MonsterAvatarProps) {
   // Fixed-size, relatively-positioned wrapper so the base layer and the
   // absolutely-positioned Lottie layer stack exactly on top of each other
   // instead of collapsing to a full-width, near-zero-height bar on a cold
@@ -49,8 +49,8 @@ export function MonsterAvatar({ mood = "happy", color = "#FF6B4A", size = 120, .
         aria-hidden="true"
         className="absolute inset-0 flex items-center justify-center rounded-full border border-[var(--border-color)]"
         style={{
-          backgroundColor: `${color}15`,
-          borderColor: `${color}30`,
+          backgroundColor: `color-mix(in srgb, ${color} 8%, transparent)`,
+          borderColor: `color-mix(in srgb, ${color} 19%, transparent)`,
         }}
       >
         <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{MOOD_GLYPH[mood]}</span>
