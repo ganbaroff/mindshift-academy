@@ -35,12 +35,18 @@ per file that the `rest` marker sits on the last frame and that every animated p
 motionless there — so a one-shot `loop={false}` playback lands on a readable pose by construction,
 not by comment. Sizes and digests as generated:
 
-| File | Bytes | SHA-256 (first 16) | Rest marker |
+| File | Bytes on disk | SHA-256 of the built string (first 16) | Rest marker |
 |---|---|---|---|
-| `happy.json` | 11676 | `b326d7a0339718f3` | `240/240` |
-| `thinking.json` | 16658 | `8e614f23973492a5` | `180/180` |
-| `celebrating.json` | 21564 | `92fdb52e78203c10` | `150/150` |
-| `sad.json` | 13206 | `4be96b88d23d3511` | `180/180` |
+| `happy.json` | 11678 | `b326d7a0339718f3` | `240/240` |
+| `thinking.json` | 16660 | `8e614f23973492a5` | `180/180` |
+| `celebrating.json` | 21566 | `92fdb52e78203c10` | `150/150` |
+| `sad.json` | 13208 | `4be96b88d23d3511` | `180/180` |
+
+The generator prints two bytes fewer per file than `wc -c` reports, and the difference is not a
+defect: it prints `next.length`, a count of JavaScript string units, while each file carries one
+em dash in `meta.a` that costs three bytes in UTF-8 and one unit in the string. Measured on disk
+2026-09-08. The digests are of the built string and are what `--check` compares, so they are
+stable either way.
 
 The Google Noto files and the CC BY 4.0 credit that named them on `/privacy` («Сторонние
 материалы») were removed in the same commit that introduced the generator — the credit must not
