@@ -77,7 +77,7 @@ export function GridDrawSurface({
                 // Size/shape/rounding and the active fill colour match DisplayGrid's target
                 // cells exactly (same cyan) so a filled input cell looks like the target
                 // picture it is meant to reproduce, instead of a differently-styled control.
-                className={`h-11 w-11 rounded-lg border transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:h-12 sm:w-12 ${active ? "border-cyan-400/40 bg-cyan-500/10" : "border-[var(--border-color)] bg-[var(--surface-strong)]"}`}
+                className={`h-11 w-11 rounded-lg border transition-[color,background-color,border-color,scale] duration-[120ms] [transition-timing-function:var(--ease-out)] active:scale-[0.94] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:h-12 sm:w-12 ${active ? "border-[var(--color-secondary)] bg-[var(--color-secondary-soft)]" : "border-[var(--border-color)] bg-[var(--surface-strong)]"}`}
               />
             );
           })}

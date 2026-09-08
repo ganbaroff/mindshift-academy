@@ -21,11 +21,16 @@ export const SkinSelector = () => {
     ]);
   };
 
+  // These four were #8b5cf6 / #06b6d4 / #ec4899 / #10b981 — violet, cyan, pink and emerald
+  // straight out of Tailwind's default palette, left over from the retired dark theme. They
+  // are child-facing choices, so they now come from the product's own colours, and each lands
+  // where its creature already pointed: fire on primary, robot on secondary, star on accent,
+  // slime on success.
   const skins = [
-    { emoji: "🐲", name: "Огненный Дракончик", color: "#8b5cf6" },
-    { emoji: "🤖", name: "Робо-Кот Марк-1", color: "#06b6d4" },
-    { emoji: "🦄", name: "Звездный Пони", color: "#ec4899" },
-    { emoji: "👾", name: "Космический Слизень", color: "#10b981" }
+    { emoji: "🐲", name: "Огненный Дракончик", color: "var(--color-primary)" },
+    { emoji: "🤖", name: "Робо-Кот Марк-1", color: "var(--color-secondary)" },
+    { emoji: "🦄", name: "Звездный Пони", color: "var(--color-accent)" },
+    { emoji: "👾", name: "Космический Слизень", color: "var(--color-success)" }
   ];
 
   return (
@@ -38,9 +43,9 @@ export const SkinSelector = () => {
             onClick={() => handleSkinChange(skin.emoji, skin.name, skin.color)}
             aria-label={skin.name}
             aria-pressed={activeSkin === skin.emoji}
-            className={`aspect-square rounded-xl border text-xl flex items-center justify-center transition-[colors,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${
+            className={`aspect-square rounded-xl border text-xl flex items-center justify-center transition-[colors,box-shadow] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] ${
               activeSkin === skin.emoji
-                ? "border-cyan-400 bg-cyan-400/10 shadow-[0_0_10px_rgba(6,182,212,0.2)]"
+                ? "border-[var(--color-secondary)] bg-[var(--color-secondary-soft)]"
                 : "border-[var(--border-color)] bg-[var(--surface-strong)] hover:bg-[var(--surface-strong)]"
             }`}
           >

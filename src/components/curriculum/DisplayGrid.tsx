@@ -67,9 +67,9 @@ export function DisplayGrid({ filled = [], target = [], mismatch = [], label }: 
           if (isMismatch) {
             cellClass += "border-[var(--color-accent-dark)] bg-[var(--color-accent)]";
           } else if (isFilled) {
-            cellClass += "border-violet-400/60 bg-[var(--color-primary)]/40";
+            cellClass += "border-[var(--color-primary-dark)] bg-[var(--color-primary-soft)]";
           } else if (isTarget) {
-            cellClass += "border-cyan-400/40 bg-cyan-500/10";
+            cellClass += "border-[var(--color-secondary)] bg-[var(--color-secondary-soft)]";
           } else {
             cellClass += "border-[var(--border-color)] bg-[var(--surface-strong)]";
           }
