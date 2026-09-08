@@ -19,7 +19,7 @@ interface MonsterAvatarInnerProps {
 
 export default function MonsterAvatarInner({
   mood = "happy",
-  color = "#8b5cf6",
+  color = "#FF6B4A",
   size = 120,
   className = "",
 }: MonsterAvatarInnerProps) {
@@ -60,9 +60,18 @@ export default function MonsterAvatarInner({
         }}
       />
       <div className="relative z-10 w-full h-full flex items-center justify-center">
+        {/* One shot, never a loop. The face used to run `loop` forever for anyone without
+            prefers-reduced-motion, which is an animation longer than five seconds with no
+            way to stop it — WCAG 2.2.2 — sitting next to a child trying to read a task.
+            Safe to stop looping: all four files carry a `"cm": "rest"` marker and settle on
+            a readable resting pose, so the frozen last frame is a face and not a mid-blink.
+            `key={mood}` remounts the player when the mood changes, because a one-shot
+            animation would otherwise stay frozen on the previous mood's last frame and the
+            monster would never visibly react again. */}
         <Lottie
+          key={mood}
           animationData={animationData}
-          loop={!prefersReducedMotion}
+          loop={false}
           autoplay={!prefersReducedMotion}
           style={{ width: "92%", height: "92%" }}
         />

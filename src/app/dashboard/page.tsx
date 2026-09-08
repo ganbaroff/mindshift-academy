@@ -100,7 +100,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
 
   const monsterName = dbUser?.monster?.name ?? demoMonsterSeed ?? "Огненный Дракончик";
   const monsterMood = dbUser?.monster?.mood ?? 78;
-  const streak = dbUser?.streak ?? 3;
   const crystals = dbUser?.crystals ?? 120;
   const totalXp = dbUser?.xp ?? 450;
   const inventoryCount = dbUser?.inventory.length ?? (isDemo ? demoInventory.length : 0);
@@ -110,7 +109,6 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
     `Parent: ${displayName}`,
     `Monster: ${monsterName}`,
     `Mood: ${monsterMood}/100`,
-    `Streak: ${streak} days`,
     `XP: ${totalXp}`,
     `Crystals: ${crystals}`,
     "",
@@ -156,29 +154,24 @@ export default async function DashboardPage({ searchParams }: { searchParams?: S
             </h1>
             <p className="max-w-2xl text-base leading-7 text-[var(--text-secondary)] sm:text-lg">
               Вы видите прогресс ребёнка за эту неделю, как менялся монстр
-              и как растут его серия дней и кристаллы. Данные Academy можно удалить в настройках согласия.
+              и сколько кристаллов он накопил. Данные Academy можно удалить в настройках согласия.
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* «Серия дней» lived here with a 🔥 that pulsed once the streak passed five.
+              The canon (§6) freezes streak fields and forbids showing them as losable
+              counters, and this tile did the damage twice over: it showed a parent a
+              streak, and the parent is the one who then leans on the child. It was also
+              not even a real number — `dbUser?.streak ?? 3` meant a family with no data
+              was told their child had a three-day streak. Removed rather than restyled. */}
+          <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { label: "Настроение", value: `${monsterMood}/100`, hint: "Состояние питомца", isStreak: false },
-              { label: "Серия дней", value: `${streak} дн.`, hint: "Мотивация", isStreak: true },
-              { label: "Инвентарь", value: `${inventoryCount} шт.`, hint: "Разблокировано", isStreak: false },
+              { label: "Настроение", value: `${monsterMood}/100`, hint: "Состояние питомца" },
+              { label: "Инвентарь", value: `${inventoryCount} шт.`, hint: "Разблокировано" },
             ].map((item) => (
               <div key={item.label} className="rounded-[20px] border border-[var(--border-color)] bg-surface/80 p-5">
                 <p className="text-sm font-medium uppercase tracking-[0.2em] text-[var(--ink)]/45">{item.label}</p>
-                <p className="mt-3 text-2xl font-semibold text-[var(--ink)] flex items-center gap-2">
-                  {item.value}
-                  {item.isStreak && (
-                    <span
-                      aria-hidden="true"
-                      className={`inline-flex items-center ${streak > 5 ? "animate-pulse drop-shadow-[0_0_8px_rgba(234,179,8,0.6)] motion-reduce:animate-none" : ""}`}
-                    >
-                      🔥
-                    </span>
-                  )}
-                </p>
+                <p className="mt-3 text-2xl font-semibold text-[var(--ink)]">{item.value}</p>
                 <p className="mt-2 text-sm text-[var(--ink)]/58">{item.hint}</p>
               </div>
             ))}
