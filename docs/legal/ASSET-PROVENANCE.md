@@ -19,32 +19,33 @@ repository.
 `celebrating.json`, `happy.json`, `sad.json`, `thinking.json` — the monster's states, loaded by
 `src/components/companion/MonsterAvatarInner.tsx`.
 
-**Origin: Google, Noto Animated Emoji. Licence: CC BY 4.0 — attribution REQUIRED.**
+**Origin: first-party. Licence: owned — no third-party licence attaches.**
 
-Established 2026-09-06 by direct comparison, not by guessing. Each file is **byte-identical**
-to the emoji Google serves at
-`https://fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/lottie.json`:
+These four files used to be byte-identical copies of Google's Noto Animated Emoji (established
+2026-09-06 by SHA-256 comparison). As of this entry they are generated in-repo by
+`scripts/build-monster-faces.mjs` from the Mochi/Capy rig — geometry ported from
+`src/shared/ui/Capy.tsx` in the sibling MindShift ADHD-PWA repository (same owner; that file does
+not exist in this repo). Hand-authored Lottie shape JSON: no raster assets, no font outlines, no
+emoji glyphs.
 
-| Our file | Noto codepoint | Emoji | SHA-256 (first 16) | Bytes equal |
-|---|---|---|---|---|
-| `celebrating.json` | `1f973` | 🥳 party face | `6cc02b10d9471287` | yes |
-| `happy.json` | `1f60a` | 😊 smiling, smiling eyes | `81b63e6a41d25180` | yes |
-| `sad.json` | `1f622` | 😢 crying | `58c4605cb7cae240` | yes |
-| `thinking.json` | `1f914` | 🤔 thinking face | `46405d972ad78a2f` | yes |
+Generation is deterministic and machine-checked, not just claimed: `node
+scripts/build-monster-faces.mjs --check` rebuilds all four in memory and fails on any byte
+difference from what is on disk. It also runs `assertRest()` against the built JSON, which proves
+per file that the `rest` marker sits on the last frame and that every animated property is
+motionless there — so a one-shot `loop={false}` playback lands on a readable pose by construction,
+not by comment. Sizes and digests as generated:
 
-The internal composition names survived the copy and were the first clue: `emoji_party-face`,
-`emoji_Smiling face-smiling eyes`, `emoji_crying`, `emoji_thinking face`.
+| File | Bytes | SHA-256 (first 16) | Rest marker |
+|---|---|---|---|
+| `happy.json` | 11676 | `b326d7a0339718f3` | `240/240` |
+| `thinking.json` | 16658 | `8e614f23973492a5` | `180/180` |
+| `celebrating.json` | 21564 | `92fdb52e78203c10` | `150/150` |
+| `sad.json` | 13206 | `4be96b88d23d3511` | `180/180` |
 
-**What this changed.** CC BY 4.0 permits commercial use and modification, so nothing has to be
-removed — but it requires credit, and we were shipping none. Attribution now renders on
-`/privacy` under «Сторонние материалы»: *Animated Noto Emoji, © Google LLC, CC BY 4.0*. That
-follows what the Noto downstream packages do; per-emoji credit is not workable on a child's
-screen.
-
-**Product note, not a legal one.** The companion monster is the core mechanic, and its animated
-face is a stock Google emoji. `MonsterSVG.tsx` draws a custom monster in code, but the avatar
-that reacts to a child's answer is 🤔 and 🥳. If the monster is meant to be *theirs*, these four
-files are the most conspicuous thing in the product that is not.
+The Google Noto files and the CC BY 4.0 credit that named them on `/privacy` («Сторонние
+материалы») were removed in the same commit that introduced the generator — the credit must not
+outlive the asset, and the asset must not outlive the credit. `scripts/download-lotties.mjs`,
+which fetched the Noto originals, was removed alongside them.
 
 Also: `sad.json` ships but is never selected. A wrong answer moves the monster to `thinking`,
 never `sad` — a deliberate choice not to make a child read their mistake on the companion's
@@ -63,7 +64,7 @@ Low risk, not zero, and cheap to close for the audio: [Kenney](https://kenney.nl
 and impact sound packs under CC0 1.0 — no attribution, commercial use explicit. `sound-engine.ts`
 resolves files by name, so the filenames can stay and the swap is contained.
 
-The Lottie files are the sharper question, because a stock-library original is plausible there in
-a way it is not for a synthesised beep. Establish where those four came from before public launch.
+The Lottie files are closed: first-party, generated deterministically, no third-party licence to
+track. The audio provenance above remains the open question for public launch.
 
 Until then, this file is the honest answer to "where did your media come from".

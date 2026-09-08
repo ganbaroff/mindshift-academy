@@ -30,13 +30,11 @@ export default function PrivacyPage() {
         <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-[var(--text-secondary)]">{md}</pre>
         <OperatorContactLine />
 
-        {/* CC BY 4.0 requires attribution and we were shipping none. The monster's four
-            animated faces in public/lottie/ are byte-identical to Google's Noto Animated
-            Emoji (verified 2026-09-06 by SHA-256 against
-            fonts.gstatic.com/s/e/notoemoji/latest/<codepoint>/lottie.json). Provenance for
-            every shipped asset: docs/legal/ASSET-PROVENANCE.md. One notice on a stable page
-            is the practice the Noto downstream packages follow — per-emoji credit is not
-            workable on a child's screen. */}
+        {/* This block credits the third-party assets we actually ship: fonts and icons.
+            The companion's four animated faces (public/lottie/) are first-party — hand
+            authored as Lottie shape JSON by scripts/build-monster-faces.mjs, no
+            third-party artwork, so no licence notice attaches to them. Provenance for
+            every shipped asset: docs/legal/ASSET-PROVENANCE.md. */}
         <section
           data-testid="third-party-notices"
           aria-labelledby="third-party-notices-heading"
@@ -49,16 +47,7 @@ export default function PrivacyPage() {
             Сторонние материалы
           </h2>
           <p className="text-sm leading-6 text-[var(--text-secondary)]">
-            Анимации лица монстра — Animated Noto Emoji, © Google LLC, лицензия{" "}
-            <a
-              href="https://creativecommons.org/licenses/by/4.0/"
-              rel="noopener noreferrer"
-              target="_blank"
-              className="text-[var(--color-secondary-dark)] underline"
-            >
-              CC BY 4.0
-            </a>
-            . Шрифты Comfortaa, Nunito и Geist Mono — SIL Open Font License 1.1. Иконки
+            Шрифты Comfortaa, Nunito и Geist Mono — SIL Open Font License 1.1. Иконки
             lucide — лицензия ISC.
           </p>
         </section>
