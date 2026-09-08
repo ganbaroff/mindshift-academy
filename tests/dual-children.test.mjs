@@ -65,6 +65,11 @@ console.log("\n=== content / economy contracts ===");
     )
   );
   check("hint cost < starter pack", HINT_CRYSTAL_COST < STARTER_CRYSTALS);
+  // Asking for help must never be the expensive move. While a hint cost more than a task paid
+  // (5 against 3, until 2026-09-08), the cheapest route to a hint was to fail twice and take the
+  // free one — the product was paying children to fail before asking. See the comment on
+  // HINT_CRYSTAL_COST and src/lib/tasks/stuck.ts.
+  check("a hint costs less than a task pays", HINT_CRYSTAL_COST < TASK_PASS_CRYSTAL_REWARD);
   check("pass reward positive", TASK_PASS_CRYSTAL_REWARD > 0);
   check(
     "free prompts do not name exact figure for practice",

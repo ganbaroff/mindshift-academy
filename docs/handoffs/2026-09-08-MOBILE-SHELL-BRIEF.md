@@ -80,9 +80,13 @@ becomes free — that logic exists and must not be rebuilt. Design the three run
 2. what the monster actually heard — free, after the second.
 3. what I would do, confirm it or change one thing — costs crystals, only if the child asks.
 
-Check the economics before pricing rung 3: a hint costs 5 crystals, a passed task pays 3, the
-starting balance is 15. As it stands a child can buy three hints in a course of 60–90 tasks. Say
-whether that is intended or a bug — it changes rung 3 completely.
+The economics were a bug and the owner has fixed it. A hint cost 5 crystals while a passed task
+paid 3, so asking for help cost more than finishing paid, and — because `stuck.ts` makes the hint
+free after two recorded misses — the cheapest route to help was to fail twice first. The product
+was paying children to fail before asking. `HINT_CRYSTAL_COST` is now 2 against a reward of 3, and
+`tests/dual-children.test.mjs` fails the build if a hint ever costs more than a task pays again.
+Design rung 3 against the new numbers: a child who asks early ends every task with more crystals
+than they started.
 
 ### 4.4 The feedback card
 

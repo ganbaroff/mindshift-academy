@@ -2,8 +2,18 @@ import type { TaskFamilyId } from "@/lib/tasks/types";
 import { normalizeRuleMap, type RuleMap } from "@/lib/tasks/rule-runner";
 import type { Claim } from "@/lib/tasks/claim-check";
 
-/** Crystal cost to reveal one task's scaffold hint. */
-export const HINT_CRYSTAL_COST = 5;
+/**
+ * Crystal cost to reveal one task's scaffold hint.
+ *
+ * Held BELOW `TASK_PASS_CRYSTAL_REWARD` on purpose, and `tests/dual-children.test.mjs` fails if
+ * that stops being true. It was 5 against a reward of 3 until 2026-09-08, which meant asking for
+ * help cost more than finishing the task paid. `src/lib/tasks/stuck.ts` already names the damage
+ * — "the child who most needs help is the one who cannot afford it" — and softened it by making
+ * the hint free after two recorded misses. But that fix left a worse incentive standing: the
+ * cheapest way to afford help was to fail twice first. A child who asks early should end the task
+ * with more crystals than they started, every time, so that asking is never the expensive move.
+ */
+export const HINT_CRYSTAL_COST = 2;
 
 /** Crystals earned on first pass of a thinking-curriculum task. */
 export const TASK_PASS_CRYSTAL_REWARD = 3;
