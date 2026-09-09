@@ -84,7 +84,10 @@ The economics were a bug and the owner has fixed it. A hint cost 5 crystals whil
 paid 3, so asking for help cost more than finishing paid, and — because `stuck.ts` makes the hint
 free after two recorded misses — the cheapest route to help was to fail twice first. The product
 was paying children to fail before asking. `HINT_CRYSTAL_COST` is now 2 against a reward of 3, and
-`tests/dual-children.test.mjs` fails the build if a hint ever costs more than a task pays again.
+`tests/dual-children.test.mjs` now asserts a hint costs less than a task pays, and that file is
+wired into `npm test` — which is what CI runs — so the ratio cannot invert again without the build
+going red. (It was NOT in the chain when this brief was first written; a reviewer caught the false
+claim and it has been fixed rather than reworded.)
 Design rung 3 against the new numbers: a child who asks early ends every task with more crystals
 than they started.
 

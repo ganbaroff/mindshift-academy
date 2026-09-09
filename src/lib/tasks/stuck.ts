@@ -7,8 +7,13 @@
  * noticed in a message structurally identical to normal feedback, and the hint that was
  * costing five crystals becomes free.
  *
- * Why free matters (02-CURRENT-STATE §"what is broken"): the hint costs 5 crystals and a
- * passed task pays 3, so the child who most needs help is the one who cannot afford it.
+ * Why free matters (02-CURRENT-STATE §"what is broken"): the hint used to cost 5 crystals while
+ * a passed task paid 3, so the child who most needs help was the one who could not afford it.
+ * Making it free here fixed that, but left a worse incentive: the cheapest way to reach a hint
+ * was to fail twice on purpose. So on 2026-09-08 the price itself came down to 2, below the
+ * reward — see HINT_CRYSTAL_COST in src/content/curriculum/types.ts, and the invariant in
+ * tests/dual-children.test.mjs that keeps a hint cheaper than a task pays. This free-after-two
+ * rule stays: a stuck child should not spend anything at all.
  *
  * Pure policy. The *decision* is taken on the server from recorded attempts — a client
  * cannot declare itself stuck and get paid scaffolding for free.
