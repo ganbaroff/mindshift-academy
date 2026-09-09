@@ -79,6 +79,10 @@ for (const m of gateText.matchAll(/scripts\/[A-Za-z0-9/_.-]+\.mjs/g)) {
  */
 const UNREACHED = new Map([
   [
+    "dual-children.test.mjs",
+    "Fails BY DESIGN in CI: its live-interpreter half is skipped without GEMINI_API_KEY or AZURE_OPENAI_API_KEY, and it refuses to report green on a half run rather than give false confidence. Correct behaviour, so it stays out of the gate and runs via its own script where keys exist. Its keyless constant rules moved to tests/economy-invariants.test.mjs, which IS gated.",
+  ],
+  [
     "onboarding-comprehension.test.mjs",
     "RED as of 2026-09-08, and not wiring: two assertions fail — 'ready phase explains the first-session outcome with a non-answer-revealing example' and 'the only ready-phase route remains the first thinking session'. Nobody knew, because the file sat in no gate. Fix the onboarding ready phase, then wire it in and delete this entry.",
   ],
