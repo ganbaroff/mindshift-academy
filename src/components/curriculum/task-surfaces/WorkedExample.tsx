@@ -13,7 +13,7 @@ export function WorkedExample({ family, initiallyOpen = false }: Props) {
     <details
       data-testid="worked-example"
       open={initiallyOpen}
-      className="rounded-2xl border border-violet-400/30 bg-violet-400/10 p-4"
+      className="rounded-2xl border border-[var(--color-primary-soft)] bg-[var(--surface-strong)] p-4"
     >
       <summary className="min-h-11 cursor-pointer py-2 font-semibold text-[var(--color-primary-dark)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-secondary-dark)]">
         Пример с другими данными

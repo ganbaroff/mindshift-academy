@@ -94,7 +94,7 @@ export function RuleSurface({
     >
       <fieldset disabled={disabled} className="space-y-3">
         <legend className="mb-2 font-medium text-[var(--ink)]">Собери правило с веткой «иначе»</legend>
-        <label className="grid gap-2 rounded-xl border border-violet-400/30 bg-violet-400/10 p-3 sm:grid-cols-[1fr_1.4fr] sm:items-center">
+        <label className="grid gap-2 rounded-xl border border-[var(--color-primary-soft)] bg-[var(--surface-strong)] p-3 sm:grid-cols-[1fr_1.4fr] sm:items-center">
           <span><strong>Иначе, для остальных случаев:</strong></span>
           <select
             aria-label="Действие иначе, для остальных случаев"

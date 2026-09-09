@@ -1,6 +1,6 @@
 # Good-child Week 1 receipt
 
-**Date:** 2026-07-27T11:11:39.731Z
+**Date:** 2026-09-06T19:20:36.659Z
 **Repo:** mindshift-academy
 **Path:** interpretUtterance('grid-draw') → resolveGridAttempt(program, target)
 **Repeats per task:** 3
@@ -107,11 +107,8 @@ None detected by static checks (practice prompts do not name edge figures; hints
 
 ### Paid-hint figure words (allowed scaffold, noted for product risk)
 
-- `w1s2-collision` hintRu mentions shape word (paid): «Если видишь квадрат из клеток — перечисли все четыре, или скажи «два на два» и где он лежи…»
-- `w1s2-p4` hintRu mentions shape word (paid): «Квадрат 2×2: четыре клетки. Можно назвать каждую парой (строка, столбец).…»
-- `w1s2-transfer` hintRu mentions shape word (paid): «Диагональ: клетки, где номер строки равен номеру столбца. Перечисли пары по порядку.…»
-- `w1s3-p4` hintRu mentions shape word (paid): «L-фигура: три клетки вниз + одна в сторону. Перечисли все четыре пары (строка, столбец).…»
-- `w1s3-transfer` hintRu mentions shape word (paid): «Буква из клеток: сначала весь верхний ряд, потом столбец вниз от середины. Перечисли обе ч…»
+- `w1s2-collision` hintRu mentions shape word (paid): «Большую фигуру лучше разбить на части и назвать лунки по номерам — одно слово «квадрат» мо…»
+- `w1s2-p4` hintRu mentions shape word (paid): «Маленькая фигура из лунок — назови все четыре пары (ряд, столбец), а не одно слово «квадра…»
 
 ## Tasks good-child cannot pass
 

@@ -2,12 +2,10 @@
 
 import React from "react";
 import { usePathname } from "next/navigation";
-import { Flame } from "lucide-react";
 import { useGameStore } from "@/stores/game";
 import { classifySurface } from "@/lib/problem-report";
 
 export const Header = () => {
-  const totalXp = useGameStore((state) => state.totalXp);
   const crystals = useGameStore((state) => state.crystals);
   /**
    * Two names, one product. A child is here to meet a creature, so the bar says
@@ -40,33 +38,22 @@ export const Header = () => {
         </span>
       </a>
 
+      {/* Three things used to live here and all three lied to the child.
+          «Серия» was a flame and the word, with no number behind it — a promise of a
+          streak mechanic the canon (§6) forbids and the product does not have.
+          «Уровень 2» was a hardcoded string: every child, every session, level two.
+          «{totalXp} / 1000 XP» invented its own denominator, and its bar was a
+          violet→cyan neon gradient with a cyan glow — the palette of the dark theme
+          globals.css itself calls a mistake («it read as an adult analytics dashboard,
+          not as a companion for an eight-year-old»).
+          Progress the child is allowed to see lives on the map and in «Задание N из M»,
+          which are both real. Crystals stay: they buy hints, so they are the one number
+          here that does something. */}
       <div className="flex shrink-0 items-center gap-2 sm:gap-5">
-        <div className="hidden items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-2 text-sm font-semibold sm:flex">
-          <Flame className="w-4 h-4 text-amber-500 fill-amber-500" />
-          <span>Серия</span>
-        </div>
-        
-        <div className="hidden w-[150px] flex-col gap-1 sm:flex">
-          <div className="flex justify-between text-[11px] font-bold text-[var(--text-muted)]">
-            <span>Уровень 2</span>
-            <span className="tabular-nums">{totalXp} / 1000 XP</span>
-          </div>
-          <div
-            role="progressbar"
-            aria-valuenow={totalXp}
-            aria-valuemin={0}
-            aria-valuemax={1000}
-            aria-label="Прогресс до следующего уровня"
-            className="h-1.5 bg-[var(--surface-strong)] rounded-full overflow-hidden"
-          >
-            <div
-              className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.3)] transition-[width] duration-500"
-              style={{ width: `${(totalXp / 1000) * 100}%` }}
-            />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 rounded-full border border-[var(--color-accent-dark)] bg-[var(--surface-strong)] px-2 py-2 text-sm font-semibold text-amber-400 sm:px-4">
+        <div
+          aria-label={`Кристаллы: ${crystals}`}
+          className="flex items-center gap-2 rounded-full border border-[var(--color-accent-dark)] bg-[var(--surface-strong)] px-2 py-2 text-sm font-semibold text-[var(--ink)] sm:px-4"
+        >
           <span aria-hidden="true">💎</span>
           <span className="tabular-nums" suppressHydrationWarning>
             {crystals}

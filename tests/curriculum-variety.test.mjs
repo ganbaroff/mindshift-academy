@@ -32,7 +32,7 @@ import { loadCurriculum } from "../src/content/curriculum/index.ts";
  * grow; the ratchet fails if a week outside it is already clean, so a finished week cannot
  * be left unregistered and silently regress later.
  */
-const GREEN_WEEKS = new Set([2, 4]);
+const GREEN_WEEKS = new Set([1, 2, 4]);
 
 const ratchet = process.argv.includes("--ratchet");
 

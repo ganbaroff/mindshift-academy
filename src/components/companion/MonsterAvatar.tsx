@@ -22,21 +22,14 @@ interface MonsterAvatarProps {
 // Instead: the OUTER component always paints a static base layer (tinted
 // circle + mood glyph) as the very first frame, with the lazy Lottie
 // component absolutely positioned on top of it (inset-0). Once the chunk
-// mounts, Inner's own opaque circle + Lottie artwork visually cover the
-// glyph underneath — no Suspense, no empty first frame.
+// mounts, Inner's own opaque circle + Lottie artwork cover the placeholder
+// ring underneath — no Suspense, no empty first frame.
 const DynamicMonsterAvatarInner = dynamic(() => import("./MonsterAvatarInner"), {
   ssr: false,
   loading: () => null,
 });
 
-const MOOD_GLYPH: Record<MonsterMood, string> = {
-  happy: "🙂",
-  thinking: "🤔",
-  sad: "😢",
-  celebrating: "🎉",
-};
-
-export function MonsterAvatar({ mood = "happy", color = "#8b5cf6", size = 120, ...props }: MonsterAvatarProps) {
+export function MonsterAvatar({ mood = "happy", color = "var(--color-primary)", size = 120, ...props }: MonsterAvatarProps) {
   // Fixed-size, relatively-positioned wrapper so the base layer and the
   // absolutely-positioned Lottie layer stack exactly on top of each other
   // instead of collapsing to a full-width, near-zero-height bar on a cold
@@ -45,16 +38,19 @@ export function MonsterAvatar({ mood = "happy", color = "#8b5cf6", size = 120, .
   // the loaded face).
   return (
     <div className="relative" style={{ width: size, height: size, minWidth: size, minHeight: size }}>
+      {/* Placeholder ring only. Until 2026-09-08 this layer drew an emoji under the
+          companion, so a slow chunk load showed a child a smiley instead of their monster,
+          and the product's own character was the thing that arrived late. Mochi is
+          first-party now; a neutral ring is the honest stand-in for the moment before she
+          mounts, and nothing else pretends to be her. */}
       <div
         aria-hidden="true"
-        className="absolute inset-0 flex items-center justify-center rounded-full border border-[var(--border-color)]"
+        className="absolute inset-0 rounded-full border border-[var(--border-color)]"
         style={{
-          backgroundColor: `${color}15`,
-          borderColor: `${color}30`,
+          backgroundColor: `color-mix(in srgb, ${color} 8%, transparent)`,
+          borderColor: `color-mix(in srgb, ${color} 19%, transparent)`,
         }}
-      >
-        <span style={{ fontSize: size * 0.5, lineHeight: 1 }}>{MOOD_GLYPH[mood]}</span>
-      </div>
+      />
       <div className="absolute inset-0">
         <DynamicMonsterAvatarInner mood={mood} color={color} size={size} {...props} />
       </div>
