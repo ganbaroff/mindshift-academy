@@ -37,17 +37,37 @@ check(
     source.includes("Начать сессию 1")
 );
 
+// Week 1 session 1 is family `grid-draw` (src/content/curriculum/week-1/session-1.ts:29):
+// the child paints cells and presses «Проверить» (GridDrawSurface.tsx toggles cells on
+// click). The promise made here must match THAT, which is why this assertion no longer
+// looks for the old "скажешь питомцу команду" wording — the screen was telling the truth
+// and this test was the stale half.
 check(
   "ready phase explains the first-session outcome with a non-answer-revealing example",
   source.includes("Что сделаешь") &&
     source.includes("Что получится") &&
-    source.includes("Скажешь питомцу короткую и точную команду") &&
-    source.includes("Он закрасит только те клетки, которые назвала команда")
+    source.includes("Выберешь на поле клетки, которые нужно закрасить") &&
+    source.includes("Питомец закрасит только выбранные клетки")
 );
 
+// A worked promise must not double as a spoiler: the goals of the first session's own
+// tasks may never appear on the onboarding screen.
 check(
-  "the only ready-phase route remains the first thinking session",
-  source.includes('router.push("/session/w1-s1")') && !source.includes('router.push("/lesson/1")')
+  "the ready-phase example does not leak the first session's answers",
+  ["Верхняя полоса окон", "Горит один столбец окон", "Горит нижний ряд окон"].every(
+    (goal) => !source.includes(goal)
+  )
+);
+
+// `/continue` resolves the child's real position. Hardcoding w1-s1 here is defect 2 —
+// the returning child restarted at step 1 (src/lib/tasks/course-map.ts:6). So this now
+// forbids BOTH the legacy lesson route and the hardcoded first session, instead of
+// demanding the very string the product deliberately removed.
+check(
+  "the only ready-phase route resolves the child's position instead of hardcoding step 1",
+  source.includes('router.push("/continue")') &&
+    !source.includes('router.push("/lesson/1")') &&
+    !source.includes('router.push("/session/w1-s1")')
 );
 
 if (failed) process.exit(1);
