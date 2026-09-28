@@ -22,3 +22,19 @@ export function hasDevTestBypass(
 ): boolean {
   return nodeEnv === "development" && headers.get("x-test-bypass") === "true";
 }
+
+/**
+ * Dev-only, page-level companion to hasDevTestBypass. The E2E harnesses' route
+ * interception (see scripts/e2e/walkthrough-audit.mjs installAcademyBrowserRoutes)
+ * only rewrites /api/** requests, so the x-test-bypass header never reaches a
+ * page's own server-rendered document request. Pages outside proxy.ts's
+ * isProtectedPage list (e.g. /map) need a second, narrowly-scoped seam: the SAME
+ * ?demo=1 query param proxy.ts's isDemoPageBypass already uses for protected
+ * pages, gated the same way -- development only, never production.
+ */
+export function hasDevDemoQueryBypass(
+  searchParams: { demo?: string | string[] },
+  nodeEnv = process.env.NODE_ENV
+): boolean {
+  return nodeEnv === "development" && searchParams.demo === "1";
+}

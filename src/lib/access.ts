@@ -23,7 +23,15 @@ export type Viewer = { id: string };
 const TEST_BYPASS_VIEWER: Viewer = { id: "test_user_id" };
 
 /** Server-only: resolve the current Clerk user + whether they're allowed in. */
-export async function getViewerAccess(): Promise<{
+export async function getViewerAccess(opts?: {
+  /**
+   * Set by callers outside proxy.ts's isProtectedPage list (currently only /map).
+   * Must already be the NODE_ENV==="development" result of hasDevDemoQueryBypass --
+   * re-checked here too, not just trusted from the caller, because this function
+   * grants full viewer access: an auth bypass gets verified twice or not at all.
+   */
+  demoQueryBypass?: boolean;
+}): Promise<{
   user: Viewer | null;
   email: string | null;
   allowed: boolean;
@@ -38,6 +46,12 @@ export async function getViewerAccess(): Promise<{
   // rendered it once — the only proof it worked was a founder's screenshot. A screen no
   // gate can see is a screen that regresses silently.
   if (hasDevTestBypass(await headers())) {
+    return { user: TEST_BYPASS_VIEWER, email: null, allowed: true };
+  }
+
+  // Second dev-only seam for pages the proxy doesn't gate (see hasDevDemoQueryBypass
+  // in request-access.ts for why the header-based seam above can't reach them).
+  if (opts?.demoQueryBypass && process.env.NODE_ENV === "development") {
     return { user: TEST_BYPASS_VIEWER, email: null, allowed: true };
   }
 
