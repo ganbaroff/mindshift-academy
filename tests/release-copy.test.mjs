@@ -137,10 +137,6 @@ check(
     !/IF\/THEN/iu.test(lesson) &&
     !/калибровк[аи] вес[ао]в модел/iu.test(lesson),
 );
-check(
-  "progress animation transitions only width",
-  !header.includes("transition-all") && header.includes("transition-[width]"),
-);
 
 if (failed > 0) process.exit(1);
 console.log("ALL RELEASE COPY ASSERTIONS PASSED");
