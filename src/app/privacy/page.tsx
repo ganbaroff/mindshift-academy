@@ -4,27 +4,34 @@ import Link from "next/link";
 import { OperatorContactLine } from "@/components/support/OperatorContactLine";
 
 export const metadata = {
-  title: "Конфиденциальность (черновик) — MindShift Academy",
+  title: "Конфиденциальность — MindShift Academy",
 };
 
-function loadDraft(): string {
+// The notice is a versioned document under docs/legal/, rendered verbatim so the page and
+// the repository can never disagree about which text a parent was shown.
+function loadNotice(): string {
   try {
     return readFileSync(
-      join(process.cwd(), "docs/legal/CHERNOVIK-privacy-notice-ru.md"),
+      join(process.cwd(), "docs/legal/PRIVACY-NOTICE-ru.md"),
       "utf8"
     );
   } catch {
-    return "Черновик временно недоступен.";
+    return "Текст уведомления временно недоступен. Напишите оператору — контакт ниже.";
   }
 }
 
 export default function PrivacyPage() {
-  const md = loadDraft();
+  const md = loadNotice();
   return (
     <main className="min-h-screen bg-[var(--color-bg-base)] px-6 py-10 text-[var(--text-primary)]">
       <div className="mx-auto max-w-3xl space-y-6">
-        <p className="rounded-xl border border-amber-500/40 bg-[var(--color-accent)] px-4 py-3 text-sm text-[#3A2600]">
-          ЧЕРНОВИК — требует подтверждения юриста. Не является действующей политикой.
+        <p
+          data-testid="legal-status"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--surface-strong)] px-4 py-3 text-sm text-[var(--text-secondary)]"
+        >
+          Редакция 1.0 от 28.09.2026. Подготовлена оператором на основании законодательства
+          Азербайджанской Республики (раздел «Какие законы применяются»). Внешним юристом не
+          заверялась.
         </p>
         <h1 className="text-3xl font-semibold">Уведомление о конфиденциальности</h1>
         <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-[var(--text-secondary)]">{md}</pre>
