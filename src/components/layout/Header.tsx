@@ -26,7 +26,7 @@ export const Header = () => {
       <a
         href={isChild ? "/map" : "/"}
         aria-label={isChild ? "К карте" : "На главную"}
-        className="flex min-w-0 items-center gap-2 rounded-2xl transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:gap-3"
+        className="flex min-h-11 min-w-0 items-center gap-2 rounded-2xl transition-transform duration-[160ms] [transition-timing-function:var(--ease-out)] active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-secondary-dark)] sm:gap-3"
       >
         <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-secondary)] text-lg font-extrabold text-[var(--ink)] sm:h-10 sm:w-10 sm:text-xl">
           {isChild ? "З" : "M"}

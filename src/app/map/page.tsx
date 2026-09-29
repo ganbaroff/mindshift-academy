@@ -33,6 +33,7 @@ import { redirect } from "next/navigation";
 import { Check } from "lucide-react";
 import { getViewerAccess } from "@/lib/access";
 import { hasValidConsent } from "@/lib/consent";
+import { hasDevDemoQueryBypass } from "@/lib/request-access";
 import { prisma } from "@/lib/prisma";
 import { isCurriculumSessionComplete } from "@/lib/tasks/crystals";
 import {
@@ -51,8 +52,18 @@ import { Header } from "@/components/layout/Header";
 
 export const dynamic = "force-dynamic";
 
-export default async function MapPage() {
-  const { user, allowed } = await getViewerAccess();
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function MapPage({ searchParams }: { searchParams?: SearchParams }) {
+  const params = (await searchParams) ?? {};
+  // /map is deliberately not in proxy.ts's isProtectedPage list (it does its own
+  // access/consent/onboarding redirects below), so the harness's x-test-bypass
+  // header -- only ever attached to /api/** requests -- never reaches this page's
+  // own document request. ?demo=1 is the page-level, dev-only equivalent of
+  // proxy.ts's isDemoPageBypass for exactly that gap; see hasDevDemoQueryBypass.
+  const { user, allowed } = await getViewerAccess({
+    demoQueryBypass: hasDevDemoQueryBypass(params),
+  });
   if (!user) redirect("/sign-in");
   if (!allowed) redirect("/no-access");
   if (!(await hasValidConsent(user.id))) redirect("/consent");

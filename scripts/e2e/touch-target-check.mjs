@@ -6,14 +6,46 @@ import { spawn } from "node:child_process";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createRequire } from "node:module";
 import net from "node:net";
 
+const require = createRequire(import.meta.url);
 const root = process.cwd();
+const SQLiteDatabase = require("better-sqlite3");
+const { CONSENT_VERSION } = require(join(root, "src/lib/consent-policy.ts"));
 const MIN = 44;
+
+// Same throwaway fixture scripts/e2e/walkthrough-audit.mjs seeds (User + Monster +
+// ParentalConsent), keyed to the x-test-bypass test user -- without it /session/w1-s1
+// never reaches the task workspace and the testid wait below times out.
+const FIXTURE_MONSTER_COLOR = "#3FB37F";
+function seedChildFixture(databaseUrl) {
+  const db = new SQLiteDatabase(databaseUrl.replace(/^file:/, ""));
+  try {
+    db.prepare("INSERT OR IGNORE INTO User (id, clerkId, username) VALUES (?, ?, ?)").run(
+      "monster-fixture-user",
+      "test_user_id",
+      "Monster Fixture"
+    );
+    const user = db.prepare("SELECT id FROM User WHERE clerkId = ?").get("test_user_id");
+    db.prepare(
+      "INSERT OR IGNORE INTO Monster (id, userId, name, emoji, color, promptUsed) VALUES (?, ?, ?, ?, ?, ?)"
+    ).run("monster-fixture", user.id, "Крепыш", "🐲", FIXTURE_MONSTER_COLOR, "e2e fixture");
+    db.prepare(
+      `INSERT OR IGNORE INTO ParentalConsent
+         (id, clerkId, parentEmail, method, serviceConsent, externalAiConsent,
+          consentVersion, verifiedAt, updatedAt)
+       VALUES (?, ?, ?, 'email-plus', 1, 1, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`
+    ).run("consent-fixture", "test_user_id", "e2e-parent@example.test", CONSENT_VERSION);
+  } finally {
+    db.close();
+  }
+}
 const port = await new Promise((r) => { const s = net.createServer(); s.listen(0, () => { const p = s.address().port; s.close(() => r(p)); }); });
 const dbDir = mkdtempSync(join(tmpdir(), "touch-"));
 const dbUrl = `file:${join(dbDir, "t.db").replaceAll("\\", "/")}`;
 await new Promise((res, rej) => { const c = spawn(process.execPath, [join(root, "node_modules/prisma/build/index.js"), "db", "push"], { cwd: root, env: { ...process.env, DATABASE_URL: dbUrl, TURSO_DATABASE_URL: dbUrl }, stdio: "ignore" }); c.on("exit", (x) => (x === 0 ? res() : rej(new Error("db push " + x)))); });
+seedChildFixture(dbUrl);
 const srv = spawn(process.execPath, [join(root, "node_modules/next/dist/bin/next"), "dev", "--webpack", "-p", String(port)], { cwd: root, env: { ...process.env, DATABASE_URL: dbUrl, TURSO_DATABASE_URL: dbUrl, FAKE_AI: "1", FAKE_AI_MODE: "tutor_down", NEXT_PUBLIC_UX_V11: "1" }, stdio: ["ignore", "pipe", "pipe"] });
 let out = "";
 await new Promise((res, rej) => { const t = setTimeout(() => rej(new Error("ready timeout: " + out.slice(-800))), 120000); const c = (d) => { out += d; if (/Ready in/.test(out)) { clearTimeout(t); res(); } }; srv.stdout.on("data", c); srv.stderr.on("data", c); });
@@ -40,6 +72,14 @@ await page.screenshot({ path: join(root, "plans/enter-code-320px.png"), fullPage
 
 // The session screen: every control a child touches, measured at 320px.
 await page.goto(`${base}/session/w1-s1?demo=1`, { waitUntil: "domcontentloaded" });
+try {
+  const introCta = page.getByTestId("session-intro-start");
+  await introCta.waitFor({ timeout: 15000 });
+  await introCta.click({ timeout: 3000 });
+} catch {
+  // No intro this run (already resumed past it, or not present) -- the
+  // workspace wait below still handles that case, same as walkthrough-audit.mjs.
+}
 await page.getByTestId("task-workspace-grid-draw").waitFor({ timeout: 30000 });
 const small = await page.evaluate((min) => {
   const out = [];
